@@ -2,8 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { NodeSSH } from 'node-ssh';
 
-const ssh = new NodeSSH();
-
 /**
  * Função para executar comandos no servidor via SSH e retornar o output.
  */
@@ -16,17 +14,25 @@ export const runSSHCommand = createServerFn({ method: "POST" })
     command: z.string()
   }).parse(data))
   .handler(async ({ data }) => {
+    // CRITICAL: Criar instância dentro do handler para evitar conflitos de concorrência
+    const ssh = new NodeSSH();
+    
     try {
       await ssh.connect({
         host: data.host,
         port: data.port,
         username: data.username,
         password: data.password,
-        readyTimeout: 10000 
+        readyTimeout: 15000 
       });
 
       const result = await ssh.execCommand(data.command);
-      await ssh.dispose();
+      
+      try {
+        await ssh.dispose();
+      } catch (disposeError) {
+        console.warn("SSH Dispose Warning:", disposeError);
+      }
 
       return {
         success: true,
@@ -35,16 +41,16 @@ export const runSSHCommand = createServerFn({ method: "POST" })
         exitCode: result.code
       };
     } catch (error: any) {
+      console.error("SSH Execution Error:", error);
       return {
         success: false,
-        error: error.message || "Erro desconhecido na conexão SSH"
+        error: error.message || "Erro de socket ou conexão SSH interrompida"
       };
     }
   });
 
 export const getInstallScript = createServerFn({ method: "GET" })
   .handler(async () => {
-    // Agora o script gera o IP e Token e tenta salvá-los no Odin
     const script = `#!/bin/bash
 # ==========================================================
 # MAGO PANEL - INSTALADOR DE API (ODIN SPECIAL EDITION)
