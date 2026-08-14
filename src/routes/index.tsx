@@ -468,10 +468,140 @@ function Dashboard() {
           </section>
         </div>
           </>
+        ) : view === 'customers' ? (
+          <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800/50 overflow-hidden shadow-2xl">
+            <div className="p-6 border-b border-zinc-800/50 flex justify-between items-center bg-zinc-900/30">
+              <h2 className="font-bold text-lg flex items-center gap-2">
+                <Users size={18} className="text-primary" />
+                Gerenciamento de Clientes (Odin v6)
+              </h2>
+              <div className="flex gap-2">
+                <button 
+                  onClick={handleFetchUsers}
+                  className="text-xs text-zinc-400 hover:text-white transition-colors bg-zinc-800 px-3 py-1.5 rounded-lg flex items-center gap-2"
+                >
+                  <Activity size={12} className={isLoadingCustomers ? "animate-spin" : ""} />
+                  ATUALIZAR
+                </button>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              {isLoadingCustomers ? (
+                <div className="p-20 text-center text-zinc-500 flex flex-col items-center gap-4">
+                  <Activity size={40} className="animate-spin text-primary opacity-20" />
+                  <p className="animate-pulse">Consultando base de dados do Odin...</p>
+                </div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-black/20 text-zinc-500 text-xs uppercase tracking-wider font-bold">
+                      <th className="px-6 py-4">Usuário</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4">Expiração</th>
+                      <th className="px-6 py-4 text-right">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/30">
+                    {customers.length > 0 ? customers.map((user: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-white/[0.02] group transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center font-bold text-xs text-zinc-400">
+                              {user.username.substring(0,2).toUpperCase()}
+                            </div>
+                            <span className="font-bold text-zinc-200">{user.username}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${user.enabled == 1 ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
+                            {user.enabled == 1 ? 'Ativo' : 'Bloqueado'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-zinc-400 text-sm">
+                          {new Date(user.exp_date * 1000).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button className="text-zinc-600 hover:text-primary transition-colors p-2">
+                            <Settings size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td colSpan={4} className="px-6 py-20 text-center text-zinc-600 italic">
+                          Nenhum cliente encontrado no banco de dados.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </section>
         ) : (
           <LegacyLab />
         )}
       </main>
+
+      {/* Modal de Criação de Usuário */}
+      {showAddUserModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#0f0f12] border border-zinc-800 w-full max-w-md rounded-2xl p-8 shadow-2xl animate-in zoom-in fade-in duration-200">
+            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+              <UserPlus className="text-primary" />
+              Forjar Novo Cliente
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs text-zinc-500 uppercase font-bold mb-2 block">Username</label>
+                <input 
+                  type="text" 
+                  className="w-full bg-black/40 border border-zinc-800 rounded-xl p-3 text-zinc-200 outline-none focus:border-primary/50 transition-colors"
+                  placeholder="Ex: cliente_premium"
+                  value={newUserData.username}
+                  onChange={e => setNewUserData({...newUserData, username: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-500 uppercase font-bold mb-2 block">Password</label>
+                <input 
+                  type="password" 
+                  className="w-full bg-black/40 border border-zinc-800 rounded-xl p-3 text-zinc-200 outline-none focus:border-primary/50 transition-colors"
+                  placeholder="••••••••"
+                  value={newUserData.password}
+                  onChange={e => setNewUserData({...newUserData, password: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-500 uppercase font-bold mb-2 block">Validade (Dias)</label>
+                <input 
+                  type="number" 
+                  className="w-full bg-black/40 border border-zinc-800 rounded-xl p-3 text-zinc-200 outline-none focus:border-primary/50 transition-colors"
+                  value={newUserData.exp_days}
+                  onChange={e => setNewUserData({...newUserData, exp_days: parseInt(e.target.value)})}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-8">
+              <button 
+                onClick={() => setShowAddUserModal(false)}
+                className="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 py-3 rounded-xl font-bold transition-all"
+              >
+                CANCELAR
+              </button>
+              <button 
+                onClick={handleCreateUser}
+                disabled={isRunning}
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+              >
+                {isRunning ? <Activity size={18} className="animate-spin" /> : "CRIAR AGORA"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
