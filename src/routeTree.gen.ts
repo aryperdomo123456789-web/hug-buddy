@@ -10,43 +10,43 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiInstallRouteImport } from './routes/api/install'
+import { Route as ApiPublicInstallRouteImport } from './routes/api/public/install'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiInstallRoute = ApiInstallRouteImport.update({
-  id: '/api/install',
-  path: '/api/install',
+const ApiPublicInstallRoute = ApiPublicInstallRouteImport.update({
+  id: '/api/public/install',
+  path: '/api/public/install',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/api/install': typeof ApiInstallRoute
+  '/api/public/install': typeof ApiPublicInstallRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/api/install': typeof ApiInstallRoute
+  '/api/public/install': typeof ApiPublicInstallRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/api/install': typeof ApiInstallRoute
+  '/api/public/install': typeof ApiPublicInstallRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/install'
+  fullPaths: '/' | '/api/public/install'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/install'
-  id: '__root__' | '/' | '/api/install'
+  to: '/' | '/api/public/install'
+  id: '__root__' | '/' | '/api/public/install'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ApiInstallRoute: typeof ApiInstallRoute
+  ApiPublicInstallRoute: typeof ApiPublicInstallRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -58,11 +58,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/install': {
-      id: '/api/install'
-      path: '/api/install'
-      fullPath: '/api/install'
-      preLoaderRoute: typeof ApiInstallRouteImport
+    '/api/public/install': {
+      id: '/api/public/install'
+      path: '/api/public/install'
+      fullPath: '/api/public/install'
+      preLoaderRoute: typeof ApiPublicInstallRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -70,7 +70,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ApiInstallRoute: ApiInstallRoute,
+  ApiPublicInstallRoute: ApiPublicInstallRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

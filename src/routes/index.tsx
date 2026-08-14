@@ -216,11 +216,11 @@ function Dashboard() {
           
           <div className="bg-black/40 p-4 rounded-xl border border-zinc-800 font-mono text-sm relative group">
             <code className="text-primary break-all">
-              bash &lt;(curl -sSL https://71a12a47-d6b3-4362-a2b3-4497a0a13af3.lovableproject.com/api/install)
+              bash &lt;(curl -sSL https://71a12a47-d6b3-4362-a2b3-4497a0a13af3.lovableproject.com/api/public/install)
             </code>
             <button 
               onClick={() => {
-                navigator.clipboard.writeText("bash <(curl -sSL https://71a12a47-d6b3-4362-a2b3-4497a0a13af3.lovableproject.com/api/install)");
+                navigator.clipboard.writeText("bash <(curl -sSL https://71a12a47-d6b3-4362-a2b3-4497a0a13af3.lovableproject.com/api/public/install)");
                 alert("Comando copiado!");
               }}
               className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded text-xs text-white"
