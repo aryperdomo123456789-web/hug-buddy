@@ -88,7 +88,7 @@ function LegacyLab() {
 }
 
 function Dashboard() {
-  const [view, setView] = React.useState<'dashboard' | 'legacy' | 'customers'>('dashboard');
+  const [view, setView] = React.useState<'dashboard' | 'legacy' | 'customers' | 'servers'>('dashboard');
   const [terminalOutput, setTerminalOutput] = React.useState<string>("IP: 23.158.72.30\nAguardando comando...");
   const [command, setCommand] = React.useState("ls -la /home/xtreamcodes/iptv_xtream_codes/");
   const [isRunning, setIsRunning] = React.useState(false);
@@ -256,7 +256,12 @@ function Dashboard() {
             }}
           />
           <NavItem icon={<Terminal size={20} />} label="Terminal" />
-          <NavItem icon={<Server size={20} />} label="Servidores" />
+          <NavItem 
+            icon={<Server size={20} />} 
+            label="Servidores" 
+            active={view === 'servers'}
+            onClick={() => setView('servers')}
+          />
           <div className="my-2 border-t border-zinc-800/30 mx-2" />
           <NavItem 
             icon={<Activity size={20} />} 
@@ -283,7 +288,7 @@ function Dashboard() {
         <header className="flex justify-between items-end mb-12">
           <div>
             <h1 className="text-4xl font-black mb-2 tracking-tight uppercase">
-              {view === 'dashboard' ? 'Dashboard' : view === 'customers' ? 'Clientes' : 'Laboratório Legado'}
+              {view === 'dashboard' ? 'Dashboard' : view === 'customers' ? 'Clientes' : view === 'servers' ? 'Servidores' : 'Laboratório Legado'}
             </h1>
             <p className="text-zinc-500">
               {view === 'dashboard' 
