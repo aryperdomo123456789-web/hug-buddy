@@ -246,13 +246,7 @@ function Dashboard() {
             active={view === 'customers'}
             onClick={() => {
               setView('customers');
-              if (customers.length === 0) {
-                setIsLoadingCustomers(true);
-                fetchUsersFn().then(res => {
-                  if (res.success) setCustomers(res.data);
-                  setIsLoadingCustomers(false);
-                });
-              }
+              handleFetchUsers();
             }}
           />
           <NavItem icon={<Terminal size={20} />} label="Terminal" />
