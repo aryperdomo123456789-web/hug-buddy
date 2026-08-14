@@ -116,6 +116,7 @@ function Dashboard() {
     username: "",
     password: "",
     owner: "SuaFonte444",
+    member_id: 1,
     exp_days: 30,
     max_connections: 1,
     enabled: true,
@@ -135,15 +136,19 @@ function Dashboard() {
   const fetchUsersFn = useServerFn(getUsers);
   const fetchServersFn = useServerFn(getServers);
   const fetchStreamsFn = useServerFn(getStreams);
+  const fetchBouquetsFn = useServerFn(getBouquets);
   const createUserFn = useServerFn(createUser);
   const updateUserFn = useServerFn(updateUser);
   const deleteUserFn = useServerFn(deleteUser);
+  const killConnectionsFn = useServerFn(killUserConnections);
+  const toggleStatusFn = useServerFn(toggleUserStatus);
 
   const handleFetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetchUsersFn();
-      if (res.success) setCustomers(res.data || []);
+      const [uRes, bRes] = await Promise.all([fetchUsersFn(), fetchBouquetsFn()]);
+      if (uRes.success) setCustomers(uRes.data || []);
+      if (bRes.success) setBouquets(bRes.data || []);
     } catch (e) { toast.error("Erro ao carregar clientes"); }
     finally { setLoading(false); }
   };
