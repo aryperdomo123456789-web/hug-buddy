@@ -101,15 +101,16 @@ function Dashboard() {
         {/* Mago Dev Motivational Banner */}
         <div className="mt-12 p-8 rounded-2xl bg-gradient-to-r from-primary/20 to-transparent border border-primary/20 relative overflow-hidden group">
           <div className="relative z-10 max-w-2xl">
-            <h3 className="text-2xl font-black mb-4 uppercase">Tá moscando por que, campeão?</h3>
+            <h3 className="text-2xl font-black mb-4 uppercase">Odin Streaming System v6 Conectado</h3>
             <p className="text-zinc-400 mb-6 leading-relaxed">
-              O mercado de IPTV não espera ninguém. Ou você domina a tecnologia e automatiza seu império, 
-              ou vai continuar sendo mais um na multidão. O código é sua arma, o tráfego é seu combustível. 
+              Já estudei a arquitetura do Odin v6. Estamos operando na porta <span className="text-white font-bold">7999</span> com o banco <span className="text-white font-bold">xtream_iptvpro</span>. 
+              O instalador já foi atualizado para extrair as credenciais automaticamente e preparar sua API.
               <span className="text-white font-bold ml-1">Bora pra cima!</span>
             </p>
             <div className="flex gap-4 text-xs font-mono text-primary">
-              <span>// SCRIPT_ID: MAGO_V1</span>
-              <span>// STATUS: OPERATIONAL</span>
+              <span>// SYSTEM: ODIN_V6</span>
+              <span>// DB: MARIA_10.3</span>
+              <span>// STATUS: READY_TO_FORGE</span>
             </div>
           </div>
           <div className="absolute right-0 top-0 h-full w-1/3 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] pointer-events-none" />

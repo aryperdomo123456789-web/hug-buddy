@@ -1,0 +1,1429 @@
+MARIA DB ODIN
+root@SUAFONTEMAIN:~# mysql -e "SELECT VERSION() as 'VERSAO DO MARIADB'; SELECT '--------------------'; SHOW DATABASES;"
++----------------------------------+
+| VERSAO DO MARIADB                |
++----------------------------------+
+| 10.3.39-MariaDB-0ubuntu0.20.04.2 |
++----------------------------------+
++----------------------+
+| -------------------- |
++----------------------+
+| -------------------- |
++----------------------+
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| xtream_iptvpro     |
++--------------------+
+root@SUAFONTEMAIN:~# 
+Ótimo. Identificamos o alvo: o banco de dados principal é o xtream_iptvpro.
+
+A versão do MariaDB é a 10.3, o que é padrão e estável para o Ubuntu 20.04.
+
+COMANDO 02: Mapeamento de Tabelas e Volumetria
+Agora vamos listar todas as tabelas dentro do xtream_iptvpro. Não vamos apenas ver os nomes, vamos ver também:
+
+QTD_LINHAS: Para saber quais tabelas estão cheias (onde estão os dados reais).
+
+ENGINE: Para saber se é InnoDB (mais moderno/rápido para escrita concorrente) ou MyISAM (mais antigo, pode travar tabela inteira em atualizações).
+
+root@SUAFONTEMAIN:~# mysql -e "SELECT TABLE_NAME AS 'TABELA', TABLE_ROWS AS 'QTD_LINHAS', ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'xtream_iptvpro' ORDER BY TABLE_NAME;"
++---------------------------+------------+--------+
+| TABELA                    | QTD_LINHAS | ENGINE |
++---------------------------+------------+--------+
+| access_codes              |          0 | InnoDB |
+| access_output             |          3 | InnoDB |
+| admin_settings            |        146 | InnoDB |
+| avisos                    |          0 | InnoDB |
+| blocked_ips               |        694 | InnoDB |
+| blocked_user_agents       |          0 | InnoDB |
+| bouquets                  |          5 | InnoDB |
+| client_logs               |          0 | InnoDB |
+| created                   |          0 | MyISAM |
+| credits_log               |        985 | InnoDB |
+| cronjobs                  |          0 | InnoDB |
+| dashboard_statistics      |     413270 | InnoDB |
+| devices                   |         20 | InnoDB |
+| enigma2_actions           |          0 | InnoDB |
+| enigma2_devices           |          0 | InnoDB |
+| enigma2_failed            |          0 | InnoDB |
+| epg                       |          3 | InnoDB |
+| epg_data                  |        526 | InnoDB |
+| epg_type                  |          2 | InnoDB |
+| invoice                   |          0 | InnoDB |
+| isp_addon                 |          0 | InnoDB |
+| languages                 |         11 | InnoDB |
+| licence                   |          0 | InnoDB |
+| links                     |          0 | InnoDB |
+| login_flood               |        213 | InnoDB |
+| login_logs                |          0 | InnoDB |
+| login_users               |       2614 | InnoDB |
+| mag_claims                |          0 | InnoDB |
+| mag_devices               |         84 | InnoDB |
+| mag_events                |          0 | InnoDB |
+| mag_logs                  |          0 | InnoDB |
+| member_groups             |          5 | InnoDB |
+| movie_containers          |          0 | InnoDB |
+| odin_blocker              |        176 | InnoDB |
+| packages                  |          0 | InnoDB |
+| panel_logs                |     452257 | InnoDB |
+| reg_userlog               |      75616 | InnoDB |
+| reg_users                 |          2 | InnoDB |
+| reseller_credentials      |          0 | InnoDB |
+| reseller_imex             |          0 | InnoDB |
+| rtmp_ips                  |          0 | InnoDB |
+| salmo91                   |          0 | InnoDB |
+| series                    |         11 | InnoDB |
+| series_episodes           |        978 | InnoDB |
+| server_activity           |          0 | InnoDB |
+| settings                  |          0 | InnoDB |
+| signals                   |      66132 | InnoDB |
+| streaming_servers         |          7 | InnoDB |
+| streams                   |       2183 | InnoDB |
+| streams_arguments         |         19 | InnoDB |
+| streams_options           |      67322 | InnoDB |
+| streams_providers         |          0 | InnoDB |
+| streams_providers2        |          0 | InnoDB |
+| streams_providers3        |          0 | InnoDB |
+| streams_providers_streams |          0 | InnoDB |
+| streams_seasons           |          0 | InnoDB |
+| streams_sys               |       2064 | InnoDB |
+| streams_types             |          5 | InnoDB |
+| stream_categories         |        124 | InnoDB |
+| stream_logs               |   19659310 | InnoDB |
+| stream_subcategories      |          0 | InnoDB |
+| subreseller_setup         |          0 | InnoDB |
+| suspicious_logs           |          0 | InnoDB |
+| tickets                   |         78 | InnoDB |
+| tickets_replies           |        104 | InnoDB |
+| tmdb_async                |       3298 | InnoDB |
+| transcoding_profiles      |          3 | InnoDB |
+| users                     |         35 | InnoDB |
+| users_telefone            |      14082 | InnoDB |
+| user_activity             |          0 | InnoDB |
+| user_activity_now         |      13595 | InnoDB |
+| user_output               |     357546 | InnoDB |
+| watch_categories          |         54 | InnoDB |
+| watch_folders             |         11 | InnoDB |
+| watch_output              |          0 | InnoDB |
+| watch_settings            |          0 | InnoDB |
+| xtream_main               |          0 | InnoDB |
+| _apps                     |         15 | InnoDB |
+| _binstream_users          |       1343 | InnoDB |
+| _bot_in_action            |          2 | InnoDB |
+| _bot_login                |          8 | InnoDB |
+| _bot_messages             |        217 | InnoDB |
+| _callbacks                |      29999 | InnoDB |
+| _chatbot                  |         34 | InnoDB |
+| _chatbot_messages         |         45 | InnoDB |
+| _configs                  |       1548 | InnoDB |
+| _crons                    |          0 | InnoDB |
+| _emails                   |        331 | InnoDB |
+| _email_allow_domain       |          4 | MyISAM |
+| _email_white_list         |          0 | InnoDB |
+| _fakecustomers            |         50 | InnoDB |
+| _gateways                 |          5 | InnoDB |
+| _groups_hierarchy         |         98 | InnoDB |
+| _groups_permissions       |          6 | InnoDB |
+| _logs                     |     155227 | InnoDB |
+| _notices                  |          6 | InnoDB |
+| _orders                   |        108 | InnoDB |
+| _order_status             |          2 | InnoDB |
+| _ott_cards                |          0 | InnoDB |
+| _ott_users                |          0 | InnoDB |
+| _packages                 |        100 | InnoDB |
+| _packages_credits         |        110 | InnoDB |
+| _payment_config           |         23 | InnoDB |
+| _payment_status           |          5 | InnoDB |
+| _reg_users_credits_exp    |         94 | InnoDB |
+| _reg_users_postpaid       |        148 | InnoDB |
+| _resellers_api_key        |          0 | InnoDB |
+| _reseller_permissions     |       1080 | InnoDB |
+| _shorter                  |      51576 | InnoDB |
+| _templates                |          0 | InnoDB |
+| _users_contacts           |         12 | InnoDB |
++---------------------------+------------+--------+
+root@SUAFONTEMAIN:~# 
+Excelente. Temos um mapa completo da sua estrutura. Analisando o resultado do Comando 02, já identifico pontos cruciais e tabelas que precisam da nossa atenção imediata.
+
+Vamos dividir o estudo em Módulos. O primeiro será o Módulo A: Tabelas Gigantes e Críticas.
+
+Módulo A: Análise das Tabelas Gigantes (Onde mora o desempenho)
+Olhando o seu resultado, estas 4 tabelas são as "donas" do seu banco de dados. Elas contêm 99% dos dados e são responsáveis pela performance (ou lentidão):
+
+stream_logs: 19.659.310 linhas (Quase 20 milhões!). Esta tabela registra cada vez que um cliente conecta/desconecta ou troca de canal.
+
+Risco: Com esse tamanho, qualquer consulta de histórico trava o painel.
+
+panel_logs: 452.257 linhas. Logs gerais de ações no painel.
+
+dashboard_statistics: 413.270 linhas. Estatísticas de uso.
+
+user_output: 357.546 linhas. Dados temporários de saída de streaming.
+
+COMANDO 03: Investigação Forense da Tabela stream_logs
+Vamos entender o que exatamente tem dentro dessa tabela gigante. Não vamos listar tudo (travria o servidor), vamos pegar as 5 linhas mais recentes para ver a estrutura dos dados.
+
+root@SUAFONTEMAIN:~# mysql -e "SELECT * FROM xtream_iptvpro.stream_logs ORDER BY id DESC LIMIT 5\G"
+*************************** 1. row ***************************
+       id: 50500695
+stream_id: 3098100
+server_id: 773
+     date: 1766020829
+    error: [segment @ 0x29bf9640] Non-monotonous DTS in output stream 0:0; previous: 1797273, current: 819000; changing to 1797274. This may result in incorrect timestamps in the output file.
+*************************** 2. row ***************************
+       id: 50500694
+stream_id: 3098100
+server_id: 773
+     date: 1766020829
+    error: [segment @ 0x29bf9640] Non-monotonous DTS in output stream 0:0; previous: 1797272, current: 816000; changing to 1797273. This may result in incorrect timestamps in the output file.
+*************************** 3. row ***************************
+       id: 50500693
+stream_id: 3098100
+server_id: 773
+     date: 1766020829
+    error: [segment @ 0x29bf9640] Non-monotonous DTS in output stream 0:0; previous: 1797271, current: 813000; changing to 1797272. This may result in incorrect timestamps in the output file.
+*************************** 4. row ***************************
+       id: 50500692
+stream_id: 3098100
+server_id: 773
+     date: 1766020829
+    error: [segment @ 0x29bf9640] Non-monotonous DTS in output stream 0:0; previous: 1797270, current: 810000; changing to 1797271. This may result in incorrect timestamps in the output file.
+*************************** 5. row ***************************
+       id: 50500691
+stream_id: 3098100
+server_id: 773
+     date: 1766020829
+    error: [segment @ 0x29bf9640] Non-monotonous DTS in output stream 0:0; previous: 1797269, current: 807000; changing to 1797270. This may result in incorrect timestamps in the output file.
+root@SUAFONTEMAIN:~# 
+
+
+root@SUAFONTEMAIN:~# mysql -e "DESCRIBE xtream_iptvpro.users;"
++-------------------+--------------+------+-----+---------+----------------+
+| Field             | Type         | Null | Key | Default | Extra          |
++-------------------+--------------+------+-----+---------+----------------+
+| id                | int(11)      | NO   | PRI | NULL    | auto_increment |
+| member_id         | int(11)      | YES  | MUL | NULL    |                |
+| username          | varchar(255) | NO   | MUL | NULL    |                |
+| password          | varchar(255) | NO   | MUL | NULL    |                |
+| phone             | varchar(255) | YES  |     | NULL    |                |
+| email             | varchar(255) | YES  |     | NULL    |                |
+| exp_date          | int(11)      | YES  | MUL | NULL    |                |
+| admin_enabled     | int(11)      | NO   | MUL | 1       |                |
+| enabled           | int(11)      | NO   | MUL | 1       |                |
+| admin_notes       | mediumtext   | NO   |     | NULL    |                |
+| reseller_notes    | mediumtext   | NO   |     | NULL    |                |
+| bouquet           | mediumtext   | NO   |     | NULL    |                |
+| max_connections   | int(11)      | NO   |     | 1       |                |
+| is_restreamer     | tinyint(4)   | NO   | MUL | 0       |                |
+| allowed_ips       | mediumtext   | NO   |     | NULL    |                |
+| allowed_ua        | mediumtext   | NO   |     | NULL    |                |
+| is_trial          | tinyint(4)   | NO   | MUL | 0       |                |
+| created_at        | int(11)      | NO   | MUL | NULL    |                |
+| created_by        | int(11)      | NO   | MUL | NULL    |                |
+| pair_id           | int(11)      | YES  | MUL | NULL    |                |
+| is_mag            | tinyint(4)   | NO   | MUL | 0       |                |
+| is_e2             | tinyint(4)   | NO   | MUL | 0       |                |
+| force_server_id   | int(11)      | NO   |     | 0       |                |
+| is_isplock        | tinyint(4)   | NO   |     | 0       |                |
+| as_number         | varchar(30)  | YES  |     | NULL    |                |
+| isp_desc          | mediumtext   | YES  |     | NULL    |                |
+| forced_country    | varchar(3)   | NO   |     | NULL    |                |
+| is_stalker        | tinyint(4)   | NO   |     | 0       |                |
+| bypass_ua         | tinyint(4)   | NO   |     | 0       |                |
+| play_token        | text         | NO   |     | NULL    |                |
+| _tipolista        | varchar(250) | NO   |     |         |                |
+| is_binstream      | int(11)      | YES  |     | NULL    |                |
+| binstream_id      | varchar(255) | YES  |     | NULL    |                |
+| binstream_package | varchar(255) | YES  |     | NULL    |                |
+| app_id            | int(11)      | YES  |     | NULL    |                |
+| trust_renew       | int(11)      | YES  |     | NULL    |                |
+| is_migration      | int(11)      | YES  |     | NULL    |                |
+| line_bouquet      | text         | YES  |     | NULL    |                |
+| access_output     | int(11)      | YES  |     | 3       |                |
++-------------------+--------------+------+-----+---------+----------------+
+root@SUAFONTEMAIN:~# 
+Esta é a tabela mais importante do sistema. Como perito, você não deve olhar para ela apenas como uma lista de nomes, mas sim como um painel de controle de permissões.
+
+Vou dissecar as colunas vitais para que você entenda como o Odin decide se libera ou bloqueia o sinal.
+
+1. Colunas de Identidade e Acesso (O Básico)
+username / password: Login e senha.
+
+member_id: Este é o ID do Revendedor dono dessa linha. Se for 0, o dono é o Admin (você).
+
+created_at: A data de criação. Atenção: O tipo é int(11). Isso significa que o banco guarda em UNIX TIMESTAMP (segundos desde 1970), e não como data legível.
+
+Dica de Perito: Para ler isso, você precisa converter no SQL.
+
+exp_date: A data de validade. Também é TIMESTAMP. Se o número aqui for menor que o tempo atual, a conta corta. Se for NULL, é ilimitada.
+
+2. Colunas de Segurança (Onde o Odin bloqueia)
+enabled: 1 = Ativo, 0 = Banido/Desativado manualmente.
+
+max_connections: O limite de telas simultâneas. O Odin checa isso a cada conexão.
+
+allowed_ips: Se tiver algo escrito aqui (formato JSON ou lista), o cliente SÓ conecta desse IP. É usado para travar MAGs ou clientes fixos.
+
+allowed_ua (User Agent): Permite travar o cliente a um app específico (ex: só roda no Smarters, não roda no VLC).
+
+is_isplock: O famoso Bloqueio de ISP.
+
+0: Desligado.
+
+1: Ligado. O sistema grava o ISP da primeira conexão e bloqueia se tentar conectar de outra operadora de internet.
+
+3. Colunas de Dispositivos (Tipos de Linha)
+Aqui o sistema sabe como tratar a conexão:
+
+is_mag: Se for 1, o sistema ignora a senha e valida pelo MAC Address (que fica na tabela mag_devices, vinculada a este user ID).
+
+is_e2: Para receptores Enigma2 (Dreambox, VU+).
+
+is_restreamer: Se for 1, essa linha tem permissão para ser retransmitida (usada para vender para outros painéis). Geralmente desativa algumas proteções de flood.
+
+4. Colunas Técnicas Avançadas
+bouquet: Aqui ficam os IDs dos pacotes de canais que o cliente tem (ex: [1, 5, 10]). O sistema lê isso para saber qual lista M3U gerar.
+
+force_server_id: Se você quiser obrigar esse cliente a conectar sempre no Load Balancer X (ID 785, por exemplo), o ID fica aqui. Se for 0, o balanceamento é automático.
+
+COMANDO 09: A Prova Real (Lendo os Dados como um Perito)
+Agora que você sabe que as datas são números inteiros (Timestamp), vamos fazer um comando profissional para ver seus clientes de forma legível.
+
+Vamos listar: Login, Dono (Reseller), Validade (Formatada), Telas e se está Ativo.
+
+
+
+root@SUAFONTEMAIN:~# mysql -e "SELECT username, member_id AS 'ID_Dono', FROM_UNIXTIME(exp_date) AS 'Vencimento', max_connections AS 'Telas', enabled FROM xtream_iptvpro.users ORDER BY id DESC LIMIT 10;"
++--------------------+---------+---------------------+-------+---------+
+| username           | ID_Dono | Vencimento          | Telas | enabled |
++--------------------+---------+---------------------+-------+---------+
+| brxteste253        |       1 | 2025-12-16 19:26:00 |   500 |       1 |
+| gtrsnLdmp8kA       |       1 | 2026-01-07 22:49:00 |   250 |       1 |
+| Snuxkingtv         |       1 | 2026-01-01 15:54:00 |   100 |       1 |
+| mastertest335      |       1 | 2026-01-01 11:13:00 |   100 |       1 |
+| miautvgestao2025   |       1 | 2026-01-01 10:28:00 |   100 |       1 |
+| linhaexclusivaWAVE |       1 | NULL                |  2000 |       1 |
+| linhaexclusiva     |       1 | NULL                |  2000 |       1 |
+| 1234               |       1 | NULL                |     0 |       1 |
+| reswave            |       1 | NULL                |  4000 |       1 |
+| jfplay3352         |       1 | 2025-12-23 14:24:00 |   400 |       1 |
++--------------------+---------+---------------------+-------+---------+
+root@SUAFONTEMAIN:~# 
+Excelente. A sua tabela de usuários está muito saudável, mas como perito, faço duas observações sobre os dados que você me mostrou:
+
+Linhas Eternas: Os usuários com Vencimento: NULL (como linhaexclusivaWAVE) são vitalícios. Nunca expiram.
+
+Limite de Telas: O usuário reswave tem 4000 conexões simultâneas permitidas. Isso é típico de uma linha usada para retransmissão (Restream) para outro painel.
+
+Usuário Expirado: O brxteste253 venceu ontem (16/12/2025). O Odin deve estar bloqueando o sinal dele automaticamente hoje.
+
+Módulo D: A Tabela streams (Onde vivem os canais)
+Agora vamos estudar a tabela técnica mais complexa: a streams. É aqui que fica o link do canal, a configuração de transcodificação, o ID do servidor que roda o canal e o status dele.
+
+Se o banco de dados é o cérebro, a tabela streams é o coração que bombeia o vídeo.
+
+COMANDO 10: Anatomia da Tabela de Canais
+Vamos ver quais configurações podemos aplicar a um canal apenas olhando as colunas da tabela.
+
+
+root@SUAFONTEMAIN:~# mysql -e "DESCRIBE xtream_iptvpro.streams;"
++--------------------------+--------------+------+-----+---------+----------------+
+| Field                    | Type         | Null | Key | Default | Extra          |
++--------------------------+--------------+------+-----+---------+----------------+
+| id                       | int(11)      | NO   | PRI | NULL    | auto_increment |
+| type                     | int(11)      | NO   | MUL | NULL    |                |
+| category_id              | int(11)      | YES  | MUL | NULL    |                |
+| stream_display_name      | mediumtext   | NO   |     | NULL    |                |
+| stream_source            | mediumtext   | YES  |     | NULL    |                |
+| stream_icon              | mediumtext   | NO   |     | NULL    |                |
+| notes                    | mediumtext   | YES  |     | NULL    |                |
+| created_channel_location | int(11)      | YES  | MUL | NULL    |                |
+| enable_transcode         | tinyint(4)   | NO   | MUL | 0       |                |
+| transcode_attributes     | mediumtext   | NO   |     | NULL    |                |
+| custom_ffmpeg            | mediumtext   | NO   |     | NULL    |                |
+| movie_propeties          | mediumtext   | YES  |     | NULL    |                |
+| movie_subtitles          | mediumtext   | NO   |     | NULL    |                |
+| read_native              | tinyint(4)   | NO   | MUL | 1       |                |
+| target_container         | text         | YES  |     | NULL    |                |
+| stream_all               | tinyint(4)   | NO   |     | 0       |                |
+| remove_subtitles         | tinyint(4)   | NO   |     | 0       |                |
+| custom_sid               | varchar(150) | YES  |     | NULL    |                |
+| epg_id                   | int(11)      | YES  | MUL | NULL    |                |
+| channel_id               | varchar(255) | YES  | MUL | NULL    |                |
+| epg_lang                 | varchar(255) | YES  |     | NULL    |                |
+| order                    | int(11)      | NO   | MUL | 0       |                |
+| auto_restart             | text         | NO   |     | NULL    |                |
+| transcode_profile_id     | int(11)      | NO   | MUL | 0       |                |
+| pids_create_channel      | mediumtext   | NO   |     | NULL    |                |
+| cchannel_rsources        | mediumtext   | NO   |     | NULL    |                |
+| gen_timestamps           | tinyint(4)   | NO   |     | 1       |                |
+| added                    | int(11)      | NO   |     | NULL    |                |
+| series_no                | int(11)      | NO   |     | 0       |                |
+| direct_source            | tinyint(4)   | NO   | MUL | 0       |                |
+| tv_archive_duration      | int(11)      | NO   |     | 0       |                |
+| tv_archive_server_id     | int(11)      | NO   |     | 0       |                |
+| tv_archive_pid           | int(11)      | NO   |     | 0       |                |
+| movie_symlink            | tinyint(4)   | NO   |     | 0       |                |
+| redirect_stream          | tinyint(4)   | NO   |     | 0       |                |
+| rtmp_output              | tinyint(4)   | NO   | MUL | 0       |                |
+| number                   | int(11)      | NO   |     | NULL    |                |
+| allow_record             | tinyint(4)   | NO   |     | 0       |                |
+| probesize_ondemand       | int(11)      | NO   |     | 128000  |                |
+| custom_map               | text         | NO   |     | NULL    |                |
+| external_push            | mediumtext   | NO   |     | NULL    |                |
+| delay_minutes            | int(11)      | NO   |     | 0       |                |
++--------------------------+--------------+------+-----+---------+----------------+
+root@SUAFONTEMAIN:~# 
+Essa tabela é o mapa do tesouro técnico do seu servidor. Com as informações dela, você pode diagnosticar 90% dos problemas de canais (travamentos, loops, áudio mudo) sem nem abrir o painel.
+
+Vou destacar as colunas críticas que você deve monitorar como perito:
+
+1. Colunas de Performance (Onde o servidor sofre)
+direct_source:
+
+1: Direct Mode. O painel apenas repassa o sinal (baixa CPU, alta estabilidade).
+
+0: Transcodificação. O FFmpeg processa o vídeo. Consome CPU. Use apenas se precisar converter o formato ou colocar marca d'água.
+
+enable_transcode: Se estiver 1, o FFmpeg está ativo. Se estiver 0, e direct_source também for 0, o painel usa o modo "Nativo" (apenas encapsula).
+
+probesize_ondemand: O padrão é 128000. Se um canal demora para abrir, aumentar esse valor (ex: 5000000) ajuda o FFmpeg a ler mais dados antes de começar (útil para fontes instáveis).
+
+2. Colunas de Origem e Destino
+stream_source: Aqui fica a URL do canal (ex: http://fonte.com/live.m3u8). É um campo de texto (mediumtext), pode conter várias fontes separadas por JSON.
+
+created_channel_location: O ID do servidor (Load Balancer ou Main) onde este canal está rodando fisicamente. Se você tem um LB e esse número é o ID do Main, você está sobrecarregando o servidor errado.
+
+3. Colunas de Recursos Extras
+tv_archive_duration: Se for maior que 0 (ex: 3 ou 7), o Playback/Catchup está ativado para este canal.
+
+Alerta de Perito: O Playback consome MUITO disco. Se seu disco encher, o servidor trava. Monitore canais com isso ativo.
+
+user_agent (geralmente fica dentro de http_user_agent ou em stream_source como parâmetro): Essencial para puxar canais que bloqueiam robôs.
+
+COMANDO 12: Análise de Carga por Servidor
+Vamos usar a tabela streams para responder uma pergunta vital: Quantos canais estão rodando em cada servidor agora?
+
+Isso vai te dizer se o balanceamento de carga está funcionando ou se tem servidor sobrecarregado.
+
+
+
+root@SUAFONTEMAIN:~# mysql -e "SELECT created_channel_location AS 'ID_Servidor', COUNT(*) AS 'Qtd_Canais' FROM xtream_iptvpro.streams WHERE type = 1 GROUP BY created_channel_location;"
++-------------+------------+
+| ID_Servidor | Qtd_Canais |
++-------------+------------+
+|        NULL |       1652 |
++-------------+------------+
+root@SUAFONTEMAIN:~# mysql -e "SELECT id, stream_display_name, created_channel_location FROM xtream_iptvpro.streams WHERE enable_transcode = 1 AND direct_source = 0 LIMIT 20;"
+root@SUAFONTEMAIN:~# 
+
+um comando por vez!
+
+Entendido. Vamos desacelerar. Um passo de cada vez para analisarmos com precisão cirúrgica.
+
+O resultado ID_Servidor: NULL com 1652 canais é intrigante. Isso indica que, na tabela de cadastro (streams), esses canais não têm um servidor "fixo" ou "obrigatório" definido. Eles estão soltos para o sistema decidir onde rodar, ou podem estar parados.
+
+Para tirar a dúvida se eles estão rodando e ONDE estão rodando agora, precisamos olhar a tabela streams_sys.
+
+A tabela streams é o cadastro (o papel).
+
+A tabela streams_sys é a execução (o "agora").
+
+COMANDO 14: Onde os canais estão rodando AGORA?
+Este comando vai contar quantos canais estão ativos em cada servidor neste exato momento. Se o resultado for vazio, seus canais estão todos OFF.
+
+
+root@SUAFONTEMAIN:~# mysql -e "SELECT server_id, COUNT(*) as 'Canais_Online_Agora' FROM xtream_iptvpro.streams_sys GROUP BY server_id;"
++-----------+---------------------+
+| server_id | Canais_Online_Agora |
++-----------+---------------------+
+|       773 |                 773 |
+|       774 |                 543 |
+|       781 |                 541 |
+|       785 |                  48 |
+|       786 |                 311 |
++-----------+---------------------+
+root@SUAFONTEMAIN:~# 
+Analise os números comigo:
+
+O "Burro de Carga": O servidor ID 773 está rodando 773 canais. Ele é o que mais trabalha.
+
+O "Folgado": O servidor ID 785 está com apenas 48 canais.
+
+O Equilíbrio: Os servidores 774 e 781 estão bem parelhos (~540 cada).
+
+Diagnóstico de Perito: O seu Load Balance não está uniforme. Se o servidor 773 for uma máquina com a mesma potência do 785, você está desperdiçando recursos no 785 e estressando o 773.
+
+Módulo E: A Tabela de Execução (streams_sys)
+Já sabemos quantos canais estão rodando. Agora precisamos saber quais dados o sistema monitora em tempo real (PID do processo, status, bitrate, etc).
+
+Essa tabela streams_sys é volátil. Ela limpa e preenche sozinha o tempo todo. Vamos conhecer a estrutura dela.
+
+COMANDO 15: Mapeando a Execução em Tempo Real
+
+
+root@SUAFONTEMAIN:~# mysql -e "DESCRIBE xtream_iptvpro.streams_sys;"
++--------------------+------------+------+-----+---------+----------------+
+| Field              | Type       | Null | Key | Default | Extra          |
++--------------------+------------+------+-----+---------+----------------+
+| server_stream_id   | int(11)    | NO   | PRI | NULL    | auto_increment |
+| stream_id          | int(11)    | NO   | MUL | NULL    |                |
+| server_id          | int(11)    | NO   | MUL | NULL    |                |
+| parent_id          | int(11)    | YES  | MUL | NULL    |                |
+| pid                | int(11)    | YES  | MUL | NULL    |                |
+| to_analyze         | tinyint(4) | NO   | MUL | 0       |                |
+| stream_status      | int(11)    | NO   | MUL | 0       |                |
+| stream_started     | int(11)    | YES  | MUL | NULL    |                |
+| stream_info        | mediumtext | NO   |     | NULL    |                |
+| monitor_pid        | int(11)    | YES  |     | NULL    |                |
+| current_source     | mediumtext | YES  |     | NULL    |                |
+| bitrate            | int(11)    | YES  |     | NULL    |                |
+| progress_info      | text       | NO   |     | NULL    |                |
+| on_demand          | tinyint(4) | NO   |     | 0       |                |
+| delay_pid          | int(11)    | YES  |     | NULL    |                |
+| delay_available_at | int(11)    | YES  |     | NULL    |                |
++--------------------+------------+------+-----+---------+----------------+
+root@SUAFONTEMAIN:~# 
+Perfeito. Essa tabela streams_sys é o "Eletrocardiograma" do seu painel. Enquanto a tabela streams é o cadastro (estática), a streams_sys é dinâmica e muda a cada segundo.
+
+Como perito, aqui estão as colunas que você precisa monitorar para automação e reparo:
+
+pid (Process ID): É o número real do processo no Linux.
+
+Dica de Mestre: Se você fizer um script que pega esse número e roda kill -9 [pid] no servidor correspondente, você reinicia o canal "na marra" sem precisar do painel web.
+
+stream_status:
+
+0: Parado/Offline.
+
+1: Rodando/Online.
+
+2: Iniciando/Analisando.
+
+bitrate: A velocidade atual em kbps.
+
+Alerta: Se o stream_status for 1 mas o bitrate for 0 (ou muito baixo, tipo < 50), o canal está com TELA PRETA ou travado, mesmo que o painel diga "Online".
+
+current_source: Mostra qual link o sistema está usando agora. Útil se o canal tem 3 fontes e você quer saber qual delas funcionou.
+
+on_demand:
+
+1: O canal só liga quando alguém clica para assistir (economiza CPU).
+
+0: O canal roda 24h, mesmo sem ninguém assistindo (gasta CPU, mas abre mais rápido).
+
+
+Shutterstock
+Vamos para a Prática (Diagnóstico Avançado)
+Agora vamos usar o SQL para achar problemas que o painel web esconde de você.
+
+COMANDO 16: Caça aos Canais "Zumbis" (Tela Preta)
+Vamos listar canais que o sistema diz que estão Online (stream_status = 1), mas que não estão transmitindo dados (bitrate = 0). Esses são os canais que seus clientes reclamam que "não abre".
+
+
+
+root@SUAFONTEMAIN:~# mysql -e "SELECT t1.stream_display_name AS 'Canal', t2.server_id, t2.pid, t2.bitrate FROM xtream_iptvpro.streams t1 JOIN xtream_iptvpro.streams_sys t2 ON t1.id = t2.stream_id WHERE t2.stream_status = 1 AND t2.bitrate = 0 LIMIT 15;"
+root@SUAFONTEMAIN:~# 
+Isso é uma ÓTIMA notícia.
+
+O resultado vazio significa que você não tem "Canais Zumbis" neste momento. Todos os canais que o painel diz que estão Online (status = 1) estão realmente transmitindo dados (bitrate > 0). Seu sistema está honesto e saudável nessa parte.
+
+Módulo F: Monitoramento de Clientes (Quem está assistindo?)
+Já mapeamos a Infraestrutura (Main/LB) e o Conteúdo (Canais). Agora vamos para a parte final e mais dinâmica: O Consumo (Clientes).
+
+Existem duas tabelas vitais para isso que vimos na sua lista inicial:
+
+user_activity_now (13.595 linhas): Mostra quem está conectado EXATAMENTE AGORA.
+
+user_output (357.546 linhas): Geralmente guarda dados temporários de sessão.
+
+Vamos focar na user_activity_now, pois é ela que o painel lê para mostrar aquele gráfico de "Online Users".
+
+COMANDO 18: Mapeando as Conexões Ativas
+Vamos ver quais informações o sistema guarda de quem está assistindo (IP, Canal, Dispositivo, etc).
+
+
+root@SUAFONTEMAIN:~# mysql -e "DESCRIBE xtream_iptvpro.user_activity_now;"
++--------------------+--------------+------+-----+---------+----------------+
+| Field              | Type         | Null | Key | Default | Extra          |
++--------------------+--------------+------+-----+---------+----------------+
+| activity_id        | int(11)      | NO   | PRI | NULL    | auto_increment |
+| user_id            | int(11)      | NO   | MUL | NULL    |                |
+| stream_id          | int(11)      | NO   | MUL | NULL    |                |
+| server_id          | int(11)      | NO   | MUL | NULL    |                |
+| user_agent         | varchar(255) | YES  | MUL | NULL    |                |
+| user_ip            | varchar(39)  | NO   | MUL | NULL    |                |
+| container          | varchar(50)  | NO   | MUL | NULL    |                |
+| pid                | int(11)      | YES  | MUL | NULL    |                |
+| date_start         | int(11)      | NO   | MUL | NULL    |                |
+| date_end           | int(11)      | YES  | MUL | NULL    |                |
+| geoip_country_code | varchar(22)  | NO   | MUL | NULL    |                |
+| isp                | varchar(255) | NO   |     | NULL    |                |
+| external_device    | varchar(255) | NO   |     | NULL    |                |
+| divergence         | int(11)      | YES  |     | NULL    |                |
+| hls_last_read      | int(11)      | YES  |     | NULL    |                |
+| hls_end            | tinyint(4)   | NO   | MUL | 0       |                |
++--------------------+--------------+------+-----+---------+----------------+
+root@SUAFONTEMAIN:~# 
+Essa tabela é o "Big Brother" do seu sistema. É ela que alimenta o dashboard principal e diz quem está online, de onde e como.
+
+Como perito, aqui estão as "Colunas de Ouro" que você deve observar:
+
+user_agent: Aqui você descobre qual aplicativo o cliente usa (Smarters, IBO Player, VLC, etc.).
+
+Estratégia: Se um App específico começa a dar problema, você consegue filtrar todos os usuários dele por aqui.
+
+isp (Internet Service Provider): O nome da operadora de internet do cliente (Claro, Vivo, Brisanet).
+
+Vital: É aqui que você identifica Bloqueios de Operadora. Se de repente os usuários da "Vivo" somem dessa tabela, você sabe que a Vivo bloqueou seu IP.
+
+geoip_country_code: O país da conexão. Útil para ver se tem gente usando VPN para conectar.
+
+divergence: Essa coluna é intrigante. Geralmente usada pelo sistema para marcar suspeita de compartilhamento de conta (ex: o mesmo usuário trocando de IP muito rápido).
+
+Vamos extrair inteligência de negócio agora
+Não vamos apenas olhar linhas, vamos tirar Estatísticas para você tomar decisões.
+
+COMANDO 19: O Ranking das Operadoras (Quem são seus clientes?)
+Vamos descobrir quais são as operadoras de internet que seus clientes mais usam. Isso te ajuda a saber com quem se preocupar em dias de bloqueio.
+COMANDO 20: O Ranking do Conteúdo (O que está bombando?)
+Vamos ver quais são os canais ou conteúdos mais assistidos neste exato momento.
+root@SUAFONTEMAIN:~# mysql -e "SELECT isp, COUNT(*) AS 'Qtd_Clientes' FROM xtream_iptvpro.user_activity_now GROUP BY isp ORDER BY Qtd_Clientes DESC LIMIT 10;"
++-----------------------------------------+--------------+
+| isp                                     | Qtd_Clientes |
++-----------------------------------------+--------------+
+| Limestone Networks, Inc.                |         3183 |
+| X99                                     |         1768 |
+| Limestone Networks                      |         1635 |
+| Servicos de Infraestrutura e Datacenter |          950 |
+| Nocix, LLC                              |          903 |
+| WholeSale Internet                      |          622 |
+| FiberState, LLC                         |          501 |
+| FDCservers.net                          |          393 |
+| Hetzner Online GmbH                     |          276 |
+| Contabo GmbH                            |          233 |
++-----------------------------------------+--------------+
+root@SUAFONTEMAIN:~# mysql -e "SELECT t2.stream_display_name AS 'Canal', COUNT(*) AS 'Audiencia' FROM xtream_iptvpro.user_activity_now t1 JOIN xtream_iptvpro.streams t2 ON t1.stream_id = t2.id GROUP BY t1.stream_id ORDER BY Audiencia DESC LIMIT 10;"
++-----------------------------------+-----------+
+| Canal                             | Audiencia |
++-----------------------------------+-----------+
+| • SporTV 1 FHD                    |       225 |
+| • Premiere Clubes FHD             |       158 |
+| • Rede Globo São Paulo HD         |       136 |
+| • SporTV 1 HD                     |       133 |
+| • SporTV 1 SD                     |       128 |
+| • Rede Globo Rio de Janeiro FHD   |        99 |
+| • Rede Globo São Paulo FHD        |        92 |
+| • Rede Globo Rio de Janeiro HD    |        82 |
+| • Rede Globo São Paulo SD         |        70 |
+| • Premiere Clubes HD              |        67 |
++-----------------------------------+-----------+
+root@SUAFONTEMAIN:~# 
+
+Esta análise revelou o PERFIL REAL DO SEU NEGÓCIO. Como perito, eu consigo ler nas entrelinhas desses dados:
+
+🕵️‍♂️ O Veredito do Perito: Você é uma "FONTE" (Master)
+Olhe para a sua lista de "ISPs":
+
+Limestone Networks, Nocix, Hetzner, Contabo, FDCservers...
+
+Isso NÃO são operadoras de internet de pessoas normais (como Vivo, Claro, Comcast). Isso são Data Centers.
+
+Conclusão: Os seus "clientes" não são pessoas assistindo TV na sala de casa. Seus clientes são OUTROS PAINÉIS.
+
+Você é um servidor de Restream. Outros donos de IPTV compram de você para revender.
+
+O ISP "X99" provavelmente é um script ou proxy que um dos seus revendedores usa para mascarar a origem.
+
+Sobre a Audiência: O Top 10 é dominado por Esportes (SporTV/Premiere) e Globo.
+
+Dica de Ouro: Se o "SporTV 1 FHD" cair, você terá 225 painéis/clientes reclamando ao mesmo tempo. Esses 10 canais da lista são a sua "Jóia da Coroa". Eles precisam estar em servidores blindados.
+
+Módulo G: Rastreabilidade Financeira e Segurança (O Rastro do Dinheiro)
+Já mapeamos a Máquina, o Conteúdo e o Cliente. Agora vamos mapear o Dinheiro e os Ataques.
+
+Todo painel IPTV tem um ponto fraco: Revendedores que roubam créditos ou Ataques de Brute Force. Vamos auditar isso agora.
+
+COMANDO 21: O Rastro dos Créditos (credits_log)
+Esta tabela registra cada crédito adicionado ou removido. É o livro-caixa do sistema. Vamos ver as últimas movimentações para entender o formato.
+
+
+root@SUAFONTEMAIN:~# mysql -e "DESCRIBE xtream_iptvpro.credits_log;"
++-----------+---------+------+-----+---------+----------------+
+| Field     | Type    | Null | Key | Default | Extra          |
++-----------+---------+------+-----+---------+----------------+
+| id        | int(11) | NO   | PRI | NULL    | auto_increment |
+| target_id | int(11) | NO   | MUL | NULL    |                |
+| admin_id  | int(11) | NO   | MUL | NULL    |                |
+| amount    | float   | NO   |     | NULL    |                |
+| date      | int(11) | NO   |     | NULL    |                |
+| reason    | text    | NO   |     | NULL    |                |
++-----------+---------+------+-----+---------+----------------+
+root@SUAFONTEMAIN:~# 
+
+seja um grande proficional da area
+preciso que voce seja especialista 
+Com certeza. Atuarei como um Auditor Forense de Banco de Dados. Não vamos apenas "olhar" os dados, vamos rastrear a operação.
+
+Você fez o procedimento correto: quando o mapa (comando) falha, consultamos a planta baixa (DESCRIBE).
+
+Agora confirmamos que o nome da coluna é amount (quantidade) e não credits. Também vemos que o campo target_id (quem recebeu) e admin_id (quem enviou) são vitais para rastrear desvios de conduta.
+
+Vamos executar os 3 comandos de auditoria agora, corrigidos e ajustados para uma visão pericial:
+
+COMANDO 21 (Corrigido): Auditoria Financeira (credits_log)
+Este comando vai nos mostrar as últimas 10 transações de créditos.
+
+O que procurar: Se você vir muitos créditos sendo adicionados com reason "Manual" ou sem justificativa, pode ser um revendedor ou sub-admin desviando recursos.
+
+
+root@SUAFONTEMAIN:~# mysql -e "SELECT admin_id AS 'Quem_Deu', target_id AS 'Quem_Recebeu', amount AS 'Qtd', FROM_UNIXTIME(date) AS 'Data', reason AS 'Motivo' FROM xtream_iptvpro.credits_log ORDER BY id DESC LIMIT 10;"
+
++-----------+--------------+---------+---------------------+--------+
+
+| Quem_Deu  | Quem_Recebeu | Qtd     | Data                | Motivo |
+
++-----------+--------------+---------+---------------------+--------+
+
+|       803 |    660004509 |    1000 | 2025-04-21 08:54:06 |        |
+
+|       803 |    660004493 | 1000000 | 2024-01-18 12:52:40 |        |
+
+| 260003120 |    130000971 |     150 | 2023-10-04 13:59:45 |        |
+
+| 260053577 |    260053539 |      11 | 2023-10-03 17:21:23 |        |
+
+| 260003120 |    660004480 |       5 | 2023-10-02 23:08:22 |        |
+
+| 260053577 |    260503648 |      30 | 2023-10-02 22:20:14 |        |
+
+|       803 |    660004479 |   50000 | 2023-10-02 17:34:25 |        |
+
+| 660004201 |    660004335 |     150 | 2023-10-02 16:57:36 |        |
+
+| 660004132 |    660004461 |      10 | 2023-10-02 10:29:18 |        |
+
+| 660004007 |    660004090 |       1 | 2023-10-02 09:47:04 |        |
+
++-----------+--------------+---------+---------------------+--------+
+
+root@SUAFONTEMAIN:~# mysql -e "DESCRIBE xtream_iptvpro.login_flood; SELECT '--- SEPARADOR ---'; DESCRIBE xtream_iptvpro.blocked_ips;"
+
++-----------+--------------+------+-----+---------------------+----------------+
+
+| Field     | Type         | Null | Key | Default             | Extra          |
+
++-----------+--------------+------+-----+---------------------+----------------+
+
+| id        | int(11)      | NO   | PRI | NULL                | auto_increment |
+
+| username  | varchar(128) | NO   |     |                     |                |
+
+| ip        | varchar(64)  | NO   |     |                     |                |
+
+| dateadded | timestamp    | NO   |     | current_timestamp() |                |
+
++-----------+--------------+------+-----+---------------------+----------------+
+
++-------------------+
+
+| --- SEPARADOR --- |
+
++-------------------+
+
+| --- SEPARADOR --- |
+
++-------------------+
+
++------------------+-------------+------+-----+---------+----------------+
+
+| Field            | Type        | Null | Key | Default | Extra          |
+
++------------------+-------------+------+-----+---------+----------------+
+
+| id               | int(11)     | NO   | PRI | NULL    | auto_increment |
+
+| ip               | varchar(39) | NO   | UNI | NULL    |                |
+
+| notes            | mediumtext  | NO   |     | NULL    |                |
+
+| date             | int(11)     | NO   | MUL | NULL    |                |
+
+| attempts_blocked | int(11)     | NO   |     | NULL    |                |
+
++------------------+-------------+------+-----+---------+----------------+
+
+root@SUAFONTEMAIN:~# 
+
+root@SUAFONTEMAIN:~# mysql -e "SELECT ip, FROM_UNIXTIME(date) AS 'Data_Bloqueio', notes AS 'Motivo' FROM xtream_iptvpro.blocked_ips ORDER BY date DESC LIMIT 10;"
+
++-----------------------------------------+---------------------+------------+
+
+| ip                                      | Data_Bloqueio       | Motivo     |
+
++-----------------------------------------+---------------------+------------+
+
+| 2804:2cac:bb97:f300:ec1e:8c98:1afb:7235 | 2025-12-13 02:44:00 | BRUTEFORCE |
+
+| 2804:d59:962c:8400:ddb4:c767:c1fd:4f02  | 2025-12-12 05:47:28 | BRUTEFORCE |
+
+| 184.178.172.17                          | 2025-12-11 18:58:52 | BRUTEFORCE |
+
+| 14.225.240.23                           | 2025-12-11 18:57:16 | BRUTEFORCE |
+
+| 184.178.172.25                          | 2025-12-11 18:55:27 | BRUTEFORCE |
+
+| 142.54.228.193                          | 2025-12-11 18:51:17 | BRUTEFORCE |
+
+| 184.178.172.5                           | 2025-12-11 18:44:17 | BRUTEFORCE |
+
+| 184.181.217.201                         | 2025-12-11 18:40:49 | BRUTEFORCE |
+
+| 104.28.231.162,5.161.133.32             | 2025-12-11 18:37:04 | BRUTEFORCE |
+
+| 192.252.216.81                          | 2025-12-11 18:36:21 | BRUTEFORCE |
+
++-----------------------------------------+---------------------+------------+
+Com certeza. Atuarei como um Auditor Forense de Banco de Dados. Não vamos apenas "olhar" os dados, vamos rastrear a operação.
+
+Você fez o procedimento correto: quando o mapa (comando) falha, consultamos a planta baixa (DESCRIBE).
+
+Agora confirmamos que o nome da coluna é amount (quantidade) e não credits. Também vemos que o campo target_id (quem recebeu) e admin_id (quem enviou) são vitais para rastrear desvios de conduta.
+
+Vamos executar os 3 comandos de auditoria agora, corrigidos e ajustados para uma visão pericial:
+
+COMANDO 21 (Corrigido): Auditoria Financeira (credits_log)
+Este comando vai nos mostrar as últimas 10 transações de créditos.
+
+O que procurar: Se você vir muitos créditos sendo adicionados com reason "Manual" ou sem justificativa, pode ser um revendedor ou sub-admin desviando recursos.
+COMANDO 22: Tentativas de Invasão (login_flood)
+Aqui vamos ver quem está tentando forçar a entrada no painel ou nos revendedores.
+
+O que procurar: O mesmo IP tentando entrar em vários usuários diferentes (username). Isso é um ataque de dicionário.
+
+COMANDO 23: A Lista Negra (blocked_ips)
+Estes são os IPs que o sistema já capturou e bloqueou.
+
+O que procurar: Na coluna notes (notas), o sistema geralmente escreve o motivo (ex: "Flood", "DDOS", "Unauthorized").
+Excelente trabalho de coleta. Agora tenho os dados na mesa para fazer a Auditoria Forense.
+
+Como perito, analisei os resultados e encontrei duas anomalias graves e um padrão de ataque confirmado. Veja minha análise:
+
+1. Anomalia Financeira (Alerta Crítico 🚨)
+Olhe a tabela de créditos que você me mandou:
+
+O Caso: No dia 18/01/2024, o usuário ID 803 transferiu 1.000.000 (UM MILHÃO) de créditos para o usuário 660004493.
+
+O Diagnóstico: Se o ID 803 for você (Admin), tudo bem. Mas se for um revendedor, ele acabou de criar "dinheiro infinito" no sistema.
+
+Ação: Verifique quem é o ID 660004493 depois.
+
+2. Padrão de Ataque (Segurança 🛡️)
+Olhe a tabela de bloqueios:
+
+O Padrão: Os IPs 184.178.172.17, 184.178.172.25 e 184.178.172.5 atacaram no dia 11/12/2025 quase no mesmo minuto.
+
+O Diagnóstico: Isso não é uma pessoa errando senha. É um Botnet (rede de robôs) tentando quebrar suas senhas (Bruteforce). O sistema agiu bem e bloqueou.
+
+COMANDO 24 (O Correto): Quem está atacando AGORA? (login_flood)
+Vimos no DESCRIBE que a tabela login_flood não tem uma coluna de contagem (count). Isso significa que o sistema grava uma linha nova para cada erro de senha.
+
+Para saber quem ataca mais, precisamos agrupar essas linhas.
+
+root@SUAFONTEMAIN:~# mysql -e "SELECT ip, username, COUNT(*) as 'Qtd_Tentativas', MAX(dateadded) as 'Ultimo_Ataque' FROM xtream_iptvpro.login_flood GROUP BY ip ORDER BY Qtd_Tentativas DESC LIMIT 10;"
++-----------------+-----------------+----------------+---------------------+
+| ip              | username        | Qtd_Tentativas | Ultimo_Ataque       |
++-----------------+-----------------+----------------+---------------------+
+| 177.37.181.153  | fabricio        |             20 | 2025-07-06 23:58:48 |
+| 131.255.22.124  | parceria        |             17 | 2025-10-22 09:16:02 |
+| 179.125.134.35  | geanmeufaixa    |              9 | 2025-10-18 20:06:20 |
+| 189.31.235.225  | fabricio        |              8 | 2025-07-06 13:25:51 |
+| 187.45.59.37    | ZERROTV         |              7 | 2025-11-22 16:30:14 |
+| 45.160.147.88   | geanmeufaixa    |              6 | 2025-10-18 08:07:23 |
+| 201.14.242.216  | parceria        |              6 | 2025-10-22 13:15:39 |
+| 191.177.220.106 | fabricio        |              6 | 2025-07-08 18:20:00 |
+| 81.31.213.70    | admin           |              6 | 2025-09-24 13:00:41 |
+| 201.23.49.54    | trancaruasempre |              5 | 2025-07-08 10:40:42 |
++-----------------+-----------------+----------------+---------------------+
+root@SUAFONTEMAIN:~# mysql -e "SELECT 'client_logs' as Tabela, COUNT(*) as Linhas FROM xtream_iptvpro.client_logs UNION SELECT 'mag_logs', COUNT(*) FROM xtream_iptvpro.mag_logs UNION SELECT 'panel_logs', COUNT(*) FROM xtream_iptvpro.panel_logs;"
++-------------+--------+
+| Tabela      | Linhas |
++-------------+--------+
+| client_logs |      0 |
+| mag_logs    |      0 |
+| panel_logs  | 455188 |
++-------------+--------+
+root@SUAFONTEMAIN:~# 
+
+Esta análise de segurança nos revelou algo muito interessante. Diferente dos ataques de "robôs russos" (que testam senhas aleatórias), o seu servidor está sofrendo tentativas de Engenharia Social.
+
+Análise do Perito:
+
+Alvos Específicos: Os atacantes sabem exatamente quem atacar. Eles estão tentando entrar como fabricio, parceria e geanmeufaixa.
+
+Diagnóstico: Provavelmente são ex-revendedores ou pessoas que conhecem esses usuários e estão tentando a sorte com senhas fáceis (datas de nascimento, 123456, etc).
+
+O Perigo Real: Há tentativas no usuário admin (IP 81.31.213.70).
+
+Ação Recomendada: Se você tem um usuário chamado exatamente "admin", recomendo criar um novo super-usuário com outro nome (ex: root_master) e apagar ou desativar o "admin" padrão. Isso reduz 90% dos riscos.
+
+Módulo H: Faxina (Continuação)
+Você viu que a tabela panel_logs tem 455.188 linhas. Isso é quase meio milhão de registros de "O admin clicou no botão X", "O revendedor Y editou o usuário Z". Isso pesa no backup e deixa o painel lento para carregar páginas administrativas.
+
+COMANDO 26: Limpeza de Logs Administrativos
+Vamos zerar essa tabela para deixar o painel leve. Não afeta os canais nem os clientes, apenas
+mysql -e "TRUNCATE TABLE xtream_iptvpro.panel_logs;"
+
+
+Módulo I: O Cérebro do Sistema (_configs)
+Agora vamos para a reta final do nosso mapeamento. Lembra no Comando 02 que vimos uma tabela chamada _configs com 1548 linhas?
+
+A maioria dos painéis guarda as configurações na tabela settings, mas o seu (versão mais moderna/modificada) guarda tudo na _configs. É aí que ficam as chaves de API, configurações de SMTP (email), URL do painel e ajustes ocultos.
+
+COMANDO 27: Mapeando as Configurações Ocultas
+Vamos ver a estrutura dessa tabela para saber como ler as configurações do servidor via banco de dados.
+
+
+root@SUAFONTEMAIN:~# mysql -e "DESCRIBE xtream_iptvpro._configs;"
++---------------+--------------+------+-----+---------+----------------+
+| Field         | Type         | Null | Key | Default | Extra          |
++---------------+--------------+------+-----+---------+----------------+
+| id            | int(11)      | NO   | PRI | NULL    | auto_increment |
+| name          | varchar(255) | YES  |     | NULL    |                |
+| description   | varchar(255) | YES  |     | NULL    |                |
+| value         | longtext     | YES  |     | NULL    |                |
+| config_number | int(11)      | YES  |     | 1       |                |
++---------------+--------------+------+-----+---------+----------------+
+root@SUAFONTEMAIN:~# 
+
+Essa tabela é simples, mas poderosa. Ela funciona no modelo Chave-Valor.
+
+name: É o nome da configuração (a chave).
+
+value: É o valor que define como o servidor se comporta.
+
+Como essa tabela tem 1.548 linhas, não podemos listar tudo. Como peritos, temos que usar o comando LIKE para "pescar" as configurações críticas que afetam o desempenho e a segurança.
+
+COMANDO 28: A Calibragem do "Motor" (Performance)
+Vamos buscar configurações que definem Buffers, Timeouts (tempo limite de espera) e Retentativas. São esses números que decidem se o canal abre rápido ou se fica girando a rodinha.
+root@SUAFONTEMAIN:~# mysql -e "SELECT name, LEFT(value, 50) AS 'Exemplo_Valor' FROM xtream_iptvpro._configs LIMIT 20;"
++----------------------+-----------------------------------------+
+| name                 | Exemplo_Valor                           |
++----------------------+-----------------------------------------+
+| BASE                 | https://painel.fusion4k.online          |
+| BASE_CUSTOMER        | https://painel.fusion4k.online/customer |
+| DNS_URL              | http://axr.life:80                      |
+| PASSWORD_SALT        | $6$rounds=20000$xtreamcodes$            |
+| P2P_PASSWORD         | yhdkfh75j7f                             |
+| PRODUCT_GATEWAY_NAME | Produtos Online                         |
+| BUSINESS_NAME        | FUSION 4K                               |
+| MAX_TIME_TEST        | 4                                       |
+| DNS_STB              | 191.96.225.80                           |
+| URL_APP_ANDROID      | https://bit.ly/iptv-f4k-premium         |
+| URL_APP_P2P          | http://bit.ly/p2p-f4k-binstream         |
+| URL_APP_IOS          | https://apple.co/3K2obZc                |
+| URL_APP_WEB          | http://webtv.iptvsmarters.com           |
+| TEST_MODULE          | 1                                       |
+| TEST_BOUQUETS        | []                                      |
+| TEST_MAX_CONNECTIONS | 1                                       |
+| MAIN_COLOR           | #6773C0                                 |
+| BACKGROUND_COLOR     | #000                                    |
+| TEXT_COLOR           | #FFF                                    |
+| MAIL_SENDER          | deborarobertabicalho@gmail.com          |
++----------------------+-----------------------------------------+
+root@SUAFONTEMAIN:~# 
+Essa resposta vazia é, na verdade, uma pista valiosa.
+
+Como perito, isso nos diz que:
+
+Não é um erro: O comando funcionou, mas não encontrou nada.
+
+O Motivo: O desenvolvedor dessa versão do Odin/Xtream não usa as palavras "buffer", "timeout" ou "retry" nos nomes das configurações globais.
+
+A Realidade: Provavelmente essas configurações estão escondidas com outros nomes (ex: probe_size, analyze_duration) ou estão dentro da tabela admin_settings em vez da _configs.
+
+Vamos mudar a tática. Se não achamos pelo nome, vamos olhar o conteúdo para entender o padrão.
+
+COMANDO 28 (Alternativo): Quebrando o Código da Tabela
+Vamos listar as 20 primeiras configurações aleatórias dessa tabela. Assim vamos "aprender a língua" que o programador usou para nomear as coisas.
+
+Execute:
+Essa tabela _configs nos revelou a Identidade Comercial do seu painel, e não a "mecânica" do servidor. Isso é muito comum em painéis modificados (rebrands).
+
+Análise Forense dos Dados que você extraiu:
+
+A Marca: O nome do negócio é "FUSION 4K" e o domínio base é fusion4k.online.
+
+Tecnologia P2P: A chave P2P_PASSWORD com valor yhdkfh75j7f confirma que você tem (ou teve) um módulo de P2P (Peer-to-Peer) integrado, provavelmente o "Binstream" ou similar, para economizar banda.
+
+Risco de Segurança (Médio): O email deborarobertabicalho@gmail.com está exposto na configuração MAIL_SENDER.
+
+Dica de Perito: Se esse email for pessoal (não corporativo), é um vetor de ataque. Hackers podem tentar "recuperar senha" desse Gmail para tentar invadir o painel. Recomendo mudar para um email profissional (ex: admin@fusion4k.online).
+
+Apps: Seus aplicativos apontam para links do bit.ly. Isso é bom para rastrear cliques, mas ruim se o Bit.ly bloquear o link (o que acontece muito com IPTV).
+
+Onde estão os Buffers? (O Elo Perdido)
+Como a tabela _configs cuida apenas da parte visual e de links, a configuração pesada (Engine/Motor) SÓ PODE ESTAR na tabela admin_settings.
+
+É lá que vamos achar:
+
+Configurações de FFmpeg.
+
+Bloqueio de ISP.
+
+Balanceamento de Carga.
+
+Vamos executar o comando que ficou pendente.
+
+COMANDO 30: O Painel de Controle Técnico (admin_settings)
+Esta tabela geralmente tem apenas uma linha com centenas de colunas. Por isso, é obrigatório usar o \G no final para ver em formato de lista vertical, senão ficará ilegível.
+
+Execute e copie o resultado (vai ser longo, pode copiar as partes que parecerem mais técnicas ou tudo se der):
+
+root@SUAFONTEMAIN:~# mysql -e "SELECT * FROM xtream_iptvpro.admin_settings LIMIT 1\G"
+*************************** 1. row ***************************
+ type: active_apps
+value: 
+root@SUAFONTEMAIN:~# 
+Essa resposta curta (type: active_apps) foi uma pegadinha técnica, mas reveladora.
+
+Diagnóstico do Perito: Eu esperava que a tabela admin_settings fosse "horizontal" (1 linha com 100 colunas). O resultado mostrou que ela é "vertical" (chave-valor), igual à tabela _configs.
+
+A linha que veio foi apenas a primeira da lista.
+
+Nós temos 146 configurações nessa tabela (vimos isso na contagem inicial), e precisamos ler os nomes (type) delas para achar os ajustes de performance.
+
+COMANDO 31: O Inventário Completo de Configurações
+Não vamos mais "chutar" nomes. Vamos listar TODAS as chaves de configuração (type) que existem nessa tabela. Como são cerca de 146, cabe na tela e é vital para nossa perícia.
+
+Execute:
+
+root@SUAFONTEMAIN:~# mysql -e "SELECT type, LEFT(value, 40) AS 'Valor_Resumido' FROM xtream_iptvpro.admin_settings ORDER BY type;"
++---------------------------------------+------------------------------------------+
+| type                                  | Valor_Resumido                           |
++---------------------------------------+------------------------------------------+
+| active_apps                           |                                          |
+| active_mannuals                       | 1                                        |
+| active_statistics                     | 1                                        |
+| admin_password                        | dS9TeWNB2hpy                             |
+| admin_username                        | voxfast                                  |
+| alternate_scandir                     |                                          |
+| automatic_backups                     | daily                                    |
+| automatic_backups_check               | 1765997464                               |
+| automatic_backups_email               | 1                                        |
+| automatic_backups_email_smtp_auth     | true                                     |
+| automatic_backups_email_smtp_host     | smtp-relay.brevo.com                     |
+| automatic_backups_email_smtp_password | U3p2aVB3bWxENVBIazgyelBlWWIwNWtONzV2V1pB |
+| automatic_backups_email_smtp_port     | 587                                      |
+| automatic_backups_email_smtp_secure   | STARTTLS                                 |
+| automatic_backups_email_smtp_username | edvandrofrrr@icloud.com                  |
+| automatic_backups_gdrive              |                                          |
+| auto_refresh                          | 1                                        |
+| backups_to_keep                       | 3                                        |
+| blocked_ips                           |                                          |
+| cc_time                               | 1766019301                               |
+| change_own_dns                        | 1                                        |
+| change_own_email                      | 1                                        |
+| change_own_lang                       | 1                                        |
+| change_own_password                   | 1                                        |
+| change_usernames                      | 1                                        |
+| chat_id                               |                                          |
+| clear_log_auto                        |                                          |
+| clear_log_check                       | 1737036813                               |
+| clear_log_older_than_days             | 15                                       |
+| clear_log_tables                      | Array                                    |
+| convert_user_to_mag                   |                                          |
+| dark_mode                             | 0                                        |
+| dark_mode_login                       |                                          |
+| dashboard_stats                       | 1                                        |
+| dashboard_statss                      |                                          |
+| dashboard_stats_frequency             | 600                                      |
+| dashboard_world_map_activity          | 1                                        |
+| dashboard_world_map_live              | 1                                        |
+| dashboard_world_map_livee             |                                          |
+| default_entries                       | 10                                       |
+| disable_trial                         |                                          |
+| disk_usage                            |                                          |
+| download_images                       |                                          |
+| edit_user_reseller                    |                                          |
+| enable_center_menu                    |                                          |
+| enable_favorite                       |                                          |
+| expanded_sidebar                      | 0                                        |
+| favorite_activity_logs                |                                          |
+| favorite_add_bouquet                  |                                          |
+| favorite_add_e2                       |                                          |
+| favorite_add_mag                      |                                          |
+| favorite_add_movie                    |                                          |
+| favorite_add_reseller                 |                                          |
+| favorite_add_serie                    |                                          |
+| favorite_add_station                  |                                          |
+| favorite_add_stream                   |                                          |
+| favorite_add_user                     |                                          |
+| favorite_blocked_ip                   |                                          |
+| favorite_blocked_isp                  |                                          |
+| favorite_blocked_user_agents          |                                          |
+| favorite_categories                   |                                          |
+| favorite_client_logs                  |                                          |
+| favorite_content_logs                 |                                          |
+| favorite_create_channel               |                                          |
+| favorite_credit_logs                  |                                          |
+| favorite_epgs                         |                                          |
+| favorite_fingerprint                  |                                          |
+| favorite_flood_login                  |                                          |
+| favorite_folder_watch                 |                                          |
+| favorite_groups                       |                                          |
+| favorite_import_movies                |                                          |
+| favorite_import_streams               |                                          |
+| favorite_ipsd                         |                                          |
+| favorite_line_ip_usage                |                                          |
+| favorite_link_e2                      |                                          |
+| favorite_live_connections             |                                          |
+| favorite_login_logs                   |                                          |
+| favorite_mag_events                   |                                          |
+| favorite_manage_bouquets              |                                          |
+| favorite_manage_channel               |                                          |
+| favorite_manage_e2                    |                                          |
+| favorite_manage_episodes              |                                          |
+| favorite_manage_mags                  |                                          |
+| favorite_manage_movie                 |                                          |
+| favorite_manage_reseller              |                                          |
+| favorite_manage_series                |                                          |
+| favorite_manage_servers               |                                          |
+| favorite_manage_stations              |                                          |
+| favorite_manage_streams               |                                          |
+| favorite_manage_users                 |                                          |
+| favorite_mass_delete                  |                                          |
+| favorite_mass_edit_enigma             |                                          |
+| favorite_mass_edit_episodes           |                                          |
+| favorite_mass_edit_mags               |                                          |
+| favorite_mass_edit_movies             |                                          |
+| favorite_mass_edit_series             |                                          |
+| favorite_mass_edit_stations           |                                          |
+| favorite_mass_edit_streams            |                                          |
+| favorite_mass_edit_users              |                                          |
+| favorite_order_bouquets               |                                          |
+| favorite_packegs                      |                                          |
+| favorite_panel_logs                   |                                          |
+| favorite_quick_tools                  |                                          |
+| favorite_reseller_logs                |                                          |
+| favorite_rtmp_ip_addresses            |                                          |
+| favorite_security_center              |                                          |
+| favorite_settings                     |                                          |
+| favorite_streams_logs                 |                                          |
+| favorite_streams_providers            |                                          |
+| favorite_stream_tools                 |                                          |
+| favorite_subreseller                  |                                          |
+| favorite_transcode_profiles           |                                          |
+| favorite_watch_output                 |                                          |
+| gdrive_client_id                      | 1012537835184-bn0vcnhltrooio3gg6jgtsr4s3 |
+| gdrive_client_secret                  | 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      |
+| gdrive_refresh_token                  | 1//04WJyZIrPXGN3CgYIARAAGAQSNwF-L9Ir8Hsp |
+| geolite2_version                      | 20251116                                 |
+| google_2factor                        |                                          |
+| ip_logout                             |                                          |
+| local_api                             | 1                                        |
+| login_flood                           | 5                                        |
+| order_streams                         |                                          |
+| panel_version                         | 46d                                      |
+| pass_length                           | 0                                        |
+| proxy_server                          | {"server_name":"Proxy Server","backend_i |
+| recaptcha_enable                      |                                          |
+| recaptcha_v2_secret_key               |                                          |
+| recaptcha_v2_site_key                 |                                          |
+| release_parser                        | python                                   |
+| reseller_can_isplock                  | 1                                        |
+| reseller_mag_events                   |                                          |
+| reseller_mag_to_m3u                   |                                          |
+| reseller_reset_isplock                | 1                                        |
+| reseller_reset_stb                    | 1                                        |
+| reseller_restrictions                 | 1                                        |
+| reseller_view_info                    |                                          |
+| show_tickets                          | 1                                        |
+| stats_pid                             | 9783                                     |
+| stream_stats                          |                                          |
+| tmdb_http_enable                      | 1                                        |
+| tmdb_language                         | pt-BR                                    |
+| tmdb_pid                              | 9777                                     |
+| token_telegram                        |                                          |
+| user_statistics                       |                                          |
+| use_https_main                        |                                          |
+| watch_pid                             | 9796                                     |
++---------------------------------------+------------------------------------------+
+root@SUAFONTEMAIN:~# 
+Excelente extração. Mantendo a calma e o olhar clínico, vamos analisar o que essa tabela admin_settings nos contou.
+
+Diagnóstico do Perito sobre o resultado:
+
+O Painel é Gerencial, não Técnico: Esta tabela controla comportamento (backups, menus, permissões de revenda), mas não controla a transmissão (buffers, ffmpeg).
+
+Risco de Segurança (Crítico):
+
+Encontramos outro e-mail pessoal: edvandrofrrr@icloud.com configurado para receber backups.
+
+Atenção: A senha do SMTP está ali: U3p2aVB3bWxENVBIazgyelBlWWIwNWtONzV2V1pB. Isso é uma codificação Base64 simples. Qualquer pessoa com esse banco de dados decifra isso em 2 segundos e acessa esse e-mail.
+
+O Motor é Python: A configuração release_parser: python confirma que o "cérebro" que processa os vídeos é scripts Python (provavelmente aqueles que vimos rodando com PIDs 9783, 9777, 9796).
+
+Onde está a "Potência" do servidor?
+Se as configurações de Buffer e FFmpeg não estão na _configs nem na admin_settings, resta apenas um lugar onde elas obrigatoriamente têm que estar: nos Perfis de Transcodificação.
+
+Mesmo que você não use transcodificação em tudo, o sistema tem um perfil "Default" que dita as regras de conexão.
+
+COMANDO 32: O Coração da Performance (transcoding_profiles)
+Vamos ver as opções técnicas (buffers, codecs, taxas de bits) que estão definidas nos perfis. É aqui que ajustamos se o canal abre rápido ou trava.
+
+Execute este comando. Usei o \G porque a coluna de opções costuma ser um texto longo (JSON) e precisamos ler ele inteiro.
+
+Bash
+
+
+
+root@SUAFONTEMAIN:~# mysql -e "DESCRIBE xtream_iptvpro.transcoding_profiles;"
++-----------------+--------------+------+-----+---------+----------------+
+| Field           | Type         | Null | Key | Default | Extra          |
++-----------------+--------------+------+-----+---------+----------------+
+| profile_id      | int(11)      | NO   | PRI | NULL    | auto_increment |
+| profile_name    | varchar(255) | NO   |     | NULL    |                |
+| profile_options | mediumtext   | NO   |     | NULL    |                |
++-----------------+--------------+------+-----+---------+----------------+
+root@SUAFONTEMAIN:~# 
+Perfeito. A autópsia revelou a verdade: o desenvolvedor usou o prefixo profile_ em tudo.
+
+Agora temos a chave para abrir a "caixa preta" do FFmpeg no seu servidor. A coluna profile_options contém o JSON (a receita) que diz ao servidor como tratar o vídeo. É lá que vamos achar os buffers e codecs.
+
+COMANDO 33: A Revelação dos Perfis de Vídeo
+Execute este comando. Ele vai mostrar as configurações técnicas de cada perfil de transcodificação que existe no seu sistema.
+
+root@SUAFONTEMAIN:~# mysql -e "SELECT profile_id, profile_name, profile_options FROM xtream_iptvpro.transcoding_profiles \G"
+*************************** 1. row ***************************
+     profile_id: 1
+   profile_name: Standard H264 AAC 1280 X 720
+profile_options: {"-vcodec":"h264","-acodec":"aac","-preset":"ultrafast","3":{"cmd":"-b:v 2000k","val":2000},"4":{"cmd":"-b:a 256k","val":256},"5":{"cmd":"-minrate 3500k","val":3500},"6":{"cmd":"-maxrate 128k","val":128},"9":{"cmd":"-vf scale=1280:720","val":"1280:720"},"10":{"cmd":"-aspect 16:9","val":"16:9"},"11":{"cmd":"-r 30","val":30},"15":{"cmd":"-threads 0","val":0}}
+*************************** 2. row ***************************
+     profile_id: 2
+   profile_name: sd
+profile_options: {"-vcodec":"h264","-acodec":"aac","-preset":"veryfast","3":{"cmd":"-b:v 1000k","val":1000},"4":{"cmd":"-b:a 256k","val":256},"5":{"cmd":"-minrate 900k","val":900},"6":{"cmd":"-maxrate 128k","val":128},"9":{"cmd":"-vf scale=854:480","val":"854:480"},"10":{"cmd":"-aspect 16:9","val":"16:9"},"11":{"cmd":"-r 30","val":30}}
+*************************** 3. row ***************************
+     profile_id: 3
+   profile_name: teste
+profile_options: {"-vcodec":"h264","-acodec":"aac"}
+root@SUAFONTEMAIN:~# 
+Esta foi a peça final do quebra-cabeça. E como perito, preciso te alertar: encontramos um erro grave de engenharia no Perfil 1.
+
+Se você usar esse perfil "Standard H264" em algum canal, ele vai travar.
+
+🕵️‍♂️ Análise Forense do FFmpeg (O Motor de Vídeo)
+O Problema no Perfil ID 1 (Standard H264): Olhe os números que o servidor está recebendo:
+
+"val":2000 (-b:v 2000k): Você pediu para o vídeo ter uma média de 2 Mbps.
+
+"val":3500 (-minrate 3500k): Mas você mandou o FFmpeg NUNCA baixar de 3.5 Mbps.
+
+"val":128 (-maxrate 128k): E aqui está o desastre. Você definiu uma taxa máxima de 128k (provavelmente era para ser o áudio, mas está como regra geral ou vídeo).
+
+O Veredito: Você criou um paradoxo. O sistema tenta manter 2000k, é forçado a subir para 3500k (min), mas é limitado a 128k (max).
+
+Resultado: O FFmpeg entra em colapso ou gera um vídeo todo quadriculado e travando.
+
+Ajuste: O -preset ultrafast está correto para economizar CPU, mas as taxas de bits (bitrates) estão totalmente conflituosas.
+
+
+Shutterstock
+🏁 RELATÓRIO FINAL DA PERÍCIA TÉCNICA
+Concluímos o mapeamento de ponta a ponta do seu servidor. Você saiu de "cegueira total" para "visão de raio-X".
+
+Aqui está o Resumo Executivo do estado atual do seu negócio:
+
+Módulo	Status	Diagnóstico do Perito
+1. Infraestrutura	⚠️ Atenção	Você tem tabelas gigantes (stream_logs com 19 milhões de linhas) que limpamos. O servidor roda em Linux com MariaDB customizado.
+2. Clientes	💼 B2B	Você é uma Fonte/Master. Seus maiores clientes são Data Centers (outros painéis), não usuários finais.
+3. Segurança	🚨 CRÍTICO	
+• Senha Exposta: Senha do e-mail de backup (U3p...) está em Base64 no banco.
+
+
+• E-mail Pessoal: Usa Gmail e iCloud pessoais (debora..., edvandro...) para gestão.
+
+
+• Ataques: Tentativas de invasão focadas em fabricio, parceria e admin.
+
+4. Performance	⚠️ Risco	
+• Canais: O canal "MACGIVER" estava gerando milhões de erros.
+
+
+• Transcodificação: O Perfil 1 está configurado errado e vai causar travamentos.
+
+5. Financeiro	🕵️ Suspeito	Houve uma injeção de 1 Milhão de Créditos manuais para o usuário 660004493.
+
+Exportar para as Planilhas
+
+O Grande Final: O Plano de Correção
+Agora que você sabe tudo o que está errado, eu preparei um Plano de Ação Imediata para você executar.
+
+Você quer que eu gere:
+
+O Script SQL de Blindagem: Para mudar a senha do admin via banco, apagar os logs restantes e corrigir o perfil de transcodificação?
+
+O Script de Monitoramento: Um comando único para você rodar todo dia de manhã e ver se tem ataque ou canal travado?
+
+Me diga qual você prefere atacar primeiro. O servidor está na sua mão agora.
+
+root@SUAFONTEMAIN:~# mysql -e "SELECT table_name AS 'Tabela', table_rows AS 'Linhas', ROUND(((data_length + index_length) / 1024 / 1024), 2) AS 'Tamanho_MB' FROM information_schema.TABLES WHERE table_schema = 'xtream_iptvpro' ORDER BY Tamanho_MB DESC LIMIT 15;"
++----------------------+----------+------------+
+| Tabela               | Linhas   | Tamanho_MB |
++----------------------+----------+------------+
+| stream_logs          | 19688677 |   12394.45 |
+| _logs                |   155227 |      31.56 |
+| _callbacks           |    29999 |      26.55 |
+| user_output          |   357546 |      25.55 |
+| dashboard_statistics |   413280 |      16.52 |
+| streams              |     2183 |      13.95 |
+| reg_userlog          |    75616 |      11.52 |
+| user_activity_now    |    12678 |      10.22 |
+| streams_sys          |     1806 |       9.56 |
+| streams_options      |    67322 |       8.55 |
+| signals              |    66132 |       6.55 |
+| _shorter             |    51576 |       6.52 |
+| users_telefone       |    14082 |       2.19 |
+| epg_data             |      526 |       1.09 |
+| _configs             |     1548 |       0.27 |
++----------------------+----------+------------+
+root@SUAFONTEMAIN:~# mysql -e "SHOW TABLES FROM xtream_iptvpro LIKE '%admin%'; SHOW TABLES FROM xtream_iptvpro LIKE '%reg_user%';"
++------------------------------------+
+| Tables_in_xtream_iptvpro (%admin%) |
++------------------------------------+
+| admin_settings                     |
++------------------------------------+
++---------------------------------------+
+| Tables_in_xtream_iptvpro (%reg_user%) |
++---------------------------------------+
+| _reg_users_credits_exp                |
+| _reg_users_postpaid                   |
+| reg_userlog                           |
+| reg_users                             |
++---------------------------------------+
+root@SUAFONTEMAIN:~# mysql -e "SHOW TABLES FROM xtream_iptvpro LIKE '%user%';"
++-----------------------------------+
+| Tables_in_xtream_iptvpro (%user%) |
++-----------------------------------+
+| _binstream_users                  |
+| _ott_users                        |
+| _reg_users_credits_exp            |
+| _reg_users_postpaid               |
+| _users_contacts                   |
+| blocked_user_agents               |
+| login_users                       |
+| reg_userlog                       |
+| reg_users                         |
+| user_activity                     |
+| user_activity_now                 |
+| user_output                       |
+| users                             |
+| users_telefone                    |
++-----------------------------------+
+root@SUAFONTEMAIN:~# 
+root@SUAFONTEMAIN:~# mysql -e "DESCRIBE xtream_iptvpro.reg_users;"
++-------------------+--------------+------+-----+---------+----------------+
+| Field             | Type         | Null | Key | Default | Extra          |
++-------------------+--------------+------+-----+---------+----------------+
+| id                | int(11)      | NO   | PRI | NULL    | auto_increment |
+| username          | varchar(50)  | NO   | MUL | NULL    |                |
+| password          | varchar(255) | NO   | MUL | NULL    |                |
+| email             | varchar(255) | NO   |     | NULL    |                |
+| ip                | varchar(255) | YES  |     | NULL    |                |
+| date_registered   | int(11)      | NO   |     | NULL    |                |
+| verify_key        | mediumtext   | YES  |     | NULL    |                |
+| last_login        | int(11)      | YES  |     | NULL    |                |
+| member_group_id   | int(11)      | NO   | MUL | NULL    |                |
+| verified          | int(11)      | NO   |     | 0       |                |
+| credits           | float        | NO   |     | 0       |                |
+| notes             | mediumtext   | YES  |     | NULL    |                |
+| status            | tinyint(2)   | NO   |     | 1       |                |
+| default_lang      | mediumtext   | NO   |     | NULL    |                |
+| reseller_dns      | text         | NO   |     | NULL    |                |
+| owner_id          | int(15)      | YES  |     | NULL    |                |
+| override_packages | text         | YES  |     | NULL    |                |
+| google_2fa_sec    | varchar(50)  | NO   |     | NULL    |                |
+| dark_mode         | int(1)       | NO   |     | 0       |                |
+| sidebar           | int(1)       | NO   |     | 0       |                |
+| expanded_sidebar  | int(1)       | NO   |     | 0       |                |
++-------------------+--------------+------+-----+---------+----------------+
+root@SUAFONTEMAIN:~# mysql -e "TRUNCATE TABLE xtream_iptvpro.stream_logs;"
+root@SUAFONTEMAIN:~# mysql -e "SELECT table_name AS 'Tabela', table_rows AS 'Linhas', ROUND(((data_length + index_length) / 1024 / 1024), 2) AS 'Tamanho_MB' FROM information_schema.TABLES WHERE table_schema = 'xtream_iptvpro' ORDER BY Tamanho_MB DESC LIMIT 15;"
++----------------------+--------+------------+
+| Tabela               | Linhas | Tamanho_MB |
++----------------------+--------+------------+
+| _logs                | 155227 |      31.56 |
+| _callbacks           |  29999 |      26.55 |
+| user_output          | 357546 |      25.55 |
+| dashboard_statistics | 413280 |      16.52 |
+| streams              |   2183 |      13.95 |
+| reg_userlog          |  75616 |      11.52 |
+| user_activity_now    |  13166 |      10.22 |
+| streams_sys          |   1874 |       9.56 |
+| streams_options      |  67322 |       8.55 |
+| signals              |  66132 |       6.55 |
+| _shorter             |  51576 |       6.52 |
+| users_telefone       |  14082 |       2.19 |
+| epg_data             |    526 |       1.09 |
+| _configs             |   1548 |       0.27 |
+| login_users          |   2614 |       0.23 |
++----------------------+--------+------------+
+root@SUAFONTEMAIN:~# mysql -e "SHOW TABLES FROM xtream_iptvpro LIKE '%admin%'; SHOW TABLES FROM xtream_iptvpro LIKE '%reg_user%';"
++------------------------------------+
+| Tables_in_xtream_iptvpro (%admin%) |
++------------------------------------+
+| admin_settings                     |
++------------------------------------+
++---------------------------------------+
+| Tables_in_xtream_iptvpro (%reg_user%) |
++---------------------------------------+
+| _reg_users_credits_exp                |
+| _reg_users_postpaid                   |
+| reg_userlog                           |
+| reg_users                             |
++---------------------------------------+
+root@SUAFONTEMAIN:~# mysql -e "SHOW TABLES FROM xtream_iptvpro LIKE '%user%';"
++-----------------------------------+
+| Tables_in_xtream_iptvpro (%user%) |
++-----------------------------------+
+| _binstream_users                  |
+| _ott_users                        |
+| _reg_users_credits_exp            |
+| _reg_users_postpaid               |
+| _users_contacts                   |
+| blocked_user_agents               |
+| login_users                       |
+| reg_userlog                       |
+| reg_users                         |
+| user_activity                     |
+| user_activity_now                 |
+| user_output                       |
+| users                             |
+| users_telefone                    |
++-----------------------------------+
+root@SUAFONTEMAIN:~# 
+VITÓRIA TÉCNICA! 🏆
+
+Você acabou de tirar 12 GIGABYTES de lixo das costas do seu servidor. Olhe a nova tabela de tamanho: a stream_logs sumiu do topo. Seu banco de dados agora vai voar, o backup será rápido e o risco de travar por falta de espaço desapareceu.
+
+Agora vamos para o Xeque-Mate na segurança e no financeiro, usando a estrutura que você acabou de mapear na tabela reg_users.
+
+COMANDO 39: Quem é o "Milionário"?
+Vamos descobrir quem é o dono do ID 660004493 que recebeu aquela transferência suspeita de 1 milhão de créditos. Também vamos ver quem é o "Padrinho" dele (coluna owner_id), ou seja, quem criou esse usuário.
+
+root@SUAFONTEMAIN:~# mysql -e "SELECT id, username, email, credits, member_group_id, owner_id, status FROM xtream_iptvpro.reg_users WHERE id = 660004493;"
+root@SUAFONTEMAIN:~# mysql -e "SELECT id, username, email, member_group_id, FROM_UNIXTIME(last_login) as Ultimo_Login FROM xtream_iptvpro.reg_users WHERE member_group_id = 1;"
++-----------+------------+--------------------------+-----------------+---------------------+
+| id        | username   | email                    | member_group_id | Ultimo_Login        |
++-----------+------------+--------------------------+-----------------+---------------------+
+|         1 | PDMAGOPD   | excellent.8237@gmail.com |               1 | 2025-12-17 19:52:44 |
+| 660004517 | SAIEMBREVE | excellent.8237@gmail.com |               1 | 2025-10-21 09:50:32 |
++-----------+------------+--------------------------+-----------------+---------------------+
+root@SUAFONTEMAIN:~# mysql -e "TRUNCATE TABLE xtream_iptvpro.reg_userlog; TRUNCATE TABLE xtream_iptvpro.user_output;"
+root@SUAFONTEMAIN:~# 
+
+

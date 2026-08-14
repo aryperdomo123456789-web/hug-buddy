@@ -1,0 +1,153 @@
+SCRIPT PARA POR EPG NO ODIN 
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import os, sys, json, time, getpass, unicodedata, re, difflib, subprocess
+import xml.etree.ElementTree as ET
+
+# === CONFIGURAÇÃO TÉCNICA ODIN (CUSTOM PORT 7999) ===
+DB_NAME = "xtream_iptvpro"
+DB_PORT = 7999
+PATH_ODIN = "/home/xtreamcodes/iptv_xtream_codes/"
+VERSION = "2.4 (The Master - Port 7999)"
+
+class C:
+    CYAN = '\033[96m'; VERDE = '\033[92m'; AMARELO = '\033[93m'
+    VERMELHO = '\033[91m'; BOLD = '\033[1m'; DIM = '\033[2m'; END = '\033[0m'
+    BG_BLUE = '\033[44m'
+
+# === ENGINE DE CONEXÃO ===
+_db_pass = None
+def get_db():
+    global _db_pass
+    try:
+        import mysql.connector
+    except ImportError:
+        os.system("pip3 install mysql-connector-python -q")
+        import mysql.connector
+
+    config = {
+        'user': 'root', 
+        'database': DB_NAME, 
+        'host': '127.0.0.1', 
+        'port': DB_PORT, 
+        'autocommit': True,
+        'charset': 'utf8mb4'
+    }
+    
+    if _db_pass: config['password'] = _db_pass
+    
+    try:
+        return mysql.connector.connect(**config)
+    except:
+        if not _db_pass:
+            _db_pass = getpass.getpass(f"\n  {C.AMARELO}🔑 Senha Root MySQL (Porta {DB_PORT}):{C.END} ")
+            return get_db()
+        sys.exit(1)
+
+def sql(query, params=None, fetch=True):
+    try:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute(query, params or ())
+        res = cursor.fetchall() if fetch else cursor.rowcount
+        db.close()
+        return res
+    except: return None
+
+# === LÓGICA DE LIMPEZA E MARCA ===
+def limpar_nome_expert(texto):
+    if not texto: return ""
+    texto = re.sub(r'\[.*?\]|\(.*?\)|\{.*?\}', '', texto)
+    texto = re.sub(r'^[^\w\s]+', '', texto)
+    texto = unicodedata.normalize('NFKD', texto).encode('ASCII', 'ignore').decode('ASCII').lower()
+    lixo = ['fhd', 'hd', 'sd', '4k', 'vip', 'premium', '24h', '•', '|', 'tv', 'online', 'direct']
+    for l in lixo:
+        texto = re.sub(r'\b' + l + r'\b', '', texto)
+    return re.sub(r'\s+', ' ', texto).strip()
+
+def extrair_marca(texto):
+    marcas = ['globo', 'record', 'sbt', 'band', 'espn', 'sportv', 'premiere', 'hbo', 'telecine', 'discovery', 'disney']
+    texto = texto.lower()
+    for m in marcas:
+        if m in texto: return m
+    return None
+
+def reiniciar_painel():
+    print(f"\n{C.AMARELO}⚙️  Reiniciando serviços do Odin...{C.END}")
+    if os.path.exists(PATH_ODIN):
+        os.chdir(PATH_ODIN)
+        try:
+            subprocess.run(["sudo", "./start_services.sh"])
+            print(f"{C.VERDE}✅ Script de reinício disparado!{C.END}")
+        except: pass
+
+# === SINCRONIZADOR PRINCIPAL ===
+def sincronizar_master():
+    import requests
+    print(f"\n{C.CYAN}🔗 ODIN EPG SYNC v{VERSION}{C.END}")
+    
+    epgs = sql("SELECT id, epg_name, epg_file FROM epg")
+    if not epgs: print("Nenhum EPG encontrado."); return
+    for i, e in enumerate(epgs): print(f"  [{i+1}] {e['epg_name']}")
+    
+    try:
+        sel = int(input(f"\n▶ Selecione o EPG: ")) - 1
+        epg_alvo = epgs[sel]
+    except: return
+
+    print(f"\n{C.AMARELO}⟳ Baixando XML e mapeando IDs...{C.END}")
+    try:
+        r = requests.get(epg_alvo['epg_file'], timeout=60)
+        root = ET.fromstring(r.text)
+        xml_map = {}
+        for channel in root.findall('channel'):
+            xml_id = channel.get('id')
+            display_name = channel.find('display-name').text if channel.find('display-name') is not None else ""
+            if xml_id and display_name:
+                xml_map[limpar_nome_expert(display_name)] = {
+                    'id': xml_id, 
+                    'name': display_name,
+                    'brand': extrair_marca(display_name)
+                }
+        
+        streams = sql("SELECT id, stream_display_name FROM streams WHERE type = 1")
+        total = len(streams)
+        sucesso = 0
+
+        print(f"\n{C.BOLD}{'BANCO':<35} {'SCORE':<8} {'XML MATCH'}{C.END}")
+        print("-" * 80)
+
+        for s in streams:
+            n_orig = s['stream_display_name']
+            n_limpo = limpar_nome_expert(n_orig)
+            n_brand = extrair_marca(n_orig)
+            if not n_limpo: continue
+
+            match = None
+            # Busca aproximada rigorosa (0.8)
+            match_key = difflib.get_close_matches(n_limpo, xml_map.keys(), n=1, cutoff=0.8)
+            
+            if match_key:
+                m_info = xml_map[match_key[0]]
+                # Trava de Marca (Brand Lock)
+                if not n_brand or (n_brand and m_info['brand'] == n_brand):
+                    match = m_info
+
+            if match:
+                # GRAVAÇÃO DEFINITIVA: Incluindo epg_lang = 'pt' para o Odin exibir o guia
+                sql("UPDATE streams SET epg_id = %s, channel_id = %s, epg_lang = 'pt' WHERE id = %s", 
+                    (epg_alvo['id'], match['id'], s['id']), fetch=False)
+                print(f"{n_orig[:34]:<35} {C.VERDE}MATCH{C.END:<8} {match['name'][:25]}")
+                sucesso += 1
+
+        print(f"\n{C.BG_BLUE} 📊 FINALIZADO: {sucesso} CANAIS VINCULADOS NA PORTA {DB_PORT} {C.END}")
+        if sucesso > 0:
+            if input(f"\n{C.AMARELO}❓ Deseja reiniciar o painel agora? [s/N]: {C.END}").lower() == 's':
+                reiniciar_painel()
+    except Exception as e: print(f"Erro: {e}")
+
+if __name__ == "__main__":
+    sincronizar_master()
+
+    

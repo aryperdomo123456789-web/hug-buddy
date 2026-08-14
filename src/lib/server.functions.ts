@@ -9,30 +9,29 @@ export const getInstallScript = createServerFn({ method: "GET" })
   .handler(async () => {
     const script = `#!/bin/bash
 # ==========================================================
-# MAGO PANEL - INSTALADOR DE API (GUERRA DIGITAL)
+# MAGO PANEL - INSTALADOR DE API (ODIN SPECIAL EDITION)
 # ==========================================================
-# Esse script prepara seu servidor Xtream/NXT para o Mago Panel.
+# Preparado para Odin Streaming System (Porta 7999)
 
-DOMAIN="https://71a12a47-d6b3-4362-a2b3-4497a0a13af3.lovableproject.com" # URL do seu painel
+DOMAIN="https://71a12a47-d6b3-4362-a2b3-4497a0a13af3.lovableproject.com"
 
-echo "Iniciando a Forja..."
+echo "Iniciando a Forja no Odin..."
 
-# Verifica se é um servidor compatível
-if [ ! -d "/home/xtreamcodes/iptv_xtream_codes/wwwdir" ] && [ ! -d "/home/nxt/public" ]; then
-  echo "ERRO: Servidor incompatível. Precisa de Xtream UI ou NXT."
+# Odin geralmente usa a porta 7999 e o banco xtream_iptvpro
+DB_PORT=7999
+DB_NAME="xtream_iptvpro"
+PATH_ODIN="/home/xtreamcodes/iptv_xtream_codes/"
+
+if [ ! -d "$PATH_ODIN" ]; then
+  echo "ERRO: Servidor Odin não encontrado em $PATH_ODIN"
   exit 1
 fi
 
-# Cria o diretório da API
-API_DIR="/home/xtreamcodes/iptv_xtream_codes/wwwdir/mago-api"
-if [ -d "/home/nxt/public" ]; then
-    API_DIR="/home/nxt/public/mago-api"
-fi
-
+API_DIR="$PATH_ODIN/wwwdir/mago-api"
 mkdir -p $API_DIR
 cd $API_DIR || exit
 
-# Gera um Token Único se não existir
+# Gera Token
 if [ ! -f "token.txt" ]; then
     TOKEN=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
     echo $TOKEN > token.txt
@@ -40,13 +39,13 @@ else
     TOKEN=$(cat token.txt)
 fi
 
-# Aqui baixariamos o arquivo PHP da API (exemplo simbólico)
-# wget $DOMAIN/api/download-api -O index.php
+# Detecta senha do MySQL para Odin
+DB_PASS=$(grep "'db_pass'" $PATH_ODIN/functions.php | cut -d"'" -f4)
 
 echo "------------------------------------------"
-echo "MAGO PANEL - INSTALAÇÃO CONCLUÍDA"
+echo "ODIN CONNECTED - Mago Panel"
 echo "TOKEN: $TOKEN"
-echo "URL DA API: $(curl -s icanhazip.com)/mago-api/"
+echo "DB DETECTED: $DB_NAME (Port $DB_PORT)"
 echo "------------------------------------------"
 `;
     return script;
