@@ -21,7 +21,7 @@ import {
   CheckCircle2,
   XCircle
 } from "lucide-react";
-import { runSSHCommand } from "@/lib/server.functions";
+import { runSSHCommand, getUsers, createUser } from "@/lib/server.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -105,10 +105,8 @@ function Dashboard() {
   });
 
   const runCommand = useServerFn(runSSHCommand);
-  // @ts-ignore
-  const fetchUsersFn = useServerFn(require("@/lib/server.functions").getUsers);
-  // @ts-ignore
-  const createUserFn = useServerFn(require("@/lib/server.functions").createUser);
+  const fetchUsersFn = useServerFn(getUsers);
+  const createUserFn = useServerFn(createUser);
 
   const handleFetchUsers = async () => {
     setIsLoadingCustomers(true);
