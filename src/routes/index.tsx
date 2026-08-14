@@ -370,7 +370,45 @@ function Dashboard() {
                     </Field>
                   </div>
                 </div>
+              <section className="bg-[#0f0f12] p-8 rounded-2xl border border-zinc-800 shadow-xl">
+                <h2 className="text-xl font-black text-blue-500 uppercase tracking-tighter mb-6 flex items-center gap-2">
+                  <Database size={20} /> Conexão MariaDB/MySQL
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <Field label="Host do Banco">
+                    <div className="bg-black p-3.5 rounded-xl border border-zinc-900 font-mono text-zinc-400 text-xs">
+                      {odin.dbHost}
+                    </div>
+                  </Field>
+                  <Field label="Porta">
+                    <div className="bg-black p-3.5 rounded-xl border border-zinc-900 font-mono text-zinc-400 text-xs">
+                      {odin.dbPort}
+                    </div>
+                  </Field>
+                  <Field label="Base de Dados">
+                    <div className="bg-black p-3.5 rounded-xl border border-zinc-900 font-mono text-zinc-400 text-xs">
+                      {odin.dbName}
+                    </div>
+                  </Field>
+                  <Field label="Usuário">
+                    <div className="bg-black p-3.5 rounded-xl border border-zinc-900 font-mono text-zinc-400 text-xs">
+                      {odin.dbUsername}
+                    </div>
+                  </Field>
+                  <Field label="Senha">
+                    <div className="bg-black p-3.5 rounded-xl border border-zinc-900 font-mono text-zinc-400 text-xs blur-sm hover:blur-none transition-all cursor-help">
+                      {odin.sshHost === '23.158.72.30' ? 'Y92RYuXHLP58AbOciQW' : '********'}
+                    </div>
+                  </Field>
+                  <div className="flex items-end">
+                    <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-xl w-full flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                      <span className="text-[10px] text-green-500 font-black uppercase tracking-widest">Banco Conectado</span>
+                    </div>
+                  </div>
+                </div>
               </section>
+
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {servers.map(s => (
