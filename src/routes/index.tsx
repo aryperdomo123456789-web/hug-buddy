@@ -256,9 +256,11 @@ function Dashboard() {
   );
 }
 
-function NavItem({ icon, label, active = false }: { icon: React.ReactNode; label: string; active?: boolean }) {
+function NavItem({ icon, label, active = false, onClick }: { icon: React.ReactNode; label: string; active?: boolean; onClick?: () => void }) {
   return (
-    <button className={`
+    <button 
+      onClick={onClick}
+      className={`
       flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all group
       ${active 
         ? 'bg-primary/10 text-primary border border-primary/20' 
