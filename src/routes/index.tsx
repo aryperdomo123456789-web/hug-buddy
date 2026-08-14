@@ -13,6 +13,7 @@ import {
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
+  loader: () => ({}),
 });
 
 function Dashboard() {
