@@ -1,5 +1,11 @@
+/**
+ * ip do lab: 23.158.72.30
+ * porta root: 22
+ * senha root: fontemain123333
+ */
 import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { 
   Users, 
   Server, 
@@ -9,8 +15,13 @@ import {
   Settings,
   PlusCircle,
   Activity,
-  UserPlus
+  UserPlus,
+  Play,
+  CheckCircle2,
+  XCircle
 } from "lucide-react";
+import { runSSHCommand } from "@/lib/server.functions";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
@@ -77,6 +88,41 @@ function LegacyLab() {
 
 function Dashboard() {
   const [view, setView] = React.useState<'dashboard' | 'legacy'>('dashboard');
+  const [terminalOutput, setTerminalOutput] = React.useState<string>("IP: 23.158.72.30\nAguardando comando...");
+  const [command, setCommand] = React.useState("ls -la /home/xtreamcodes/iptv_xtream_codes/");
+  const [isRunning, setIsRunning] = React.useState(false);
+  
+  const runCommand = useServerFn(runSSHCommand);
+
+  const handleRunSSH = async () => {
+    setIsRunning(true);
+    setTerminalOutput((prev) => prev + `\n\n> Executando: ${command}...`);
+    
+    try {
+      const result = await runCommand({
+        data: {
+          host: "23.158.72.30",
+          port: 22,
+          username: "root",
+          password: "fontemain123333",
+          command: command
+        }
+      });
+
+      if (result.success) {
+        setTerminalOutput((prev) => prev + `\n${result.stdout}${result.stderr ? '\nERROR: ' + result.stderr : ''}`);
+        toast.success("Comando executado com sucesso!");
+      } else {
+        setTerminalOutput((prev) => prev + `\nERRO DE CONEXÃO: ${result.error}`);
+        toast.error("Falha na conexão SSH");
+      }
+    } catch (err) {
+      setTerminalOutput((prev) => prev + `\nERRO INESPERADO: Ocorreu um erro ao processar o comando.`);
+      toast.error("Erro interno do servidor");
+    } finally {
+      setIsRunning(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 font-sans selection:bg-primary/30">
@@ -150,9 +196,9 @@ function Dashboard() {
           <>
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-              <StatCard icon={<Users className="text-blue-500" />} label="Usuários Ativos" value="1,284" change="+12%" />
-              <StatCard icon={<Activity className="text-green-500" />} label="Canais Online" value="15,402" change="99.9%" />
-              <StatCard icon={<Server className="text-purple-500" />} label="Carga CPU" value="42%" change="Estável" />
+              <StatCard icon={<Users className="text-blue-500" />} label="Usuários Ativos" value="-" change="Consultando..." />
+              <StatCard icon={<Activity className="text-green-500" />} label="Canais Online" value="-" change="Consultando..." />
+              <StatCard icon={<Server className="text-purple-500" />} label="Servidor Lab" value="23.158.72.30" change="Conectado" />
               <StatCard icon={<ShieldAlert className="text-yellow-500" />} label="Alertas" value="0" change="Limpo" />
             </div>
 
@@ -241,52 +287,70 @@ function Dashboard() {
             </div>
           </section>
 
-          {/* SSH Analysis Output */}
+          {/* SSH Analysis Output (Real Terminal) */}
           <section className="p-8 rounded-2xl bg-[#0f0f12] border border-zinc-800/50 flex flex-col">
             <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <Activity size={20} className="text-primary" />
-              Análise do Servidor (SSH)
+              <Terminal size={20} className="text-primary" />
+              Terminal de Diagnóstico SSH
             </h3>
-            <div className="bg-black/60 rounded-xl border border-zinc-800/50 p-4 font-mono text-[10px] text-zinc-400 flex-1 overflow-auto max-h-[300px] scrollbar-thin scrollbar-thumb-zinc-800">
-              <div className="text-primary mb-2 font-bold uppercase tracking-widest text-[9px] border-b border-zinc-800 pb-1 flex justify-between">
-                <span>// LOG DE COMANDO: cat /home/xtreamcodes/iptv_xtream_codes/functions.php | grep -E "'db_user'|'db_pass'|'db_name'|'db_port'"</span>
-                <span className="text-zinc-600">AWAITING INPUT...</span>
+            
+            <div className="flex gap-2 mb-4">
+              <div className="flex-1 bg-black/40 rounded-xl border border-zinc-800 px-4 flex items-center group">
+                <span className="text-zinc-600 text-xs font-mono mr-2">$</span>
+                <input 
+                  type="text"
+                  value={command}
+                  onChange={(e) => setCommand(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleRunSSH()}
+                  placeholder="Digite um comando bash..."
+                  className="bg-transparent border-none outline-none text-zinc-300 font-mono text-sm w-full py-3"
+                  disabled={isRunning}
+                />
               </div>
-              <pre className="whitespace-pre-wrap leading-tight">
-{`total 128572
-drwxrwxrwx 23 xtreamcodes xtreamcodes     4096 Aug 11 21:40 .
-drwxrwxrwx  4 xtreamcodes xtreamcodes     4096 Jun 26 16:08 ..
-drwxrwxrwx  9 xtreamcodes xtreamcodes     4096 Jun 21 12:45 admin
-drwxrwxrwx  4 xtreamcodes xtreamcodes     4096 Jun 20 01:15 adtools
-drwxrwxrwx  2 xtreamcodes xtreamcodes     4096 Jun 20 01:15 bin
--rwxrwxrwx  1 xtreamcodes xtreamcodes      904 Jun 26 15:43 check_geolite.sh
--rwxrwxrwx  1 xtreamcodes xtreamcodes      208 Jun 20 02:40 config
--rwxrwxrwx  1 xtreamcodes xtreamcodes     2323 Jun 21 12:45 config.py
-drwxrwxrwx  2 xtreamcodes xtreamcodes     4096 Aug 25  2017 created_channels
-drwxrwxrwx  2 xtreamcodes xtreamcodes     4096 Aug  2 13:12 crons
-drwxrwxrwx  2 xtreamcodes xtreamcodes     4096 Dec  1  2018 delay
--rw-r--r--  1 xtreamcodes xtreamcodes 65775230 Jun 23 22:29 GeoLite2.guard.mmdb
--rw-r--r--  1 xtreamcodes xtreamcodes 65755735 Jul 15 22:24 GeoLite2.mmdb
-drwxrwxrwx  3 xtreamcodes xtreamcodes     4096 Jun 20 01:15 isp
--rwxrwxrwx  1 xtreamcodes xtreamcodes       22 Sep 16  2019 kill_pids
-drwxr-xr-x  2 xtreamcodes xtreamcodes     4096 Aug 11 21:40 libcompat
-drwxrwxrwx  2 xtreamcodes xtreamcodes     4096 Jun 20 01:16 logs
-drwxrwxrwx  2 xtreamcodes xtreamcodes     4096 Apr 14  2019 movies
-drwxrwxrwx  5 xtreamcodes xtreamcodes     4096 Aug 11 22:22 nginx
-drwxrwxrwx 10 xtreamcodes xtreamcodes     4096 Aug 11 22:22 nginx_rtmp
--rwxrwxrwx  1 xtreamcodes xtreamcodes      509 Jun 21 12:45 permissions.sh
-drwxrwxrwx  9 xtreamcodes xtreamcodes     4096 Aug 11 22:22 php
-drwxrwxrwx  3 xtreamcodes xtreamcodes     4096 Jun 21 12:46 pytools
-drwxrwxrwx  5 xtreamcodes xtreamcodes     4096 Jun 20 01:15 SecTools
-drwxrwxrwx  2 xtreamcodes xtreamcodes     4096 Dec  1  2018 signals
--rwxrwxrwx  1 xtreamcodes xtreamcodes     2370 Aug 11 21:42 start_services.sh
-drwxrwxrwt  2 xtreamcodes xtreamcodes     1100 Aug 13 21:20 streams
-drwxrwxrwt  8 xtreamcodes xtreamcodes   287580 Aug 13 21:36 tmp
-drwxrwxrwx  2 xtreamcodes xtreamcodes     4096 Sep 16  2019 tools
-drwxrwxrwx  2 xtreamcodes xtreamcodes     4096 Dec  1  2018 tv_archive
-drwxrwxrwx  9 xtreamcodes xtreamcodes     4096 Jun 23 22:31 wwwdir
--rwxrwxrwx  1 xtreamcodes xtreamcodes     8847 Sep  2  2018 xfirewall.php`}
+              <button 
+                onClick={handleRunSSH}
+                disabled={isRunning}
+                className="bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground px-4 rounded-xl font-bold flex items-center justify-center transition-all active:scale-95 shadow-lg shadow-primary/20"
+              >
+                {isRunning ? (
+                  <Activity size={20} className="animate-spin" />
+                ) : (
+                  <Play size={20} />
+                )}
+              </button>
+            </div>
+
+            <div className="bg-black/60 rounded-xl border border-zinc-800/50 p-4 font-mono text-[10px] text-zinc-400 flex-1 overflow-auto h-[300px] scrollbar-thin scrollbar-thumb-zinc-800 relative group">
+              <div className="text-primary mb-2 font-bold uppercase tracking-widest text-[9px] border-b border-zinc-800 pb-1 flex justify-between sticky top-0 bg-black/60 z-10">
+                <span>// OUTPUT DO TERMINAL</span>
+                <span className="flex items-center gap-2">
+                  {isRunning ? (
+                    <span className="flex items-center gap-1 text-yellow-500">
+                      <Activity size={8} className="animate-spin" /> PROCESSANDO...
+                    </span>
+                  ) : (
+                    <span className="text-zinc-600">PRONTO</span>
+                  )}
+                </span>
+              </div>
+              <pre className="whitespace-pre-wrap leading-tight pt-2">
+                {terminalOutput}
               </pre>
+            </div>
+            
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button 
+                onClick={() => setCommand("ls -la /home/xtreamcodes/iptv_xtream_codes/")}
+                className="text-[10px] bg-zinc-900 border border-zinc-800 text-zinc-500 py-1.5 rounded hover:bg-zinc-800 hover:text-zinc-300 transition-colors"
+              >
+                LISTAR ARQUIVOS ODIN
+              </button>
+              <button 
+                onClick={() => setCommand("mysql -e 'show databases;'")}
+                className="text-[10px] bg-zinc-900 border border-zinc-800 text-zinc-500 py-1.5 rounded hover:bg-zinc-800 hover:text-zinc-300 transition-colors"
+              >
+                LISTAR BANCOS DB
+              </button>
             </div>
           </section>
         </div>
