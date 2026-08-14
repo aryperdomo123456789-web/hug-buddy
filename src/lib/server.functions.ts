@@ -11,15 +11,11 @@ export const getInstallScript = createServerFn({ method: "GET" })
 # ==========================================================
 # MAGO PANEL - INSTALADOR DE API (ODIN SPECIAL EDITION)
 # ==========================================================
-# Preparado para Odin Streaming System (Porta 7999)
 
-DOMAIN="https://71a12a47-d6b3-4362-a2b3-4497a0a13af3.lovableproject.com"
+echo "------------------------------------------"
+echo "   Iniciando a Forja no Odin...         "
+echo "------------------------------------------"
 
-echo "Iniciando a Forja no Odin..."
-
-# Odin geralmente usa a porta 7999 e o banco xtream_iptvpro
-DB_PORT=7999
-DB_NAME="xtream_iptvpro"
 PATH_ODIN="/home/xtreamcodes/iptv_xtream_codes/"
 
 if [ ! -d "$PATH_ODIN" ]; then
@@ -28,25 +24,29 @@ if [ ! -d "$PATH_ODIN" ]; then
 fi
 
 API_DIR="$PATH_ODIN/wwwdir/mago-api"
-mkdir -p $API_DIR
-cd $API_DIR || exit
+mkdir -p "$API_DIR"
+cd "$API_DIR" || exit
 
 # Gera Token
 if [ ! -f "token.txt" ]; then
     TOKEN=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
-    echo $TOKEN > token.txt
+    echo "$TOKEN" > token.txt
 else
     TOKEN=$(cat token.txt)
 fi
 
-# Detecta senha do MySQL para Odin
-DB_PASS=$(grep "'db_pass'" $PATH_ODIN/functions.php | cut -d"'" -f4)
+# Detecta IP Público
+IP_PUBLICO=$(curl -s https://ifconfig.me)
 
+echo ""
 echo "------------------------------------------"
-echo "ODIN CONNECTED - Mago Panel"
-echo "TOKEN: $TOKEN"
-echo "DB DETECTED: $DB_NAME (Port $DB_PORT)"
+echo "   ODIN CONECTADO COM SUCESSO!          "
 echo "------------------------------------------"
+echo "   IP: $IP_PUBLICO"
+echo "   TOKEN: $TOKEN"
+echo "------------------------------------------"
+echo ""
+echo "Copie os dados acima e cole no Mago Panel."
 `;
     return script;
   });
