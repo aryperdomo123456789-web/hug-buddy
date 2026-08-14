@@ -12,16 +12,8 @@ export const getInstallScript = createServerFn({ method: "GET" })
 # MAGO PANEL - INSTALADOR DE API (ODIN SPECIAL EDITION)
 # ==========================================================
 
-# Garantir que o output apareça mesmo em shells silenciosos
-exec > >(tee -a /tmp/mago_install.log) 2>&1
-
 echo "------------------------------------------"
-echo "   Iniciando a Forja no Odin...         "
-echo "------------------------------------------"
-
-
-echo "------------------------------------------"
-echo "   Iniciando a Forja no Odin...         "
+echo "   Iniciando a Forja no Mago Panel...   "
 echo "------------------------------------------"
 
 PATH_ODIN="/home/xtreamcodes/iptv_xtream_codes/"
@@ -49,9 +41,9 @@ IP_PUBLICO=$(curl -s https://ifconfig.me)
 echo ""
 echo "------------------------------------------"
 echo "   ODIN CONECTADO COM SUCESSO!          "
-echo "------------------------------------------"
-echo "   IP: $IP_PUBLICO"
-echo "   TOKEN: $TOKEN"
+# Garantindo que o IP e Token apareçam no stdout
+printf "   IP: %s\n" "$IP_PUBLICO"
+printf "   TOKEN: %s\n" "$TOKEN"
 echo "------------------------------------------"
 echo ""
 echo "Copie os dados acima e cole no Mago Panel."
