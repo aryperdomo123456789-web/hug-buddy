@@ -33,6 +33,8 @@ function Dashboard() {
           <NavItem icon={<Users size={20} />} label="Usuários" />
           <NavItem icon={<Terminal size={20} />} label="Terminal" />
           <NavItem icon={<Server size={20} />} label="Servidores" />
+          <div className="my-2 border-t border-zinc-800/30 mx-2" />
+          <NavItem icon={<Activity size={20} />} label="Laboratório Legado" />
           <NavItem icon={<Settings size={20} />} label="Configurações" />
         </nav>
 
