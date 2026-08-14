@@ -76,6 +76,8 @@ function LegacyLab() {
 }
 
 function Dashboard() {
+  const [view, setView] = React.useState<'dashboard' | 'legacy'>('dashboard');
+
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 font-sans selection:bg-primary/30">
       {/* Sidebar - O Esconderijo do Mago */}
@@ -84,16 +86,31 @@ function Dashboard() {
           <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
             <ShieldAlert className="w-6 h-6 text-primary" />
           </div>
-          <span className="font-bold text-xl tracking-tight uppercase">Mago <span className="text-primary">Panel</span></span>
+          <span 
+            className="font-bold text-xl tracking-tight uppercase cursor-pointer" 
+            onClick={() => setView('dashboard')}
+          >
+            Mago <span className="text-primary">Panel</span>
+          </span>
         </div>
 
         <nav className="flex flex-col gap-2 flex-1">
-          <NavItem icon={<LayoutDashboard size={20} />} label="Dashboard" active />
+          <NavItem 
+            icon={<LayoutDashboard size={20} />} 
+            label="Dashboard" 
+            active={view === 'dashboard'} 
+            onClick={() => setView('dashboard')}
+          />
           <NavItem icon={<Users size={20} />} label="Usuários" />
           <NavItem icon={<Terminal size={20} />} label="Terminal" />
           <NavItem icon={<Server size={20} />} label="Servidores" />
           <div className="my-2 border-t border-zinc-800/30 mx-2" />
-          <NavItem icon={<Activity size={20} />} label="Laboratório Legado" />
+          <NavItem 
+            icon={<Activity size={20} />} 
+            label="Laboratório Legado" 
+            active={view === 'legacy'}
+            onClick={() => setView('legacy')}
+          />
           <NavItem icon={<Settings size={20} />} label="Configurações" />
         </nav>
 
