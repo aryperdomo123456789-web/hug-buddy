@@ -309,7 +309,7 @@ function Dashboard() {
           <>
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-              <StatCard icon={<Users className="text-blue-500" />} label="Usuários Ativos" value="0" change="Conectado ao DB" />
+              <StatCard icon={<Users className="text-blue-500" />} label="Usuários Ativos" value={customers.length.toString()} change="Conectado ao DB" />
               <StatCard icon={<Activity className="text-green-500" />} label="Canais Online" value="0" change="Sync Odin" />
               <StatCard icon={<Server className="text-purple-500" />} label="Servidor Lab" value="23.158.72.30" change="API ATIVA" />
               <StatCard icon={<ShieldAlert className="text-yellow-500" />} label="Token de Acesso" value="p0P2..." change="p0P2pycjQooGKKO2fqdkIagwfNA03DFj" />
@@ -377,12 +377,14 @@ function Dashboard() {
             
             <div className="bg-black/40 p-4 rounded-xl border border-zinc-800 font-mono text-sm relative group mb-6">
               <code className="text-primary break-all">
-                curl -sSL -H "Accept: text/plain" {window.location.origin}/api/public/install | bash
+                {typeof window !== 'undefined' ? `curl -sSL -H "Accept: text/plain" ${window.location.origin}/api/public/install | bash` : 'Carregando comando...'}
               </code>
               <button 
                 onClick={() => {
-                  navigator.clipboard.writeText(`curl -sSL -H "Accept: text/plain" ${window.location.origin}/api/public/install | bash`);
-                  toast.success("Comando copiado!");
+                  if (typeof window !== 'undefined') {
+                    navigator.clipboard.writeText(`curl -sSL -H "Accept: text/plain" ${window.location.origin}/api/public/install | bash`);
+                    toast.success("Comando copiado!");
+                  }
                 }}
                 className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded text-xs text-white"
               >
