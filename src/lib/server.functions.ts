@@ -110,3 +110,57 @@ export const connectServer = createServerFn({ method: "POST" })
       serverId: "srv_" + Math.random().toString(36).substr(2, 9)
     };
   });
+
+export const getUsers = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const ssh = new NodeSSH();
+    try {
+      await ssh.connect({
+        host: "23.158.72.30",
+        port: 22,
+        username: "root",
+        password: "fontemain123333",
+      });
+
+      // Query para buscar usuários no banco xtream_iptvpro (padrão Odin)
+      // Tabelas mapeadas: users
+      const query = "mysql -u root -p'fontemain123333' -P 7999 -e \"SELECT username, password, exp_date, admin_enabled, enabled FROM xtream_iptvpro.users LIMIT 10;\" --batch --json";
+      const result = await ssh.execCommand(query);
+      
+      await ssh.dispose();
+
+      if (result.stdout) {
+        return { success: true, data: JSON.parse(result.stdout) };
+      }
+      return { success: true, data: [] };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+export const createUser = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({
+    username: z.string(),
+    password: z.string(),
+    exp_date: z.number(),
+  }).parse(data))
+  .handler(async ({ data }) => {
+    const ssh = new NodeSSH();
+    try {
+      await ssh.connect({
+        host: "23.158.72.30",
+        port: 22,
+        username: "root",
+        password: "fontemain123333",
+      });
+
+      // Comando simplificado para inserir usuário (conforme padrão do Odin v6)
+      const query = `mysql -u root -p'fontemain123333' -P 7999 -e "INSERT INTO xtream_iptvpro.users (username, password, exp_date, member_group_id, enabled) VALUES ('${data.username}', '${data.password}', '${data.exp_date}', 1, 1);"`;
+      const result = await ssh.execCommand(query);
+      
+      await ssh.dispose();
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
