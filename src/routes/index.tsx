@@ -204,49 +204,92 @@ function Dashboard() {
           <div className="absolute right-0 top-0 h-full w-1/3 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] pointer-events-none" />
         </div>
 
-        {/* SSH Connection Helper */}
-        <section className="mt-12 p-8 rounded-2xl bg-[#0f0f12] border border-zinc-800/50">
-          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <Terminal size={20} className="text-primary" />
-            Conectar Servidor SSH
-          </h3>
-          <p className="text-zinc-400 mb-6 text-sm">
-            Para conectar seu servidor Odin ao painel, rode o comando abaixo no terminal SSH do seu servidor. Isso vai gerar o token e a URL de acesso automaticamente.
-          </p>
-          
-          <div className="bg-black/40 p-4 rounded-xl border border-zinc-800 font-mono text-sm relative group">
-            <code className="text-primary break-all">
-              wget -qO- https://71a12a47-d6b3-4362-a2b3-4497a0a13af3.lovableproject.com/api/public/install | bash
-            </code>
-            <button 
-              onClick={() => {
-                navigator.clipboard.writeText("wget -qO- https://71a12a47-d6b3-4362-a2b3-4497a0a13af3.lovableproject.com/api/public/install | bash");
-                alert("Comando copiado!");
-              }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded text-xs text-white"
-            >
-              COPIAR
-            </button>
-          </div>
-          
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50">
-              <h4 className="text-xs font-bold uppercase text-zinc-500 mb-2">Instruções</h4>
-              <ol className="text-xs text-zinc-400 space-y-2 list-decimal ml-4">
-                <li>Acesse seu servidor via SSH.</li>
-                <li>Cole o comando acima e aperte Enter.</li>
-                <li>O script vai configurar a API e mostrar o <span className="text-white">TOKEN</span> na tela.</li>
-                <li>Copie o Token e o IP do servidor para finalizar a conexão aqui no painel.</li>
-              </ol>
+        {/* SSH Insights & Connection */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-12">
+          {/* SSH Connection Helper */}
+          <section className="p-8 rounded-2xl bg-[#0f0f12] border border-zinc-800/50">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <Terminal size={20} className="text-primary" />
+              Conectar Servidor SSH
+            </h3>
+            <p className="text-zinc-400 mb-6 text-sm">
+              Para conectar seu servidor Odin ao painel, rode o comando abaixo no terminal SSH do seu servidor.
+            </p>
+            
+            <div className="bg-black/40 p-4 rounded-xl border border-zinc-800 font-mono text-sm relative group mb-6">
+              <code className="text-primary break-all">
+                wget -qO- https://71a12a47-d6b3-4362-a2b3-4497a0a13af3.lovableproject.com/api/public/install | bash
+              </code>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText("wget -qO- https://71a12a47-d6b3-4362-a2b3-4497a0a13af3.lovableproject.com/api/public/install | bash");
+                  alert("Comando copiado!");
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded text-xs text-white"
+              >
+                COPIAR
+              </button>
             </div>
-            <div className="bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50">
-              <h4 className="text-xs font-bold uppercase text-zinc-500 mb-2">Segurança</h4>
-              <p className="text-xs text-zinc-400">
-                O script cria um diretório seguro em <code className="text-zinc-300">/home/xtreamcodes/iptv_xtream_codes/wwwdir/mago-api</code> e gera um token único de 32 caracteres.
-              </p>
+            
+            <div className="grid grid-cols-1 gap-4">
+              <div className="bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50">
+                <h4 className="text-xs font-bold uppercase text-zinc-500 mb-2">Segurança</h4>
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  O script cria um diretório seguro em <code className="text-zinc-300">/home/xtreamcodes/iptv_xtream_codes/wwwdir/mago-api</code> e gera um token único de 32 caracteres.
+                </p>
+              </div>
             </div>
-          </div>
-            </section>
+          </section>
+
+          {/* SSH Analysis Output */}
+          <section className="p-8 rounded-2xl bg-[#0f0f12] border border-zinc-800/50 flex flex-col">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <Activity size={20} className="text-primary" />
+              Análise do Servidor (SSH)
+            </h3>
+            <div className="bg-black/60 rounded-xl border border-zinc-800/50 p-4 font-mono text-[10px] text-zinc-400 flex-1 overflow-auto max-h-[300px] scrollbar-thin scrollbar-thumb-zinc-800">
+              <div className="text-primary mb-2 font-bold uppercase tracking-widest text-[9px] border-b border-zinc-800 pb-1 flex justify-between">
+                <span>// LOG DE COMANDO: ls -la /home/xtreamcodes/iptv_xtream_codes/</span>
+                <span className="text-zinc-600">STATE: ANALYZED</span>
+              </div>
+              <pre className="whitespace-pre-wrap leading-tight">
+{`total 128572
+drwxrwxrwx 23 xtreamcodes xtreamcodes     4096 Aug 11 21:40 .
+drwxrwxrwx  4 xtreamcodes xtreamcodes     4096 Jun 26 16:08 ..
+drwxrwxrwx  9 xtreamcodes xtreamcodes     4096 Jun 21 12:45 admin
+drwxrwxrwx  4 xtreamcodes xtreamcodes     4096 Jun 20 01:15 adtools
+drwxrwxrwx  2 xtreamcodes xtreamcodes     4096 Jun 20 01:15 bin
+-rwxrwxrwx  1 xtreamcodes xtreamcodes      904 Jun 26 15:43 check_geolite.sh
+-rwxrwxrwx  1 xtreamcodes xtreamcodes      208 Jun 20 02:40 config
+-rwxrwxrwx  1 xtreamcodes xtreamcodes     2323 Jun 21 12:45 config.py
+drwxrwxrwx  2 xtreamcodes xtreamcodes     4096 Aug 25  2017 created_channels
+drwxrwxrwx  2 xtreamcodes xtreamcodes     4096 Aug  2 13:12 crons
+drwxrwxrwx  2 xtreamcodes xtreamcodes     4096 Dec  1  2018 delay
+-rw-r--r--  1 xtreamcodes xtreamcodes 65775230 Jun 23 22:29 GeoLite2.guard.mmdb
+-rw-r--r--  1 xtreamcodes xtreamcodes 65755735 Jul 15 22:24 GeoLite2.mmdb
+drwxrwxrwx  3 xtreamcodes xtreamcodes     4096 Jun 20 01:15 isp
+-rwxrwxrwx  1 xtreamcodes xtreamcodes       22 Sep 16  2019 kill_pids
+drwxr-xr-x  2 xtreamcodes xtreamcodes     4096 Aug 11 21:40 libcompat
+drwxrwxrwx  2 xtreamcodes xtreamcodes     4096 Jun 20 01:16 logs
+drwxrwxrwx  2 xtreamcodes xtreamcodes     4096 Apr 14  2019 movies
+drwxrwxrwx  5 xtreamcodes xtreamcodes     4096 Aug 11 22:22 nginx
+drwxrwxrwx 10 xtreamcodes xtreamcodes     4096 Aug 11 22:22 nginx_rtmp
+-rwxrwxrwx  1 xtreamcodes xtreamcodes      509 Jun 21 12:45 permissions.sh
+drwxrwxrwx  9 xtreamcodes xtreamcodes     4096 Aug 11 22:22 php
+drwxrwxrwx  3 xtreamcodes xtreamcodes     4096 Jun 21 12:46 pytools
+drwxrwxrwx  5 xtreamcodes xtreamcodes     4096 Jun 20 01:15 SecTools
+drwxrwxrwx  2 xtreamcodes xtreamcodes     4096 Dec  1  2018 signals
+-rwxrwxrwx  1 xtreamcodes xtreamcodes     2370 Aug 11 21:42 start_services.sh
+drwxrwxrwt  2 xtreamcodes xtreamcodes     1100 Aug 13 21:20 streams
+drwxrwxrwt  8 xtreamcodes xtreamcodes   287580 Aug 13 21:36 tmp
+drwxrwxrwx  2 xtreamcodes xtreamcodes     4096 Sep 16  2019 tools
+drwxrwxrwx  2 xtreamcodes xtreamcodes     4096 Dec  1  2018 tv_archive
+drwxrwxrwx  9 xtreamcodes xtreamcodes     4096 Jun 23 22:31 wwwdir
+-rwxrwxrwx  1 xtreamcodes xtreamcodes     8847 Sep  2  2018 xfirewall.php`}
+              </pre>
+            </div>
+          </section>
+        </div>
           </>
         ) : (
           <LegacyLab />
