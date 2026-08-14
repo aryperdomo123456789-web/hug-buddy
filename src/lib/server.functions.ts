@@ -111,40 +111,52 @@ export const runSSHCommand = createServerFn({ method: "POST" })
 
 export const getInstallScript = createServerFn({ method: "GET" }).handler(async () => {
   const cfg = getOdinConfig();
-  const tokenLine = cfg.apiToken ? `echo "TOKEN: ${cfg.apiToken}"` : `echo "TOKEN: configure ODIN_API_TOKEN"`;
-
+  
+  // Script inspirado no Sigma, mas otimizado para o Mago Panel
   return `#!/bin/bash
-set -e
+# Mago Panel - Odin v6 Installer
+# Estudei o Sigma e fiz melhor.
+
+trim() {
+    echo "$1" | xargs
+}
 
 PATH_ODIN="/home/xtreamcodes/iptv_xtream_codes/"
 API_DIR="$PATH_ODIN/wwwdir/mago-api"
 
-echo "Iniciando a forja no Mago Panel..."
+echo "#######################################"
+echo "####### MAGO PANEL - INSTALADOR #######"
+echo "#######################################"
 
 if [ ! -d "$PATH_ODIN" ]; then
   echo "ERRO: Servidor Odin não encontrado em $PATH_ODIN"
   exit 1
 fi
 
-mkdir -p "$API_DIR"
+mkdir -p "$API_DIR/logs"
+chmod -R 777 "$API_DIR/logs"
 cd "$API_DIR"
 
-if [ ! -f "token.txt" ]; then
-  TOKEN=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
-  echo "$TOKEN" > token.txt
+if [ ! -f "token.php" ]; then
+    echo "Gerando novo token de segurança..."
+    TOKEN=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+    echo "<?php \\$token = '$TOKEN';" > token.php
 else
-  TOKEN=$(cat token.txt)
+    TOKEN=$(awk -F"'" '/\\$token/{print $2}' "token.php")
 fi
 
-IP_PUBLICO=$(curl -s https://ifconfig.me || true)
-if [ -z "$IP_PUBLICO" ]; then
-  IP_PUBLICO=$(hostname -I | awk '{print $1}')
-fi
+# Criação do arquivo de versão para compatibilidade
+echo "{\"result\":{\"version\":\"1.0.0-mago\",\"script\":\"odin-v6\"}}" > version.json
 
-echo "ODIN CONECTADO COM SUCESSO!"
-echo "IP: $IP_PUBLICO"
-${tokenLine}
-echo "Copie os dados acima e cole no Mago Panel."
+IP_PUBLICO=$(curl -s -4 icanhazip.com || curl -s -4 ifconfig.me || hostname -I | awk '{print $1}')
+
+echo ""
+echo "------------------------------------"
+echo "TOKEN DO MAGO PANEL: $TOKEN"
+echo "URL DA API: http://$IP_PUBLICO/mago-api/"
+echo "------------------------------------"
+echo "Instalação concluída com sucesso!"
+echo "------------------------------------"
 `;
 });
 
