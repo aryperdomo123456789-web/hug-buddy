@@ -166,28 +166,7 @@ export const connectServer = createServerFn({ method: "POST" })
     };
   });
 
-export type User = {
-  id: number;
-  username: string;
-  password: string;
-  exp_date: number;
-  admin_enabled: number;
-  enabled: number;
-  active_cons: number;
-  max_connections: number;
-  member_id: number;
-  created_at: number;
-};
-
-export type UsersResponse = {
-  success: true;
-  data: User[];
-} | {
-  success: false;
-  error: any;
-};
-
-export const getUsers = createServerFn({ method: "GET" }).handler(async (): Promise<UsersResponse> => {
+export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
   try {
     const cfg = getOdinConfig();
     return await withSsh(
@@ -205,7 +184,10 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async (): Prom
             "SELECT",
             "u.id, u.username, u.password, u.exp_date, u.admin_enabled, u.enabled,",
             "COALESCE(COUNT(DISTINCT uan.container_id), 0) AS active_cons,",
-            "u.max_connections, u.member_id, u.created_at",
+            "u.max_connections, u.member_id, u.created_at,",
+            "u.admin_notes, u.reseller_notes, u.bouquet, u.is_restreamer,",
+            "u.allowed_ips, u.allowed_ua, u.is_trial, u.is_isplock, u.forced_country,",
+            "u.is_mag, u.is_e2, u.force_server_id, u.is_stalker, u.bypass_ua, u.access_output",
             "FROM users u",
             "LEFT JOIN user_activity_now uan ON u.id = uan.user_id",
             "GROUP BY u.id",
@@ -226,11 +208,26 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async (): Prom
             max_connections,
             member_id,
             created_at,
+            admin_notes,
+            reseller_notes,
+            bouquet,
+            is_restreamer,
+            allowed_ips,
+            allowed_ua,
+            is_trial,
+            is_isplock,
+            forced_country,
+            is_mag,
+            is_e2,
+            force_server_id,
+            is_stalker,
+            bypass_ua,
+            access_output,
           ] = columns;
           return {
             id: Number(id),
-            username: username || "",
-            password: password || "",
+            username,
+            password,
             exp_date: Number(exp_date),
             admin_enabled: Number(admin_enabled),
             enabled: Number(enabled),
@@ -238,23 +235,31 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async (): Prom
             max_connections: Number(max_connections),
             member_id: Number(member_id),
             created_at: Number(created_at),
+            admin_notes,
+            reseller_notes,
+            bouquet,
+            is_restreamer: Number(is_restreamer),
+            allowed_ips,
+            allowed_ua,
+            is_trial: Number(is_trial),
+            is_isplock: Number(is_isplock),
+            forced_country,
+            is_mag: Number(is_mag),
+            is_e2: Number(is_e2),
+            force_server_id: Number(force_server_id),
+            is_stalker: Number(is_stalker),
+            bypass_ua: Number(bypass_ua),
+            access_output: Number(access_output),
           };
         });
 
-        return { success: true, data: rows } as const;
+        return { success: true, data: rows };
       },
     );
   } catch (error: any) {
     return { success: false, error: error.message };
   }
 });
-
-export type CreateUserResponse = {
-  success: true;
-} | {
-  success: false;
-  error: any;
-};
 
 export const createUser = createServerFn({ method: "POST" })
   .inputValidator((data) =>
@@ -263,10 +268,29 @@ export const createUser = createServerFn({ method: "POST" })
         username: z.string().min(1),
         password: z.string().min(1),
         exp_date: z.number(),
+        max_connections: z.number().int().min(1).default(1),
+        member_id: z.number().int().min(0).default(1),
+        admin_enabled: z.number().int().min(0).max(1).default(1),
+        enabled: z.number().int().min(0).max(1).default(1),
+        admin_notes: z.string().default(""),
+        reseller_notes: z.string().default(""),
+        bouquet: z.string().default("[1]"),
+        is_restreamer: z.number().int().min(0).max(1).default(0),
+        allowed_ips: z.string().default(""),
+        allowed_ua: z.string().default(""),
+        is_trial: z.number().int().min(0).max(1).default(0),
+        is_isplock: z.number().int().min(0).max(1).default(0),
+        forced_country: z.string().default(""),
+        is_mag: z.number().int().min(0).max(1).default(0),
+        is_e2: z.number().int().min(0).max(1).default(0),
+        force_server_id: z.number().int().min(0).default(0),
+        is_stalker: z.number().int().min(0).max(1).default(0),
+        bypass_ua: z.number().int().min(0).max(1).default(0),
+        access_output: z.number().int().min(0).default(3),
       })
       .parse(data),
   )
-  .handler(async ({ data }): Promise<CreateUserResponse> => {
+  .handler(async ({ data }) => {
     try {
       const cfg = getOdinConfig();
       return await withSsh(
@@ -279,16 +303,161 @@ export const createUser = createServerFn({ method: "POST" })
       async (ssh, cfg) => {
         const sql = [
           "INSERT INTO users",
-          "(username, password, member_id, exp_date, enabled, admin_enabled, max_connections, created_at, created_by, bouquet)",
-          `VALUES ('${escapeSql(data.username)}', '${escapeSql(data.password)}', 1, ${Number(data.exp_date)}, 1, 1, 1, UNIX_TIMESTAMP(), 1, '[1]')`,
+          "(username, password, member_id, exp_date, enabled, admin_enabled, max_connections, created_at, created_by, bouquet, admin_notes, reseller_notes, is_restreamer, allowed_ips, allowed_ua, is_trial, is_isplock, forced_country, is_mag, is_e2, force_server_id, is_stalker, bypass_ua, access_output)",
+          `VALUES ('${escapeSql(data.username)}', '${escapeSql(data.password)}', ${Number(data.member_id)}, ${Number(data.exp_date)}, ${Number(data.enabled)}, ${Number(data.admin_enabled)}, ${Number(data.max_connections)}, UNIX_TIMESTAMP(), ${Number(data.member_id)}, '${escapeSql(data.bouquet)}', '${escapeSql(data.admin_notes)}', '${escapeSql(data.reseller_notes)}', ${Number(data.is_restreamer)}, '${escapeSql(data.allowed_ips)}', '${escapeSql(data.allowed_ua)}', ${Number(data.is_trial)}, ${Number(data.is_isplock)}, '${escapeSql(data.forced_country)}', ${Number(data.is_mag)}, ${Number(data.is_e2)}, ${Number(data.force_server_id)}, ${Number(data.is_stalker)}, ${Number(data.bypass_ua)}, ${Number(data.access_output)})`,
         ].join(" ");
 
         const result = await execMysql(ssh, cfg, sql);
         if (result.stderr && result.stderr.trim()) {
           return { success: false, error: result.stderr.trim() };
         }
-        return { success: true } as const;
+        return { success: true };
       },
+      );
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+export const updateUser = createServerFn({ method: "POST" })
+  .inputValidator((data) =>
+    z
+      .object({
+        id: z.number(),
+        username: z.string().min(1),
+        password: z.string().min(1),
+        exp_date: z.number(),
+        enabled: z.number().int().min(0).max(1).default(1),
+        max_connections: z.number().int().min(1).default(1),
+        member_id: z.number().int().min(0).default(1),
+        admin_enabled: z.number().int().min(0).max(1).default(1),
+        admin_notes: z.string().default(""),
+        reseller_notes: z.string().default(""),
+        bouquet: z.string().default("[1]"),
+        is_restreamer: z.number().int().min(0).max(1).default(0),
+        allowed_ips: z.string().default(""),
+        allowed_ua: z.string().default(""),
+        is_trial: z.number().int().min(0).max(1).default(0),
+        is_isplock: z.number().int().min(0).max(1).default(0),
+        forced_country: z.string().default(""),
+        is_mag: z.number().int().min(0).max(1).default(0),
+        is_e2: z.number().int().min(0).max(1).default(0),
+        force_server_id: z.number().int().min(0).default(0),
+        is_stalker: z.number().int().min(0).max(1).default(0),
+        bypass_ua: z.number().int().min(0).max(1).default(0),
+        access_output: z.number().int().min(0).default(3),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const cfg = getOdinConfig();
+      return await withSsh(
+        {
+          host: cfg.sshHost,
+          port: cfg.sshPort,
+          username: cfg.sshUsername,
+          password: cfg.sshPassword,
+        },
+        async (ssh, cfg) => {
+          const sql = [
+            "UPDATE users SET",
+            `username='${escapeSql(data.username)}'`,
+            `, password='${escapeSql(data.password)}'`,
+            `, exp_date=${Number(data.exp_date)}`,
+            `, enabled=${Number(data.enabled)}`,
+            `, admin_enabled=${Number(data.admin_enabled)}`,
+            `, max_connections=${Number(data.max_connections)}`,
+            `, member_id=${Number(data.member_id)}`,
+            `, admin_notes='${escapeSql(data.admin_notes)}'`,
+            `, reseller_notes='${escapeSql(data.reseller_notes)}'`,
+            `, bouquet='${escapeSql(data.bouquet)}'`,
+            `, is_restreamer=${Number(data.is_restreamer)}`,
+            `, allowed_ips='${escapeSql(data.allowed_ips)}'`,
+            `, allowed_ua='${escapeSql(data.allowed_ua)}'`,
+            `, is_trial=${Number(data.is_trial)}`,
+            `, is_isplock=${Number(data.is_isplock)}`,
+            `, forced_country='${escapeSql(data.forced_country)}'`,
+            `, is_mag=${Number(data.is_mag)}`,
+            `, is_e2=${Number(data.is_e2)}`,
+            `, force_server_id=${Number(data.force_server_id)}`,
+            `, is_stalker=${Number(data.is_stalker)}`,
+            `, bypass_ua=${Number(data.bypass_ua)}`,
+            `, access_output=${Number(data.access_output)}`,
+            `WHERE id=${Number(data.id)}`,
+          ].join(" ");
+
+          const result = await execMysql(ssh, cfg, sql);
+          if (result.stderr && result.stderr.trim()) {
+            return { success: false, error: result.stderr.trim() };
+          }
+          return { success: true };
+        },
+      );
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+export const toggleUserStatus = createServerFn({ method: "POST" })
+  .inputValidator((data) =>
+    z
+      .object({
+        id: z.number(),
+        enabled: z.number().int().min(0).max(1),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const cfg = getOdinConfig();
+      return await withSsh(
+        {
+          host: cfg.sshHost,
+          port: cfg.sshPort,
+          username: cfg.sshUsername,
+          password: cfg.sshPassword,
+        },
+        async (ssh, cfg) => {
+          const sql = `UPDATE users SET enabled=${Number(data.enabled)}, admin_enabled=${Number(data.enabled)} WHERE id=${Number(data.id)}`;
+          const result = await execMysql(ssh, cfg, sql);
+          if (result.stderr && result.stderr.trim()) {
+            return { success: false, error: result.stderr.trim() };
+          }
+          return { success: true };
+        },
+      );
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+export const deleteUser = createServerFn({ method: "POST" })
+  .inputValidator((data) =>
+    z
+      .object({
+        id: z.number(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const cfg = getOdinConfig();
+      return await withSsh(
+        {
+          host: cfg.sshHost,
+          port: cfg.sshPort,
+          username: cfg.sshUsername,
+          password: cfg.sshPassword,
+        },
+        async (ssh, cfg) => {
+          const sql = `DELETE FROM users WHERE id=${Number(data.id)}`;
+          const result = await execMysql(ssh, cfg, sql);
+          if (result.stderr && result.stderr.trim()) {
+            return { success: false, error: result.stderr.trim() };
+          }
+          return { success: true };
+        },
       );
     } catch (error: any) {
       return { success: false, error: error.message };
