@@ -10,8 +10,10 @@ export const Route = createFileRoute('/api/public/install')({
           status: 200,
           headers: {
             'Content-Type': 'text/plain; charset=utf-8',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
             'X-Content-Type-Options': 'nosniff',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
           },
         })
       }
