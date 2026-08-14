@@ -111,7 +111,6 @@ function Dashboard() {
   const handleFetchUsers = async () => {
     setIsLoadingCustomers(true);
     try {
-      // @ts-ignore
       const res = await fetchUsersFn();
       if (res.success) {
         setCustomers(res.data);
@@ -124,6 +123,10 @@ function Dashboard() {
       setIsLoadingCustomers(false);
     }
   };
+
+  React.useEffect(() => {
+    handleFetchUsers();
+  }, []);
 
   const handleCreateUser = async () => {
     if (!newUserData.username || !newUserData.password) {
@@ -336,10 +339,20 @@ function Dashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/30">
-                <TableRow name="Pedro Alcântara" status="Ativo" expiry="12 Out 2026" connections="1/1" />
-                <TableRow name="Maria Joaquina" status="Ativo" expiry="05 Set 2026" connections="2/3" />
-                <TableRow name="Lucas Silva" status="Expirado" expiry="10 Ago 2026" connections="0/1" />
-                <TableRow name="Carla Souza" status="Pendente" expiry="-" connections="0/1" />
+                {customers.length > 0 ? customers.slice(0, 5).map((user: any, idx: number) => (
+                  <TableRow 
+                    key={idx} 
+                    name={user.username} 
+                    status={user.enabled == 1 ? (user.exp_date > Date.now()/1000 ? 'Ativo' : 'Expirado') : 'Pendente'} 
+                    expiry={user.exp_date ? new Date(user.exp_date * 1000).toLocaleDateString() : '-'} 
+                    connections={`${user.active_cons || 0}/${user.max_connections || 1}`} 
+                  />
+                )) : (
+                  <>
+                    <TableRow name="Pedro Alcântara" status="Ativo" expiry="12 Out 2026" connections="1/1" />
+                    <TableRow name="Maria Joaquina" status="Ativo" expiry="05 Set 2026" connections="2/3" />
+                  </>
+                )}
               </tbody>
             </table>
           </div>
@@ -506,15 +519,19 @@ function Dashboard() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-black/20 text-zinc-500 text-xs uppercase tracking-wider font-bold">
+                      <th className="px-6 py-4">ID</th>
                       <th className="px-6 py-4">Usuário</th>
-                      <th className="px-6 py-4">Status</th>
-                      <th className="px-6 py-4">Expiração</th>
+                      <th className="px-6 py-4">Senha</th>
+                      <th className="px-6 py-4 text-center">Estado</th>
+                      <th className="px-6 py-4 text-center">Expiração</th>
+                      <th className="px-6 py-4 text-center">Conns</th>
                       <th className="px-6 py-4 text-right">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-800/30">
                     {customers.length > 0 ? customers.map((user: any, idx: number) => (
                       <tr key={idx} className="hover:bg-white/[0.02] group transition-colors">
+                        <td className="px-6 py-4 text-xs font-mono text-zinc-500">{user.id}</td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center font-bold text-xs text-zinc-400">
@@ -523,18 +540,34 @@ function Dashboard() {
                             <span className="font-bold text-zinc-200">{user.username}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-xs font-mono text-zinc-500">{user.password}</td>
+                        <td className="px-6 py-4 text-center">
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${user.enabled == 1 ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
                             {user.enabled == 1 ? 'Ativo' : 'Bloqueado'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-zinc-400 text-sm">
-                          {new Date(user.exp_date * 1000).toLocaleDateString()}
+                        <td className="px-6 py-4 text-center">
+                           <div className="flex flex-col items-center">
+                              <span className="text-zinc-400 text-xs">{user.exp_date ? new Date(user.exp_date * 1000).toLocaleDateString() : 'Unlimited'}</span>
+                              {user.exp_date && (
+                                <span className="text-[9px] text-zinc-600 uppercase">
+                                  {Math.ceil((user.exp_date - Date.now()/1000) / 86400)} Dias
+                                </span>
+                              )}
+                           </div>
+                        </td>
+                        <td className="px-6 py-4 text-center font-mono text-xs text-zinc-400">
+                          {user.active_cons || 0} / {user.max_connections || 1}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button className="text-zinc-600 hover:text-primary transition-colors p-2">
-                            <Settings size={16} />
-                          </button>
+                          <div className="flex justify-end gap-1">
+                            <button className="text-zinc-600 hover:text-white transition-colors p-1.5 bg-zinc-900/50 rounded-lg">
+                              <Activity size={14} />
+                            </button>
+                            <button className="text-zinc-600 hover:text-primary transition-colors p-1.5 bg-zinc-900/50 rounded-lg">
+                              <Settings size={14} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     )) : (
