@@ -169,14 +169,13 @@ export const connectServer = createServerFn({ method: "POST" })
 export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
   try {
     const cfg = getOdinConfig();
-    return await withSsh(
-      {
-        host: cfg.sshHost,
-        port: cfg.sshPort,
-        username: cfg.sshUsername,
-        password: cfg.sshPassword,
-      },
-      async (ssh, cfg) => {
+    const sshParams = {
+      host: cfg.sshHost,
+      port: cfg.sshPort,
+      username: cfg.sshUsername,
+      password: cfg.sshPassword,
+    };
+    return await withSsh(sshParams, async (ssh, cfg) => {
         const result = await execMysql(
           ssh,
           cfg,
@@ -187,7 +186,7 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
             "u.max_connections, u.member_id, u.created_at,",
             "u.admin_notes, u.reseller_notes, u.bouquet, u.is_restreamer,",
             "u.allowed_ips, u.allowed_ua, u.is_trial, u.is_isplock, u.forced_country,",
-            "u.is_mag, u.is_e2, u.force_server_id, u.is_stalker, u.bypass_ua",
+            "u.is_mag, u.is_e2, u.force_server_id, u.is_stalker, u.bypass_ua, u.as_number, u.isp_desc",
             "FROM users u",
             "LEFT JOIN user_activity_now uan ON u.id = uan.user_id",
             "GROUP BY u.id",
@@ -222,6 +221,8 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
             force_server_id,
             is_stalker,
             bypass_ua,
+            as_number,
+            isp_desc,
           ] = columns;
           return {
             id: Number(id),
@@ -248,7 +249,9 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
             force_server_id: Number(force_server_id),
             is_stalker: Number(is_stalker),
             bypass_ua: Number(bypass_ua),
-            access_output: 3, // Fallback fixo para Odin
+            as_number,
+            isp_desc,
+            access_output: 3, 
           };
         });
 
@@ -508,56 +511,85 @@ export const getServers = createServerFn({ method: "GET" }).handler(async () => 
 export const getStreams = createServerFn({ method: "GET" }).handler(async () => {
   try {
     const cfg = getOdinConfig();
-    return await withSsh(
-      {
-        host: cfg.sshHost,
-        port: cfg.sshPort,
-        username: cfg.sshUsername,
-        password: cfg.sshPassword,
-      },
-      async (ssh, cfg) => {
-        const result = await execMysql(
-          ssh,
-          cfg,
-          [
-            "SELECT",
-            "s.id, s.stream_display_name, s.type, s.category_id, s.created_channel_location,",
-            "CASE WHEN sys.stream_id IS NOT NULL THEN 1 ELSE 0 END AS is_online,",
-            "COALESCE(sys.bitrate, 0) AS bitrate, COALESCE(sys.server_id, 0) AS server_id",
-            "FROM streams s",
-            "LEFT JOIN streams_sys sys ON s.id = sys.stream_id",
-            "WHERE s.type = 1",
-            "ORDER BY s.id DESC",
-            "LIMIT 100",
-          ].join(" "),
-        );
+    const sshParams = {
+      host: cfg.sshHost,
+      port: cfg.sshPort,
+      username: cfg.sshUsername,
+      password: cfg.sshPassword,
+    };
+    return await withSsh(sshParams, async (ssh, cfg) => {
+      const result = await execMysql(
+        ssh,
+        cfg,
+        [
+          "SELECT",
+          "s.id, s.stream_display_name, s.type, s.category_id, s.created_channel_location,",
+          "CASE WHEN sys.stream_id IS NOT NULL THEN 1 ELSE 0 END AS is_online,",
+          "COALESCE(sys.bitrate, 0) AS bitrate, COALESCE(sys.server_id, 0) AS server_id",
+          "FROM streams s",
+          "LEFT JOIN streams_sys sys ON s.id = sys.stream_id",
+          "WHERE s.type = 1",
+          "ORDER BY s.id DESC",
+          "LIMIT 100",
+        ].join(" "),
+      );
 
-        const rows = parseTabRows(result.stdout, (columns) => {
-          const [
-            id,
-            stream_display_name,
-            type,
-            category_id,
-            created_channel_location,
-            is_online,
-            bitrate,
-            server_id,
-          ] = columns;
-          return {
-            id: Number(id),
-            stream_display_name,
-            type: Number(type),
-            category_id: Number(category_id),
-            created_channel_location: Number(created_channel_location),
-            is_online: Number(is_online),
-            bitrate: Number(bitrate),
-            server_id: Number(server_id),
-          };
-        });
+      const rows = parseTabRows(result.stdout, (columns) => {
+        const [
+          id,
+          stream_display_name,
+          type,
+          category_id,
+          created_channel_location,
+          is_online,
+          bitrate,
+          server_id,
+        ] = columns;
+        return {
+          id: Number(id),
+          stream_display_name,
+          type: Number(type),
+          category_id: Number(category_id),
+          created_channel_location: Number(created_channel_location),
+          is_online: Number(is_online),
+          bitrate: Number(bitrate),
+          server_id: Number(server_id),
+        };
+      });
 
-        return { success: true, data: rows };
-      },
-    );
+      return { success: true, data: rows };
+    });
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+});
+
+export const getBouquets = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const cfg = getOdinConfig();
+    const sshParams = {
+      host: cfg.sshHost,
+      port: cfg.sshPort,
+      username: cfg.sshUsername,
+      password: cfg.sshPassword,
+    };
+    return await withSsh(sshParams, async (ssh, cfg) => {
+      const result = await execMysql(
+        ssh,
+        cfg,
+        "SELECT id, bouquet_name FROM bouquets ORDER BY bouquet_order ASC"
+      );
+
+      const rows = parseTabRows(result.stdout, (columns) => {
+        const [id, bouquet_name] = columns;
+        return {
+          id: Number(id),
+          name: bouquet_name,
+        };
+      });
+
+      return { success: true, data: rows };
+    });
   } catch (error: any) {
     return { success: false, error: error.message };
   }
