@@ -112,25 +112,35 @@ function Dashboard() {
       <main className="ml-64 p-10 max-w-7xl mx-auto">
         <header className="flex justify-between items-end mb-12">
           <div>
-            <h1 className="text-4xl font-black mb-2 tracking-tight">DASHBOARD</h1>
-            <p className="text-zinc-500">Bem-vindo à sua central de comando, mestre.</p>
+            <h1 className="text-4xl font-black mb-2 tracking-tight uppercase">
+              {view === 'dashboard' ? 'Dashboard' : 'Laboratório Legado'}
+            </h1>
+            <p className="text-zinc-500">
+              {view === 'dashboard' 
+                ? 'Bem-vindo à sua central de comando, mestre.' 
+                : 'Analise e extraia o melhor do sistema legado para a nossa forja.'}
+            </p>
           </div>
-          <button className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-primary/20">
-            <PlusCircle size={20} />
-            CRIAR NOVO USUÁRIO
-          </button>
+          {view === 'dashboard' && (
+            <button className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-primary/20">
+              <PlusCircle size={20} />
+              CRIAR NOVO USUÁRIO
+            </button>
+          )}
         </header>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-          <StatCard icon={<Users className="text-blue-500" />} label="Usuários Ativos" value="1,284" change="+12%" />
-          <StatCard icon={<Activity className="text-green-500" />} label="Canais Online" value="15,402" change="99.9%" />
-          <StatCard icon={<Server className="text-purple-500" />} label="Carga CPU" value="42%" change="Estável" />
-          <StatCard icon={<ShieldAlert className="text-yellow-500" />} label="Alertas" value="0" change="Limpo" />
-        </div>
+        {view === 'dashboard' ? (
+          <>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+              <StatCard icon={<Users className="text-blue-500" />} label="Usuários Ativos" value="1,284" change="+12%" />
+              <StatCard icon={<Activity className="text-green-500" />} label="Canais Online" value="15,402" change="99.9%" />
+              <StatCard icon={<Server className="text-purple-500" />} label="Carga CPU" value="42%" change="Estável" />
+              <StatCard icon={<ShieldAlert className="text-yellow-500" />} label="Alertas" value="0" change="Limpo" />
+            </div>
 
-        {/* Recent Activity / Users Table */}
-        <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800/50 overflow-hidden shadow-2xl">
+            {/* Recent Activity / Users Table */}
+            <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800/50 overflow-hidden shadow-2xl">
           <div className="p-6 border-b border-zinc-800/50 flex justify-between items-center bg-zinc-900/30">
             <h2 className="font-bold text-lg flex items-center gap-2">
               <Users size={18} className="text-primary" />
