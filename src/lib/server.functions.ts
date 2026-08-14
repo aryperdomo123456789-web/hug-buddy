@@ -124,7 +124,7 @@ export const getUsers = createServerFn({ method: "GET" })
 
       // Query para buscar usuários no banco xtream_iptvpro (padrão Odin)
       // Tabelas mapeadas: users
-      const query = "mysql -u root -p'fontemain123333' -P 7999 -e \"SELECT id, username, password, exp_date, admin_enabled, enabled, (SELECT count(*) FROM xtream_iptvpro.user_activity_now WHERE user_id = u.id) as active_cons, max_connections FROM xtream_iptvpro.users u LIMIT 100;\" --batch --json";
+      const query = "mysql -u user_iptvpro -p'Y92RYuXHLP58AbOciQW' -D xtream_iptvpro -P 7999 -e \"SELECT id, username, password, exp_date, admin_enabled, enabled, (SELECT count(*) FROM user_activity_now WHERE user_id = u.id) as active_cons, max_connections FROM users u LIMIT 100;\" --batch --json";
       const result = await ssh.execCommand(query);
       
       await ssh.dispose();
@@ -155,7 +155,7 @@ export const createUser = createServerFn({ method: "POST" })
       });
 
       // Comando simplificado para inserir usuário (conforme padrão do Odin v6)
-      const query = `mysql -u root -p'fontemain123333' -P 7999 -e "INSERT INTO xtream_iptvpro.users (username, password, exp_date, member_group_id, enabled) VALUES ('${data.username}', '${data.password}', '${data.exp_date}', 1, 1);"`;
+      const query = `mysql -u user_iptvpro -p'Y92RYuXHLP58AbOciQW' -D xtream_iptvpro -P 7999 -e "INSERT INTO users (username, password, exp_date, member_group_id, enabled) VALUES ('${data.username}', '${data.password}', '${data.exp_date}', 1, 1);"`;
       const result = await ssh.execCommand(query);
       
       await ssh.dispose();
