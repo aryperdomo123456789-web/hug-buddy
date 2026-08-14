@@ -285,8 +285,11 @@ function Dashboard() {
                 : 'Analise e extraia o melhor do sistema legado para a nossa forja.'}
             </p>
           </div>
-          {view === 'dashboard' && (
-            <button className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-primary/20">
+          {(view === 'dashboard' || view === 'customers') && (
+            <button 
+              onClick={() => setShowAddUserModal(true)}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-primary/20"
+            >
               <PlusCircle size={20} />
               CRIAR NOVO USUÁRIO
             </button>
