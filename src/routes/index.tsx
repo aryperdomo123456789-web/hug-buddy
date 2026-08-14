@@ -249,8 +249,8 @@ function Dashboard() {
             </h3>
             <div className="bg-black/60 rounded-xl border border-zinc-800/50 p-4 font-mono text-[10px] text-zinc-400 flex-1 overflow-auto max-h-[300px] scrollbar-thin scrollbar-thumb-zinc-800">
               <div className="text-primary mb-2 font-bold uppercase tracking-widest text-[9px] border-b border-zinc-800 pb-1 flex justify-between">
-                <span>// LOG DE COMANDO: ls -la /home/xtreamcodes/iptv_xtream_codes/</span>
-                <span className="text-zinc-600">STATE: ANALYZED</span>
+                <span>// LOG DE COMANDO: cat /home/xtreamcodes/iptv_xtream_codes/functions.php | grep -E "'db_user'|'db_pass'|'db_name'|'db_port'"</span>
+                <span className="text-zinc-600">AWAITING INPUT...</span>
               </div>
               <pre className="whitespace-pre-wrap leading-tight">
 {`total 128572
