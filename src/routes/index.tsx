@@ -1,3 +1,10 @@
+/**
+ * Mago Panel - Odin v6 Mirror
+ * A tela de clientes agora reflete exatamente as funções do painel original:
+ * - Colunas detalhadas: ID, Senha, Revendedor, Estado, Teste, Conexões, Info ISP.
+ * - Modal Multi-Abas: Detalhes, Avançado, Restrições e Bouquets reais.
+ * - Ações: Kill connections, toggle status, edição completa.
+ */
 import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -25,7 +32,10 @@ import {
   updateUser, 
   deleteUser, 
   getServers, 
-  getStreams 
+  getStreams,
+  getBouquets,
+  killUserConnections,
+  toggleUserStatus
 } from "@/lib/server.functions";
 import { getOdinConfig } from "@/lib/odin";
 import { toast } from "sonner";
@@ -35,6 +45,7 @@ type UserEditorState = {
   username: string;
   password: string;
   owner: string;
+  member_id: number;
   exp_days: number;
   max_connections: number;
   enabled: boolean;
@@ -101,8 +112,10 @@ function Dashboard() {
   const { odin } = Route.useLoaderData();
   const [view, setView] = React.useState<'dashboard' | 'customers' | 'servers' | 'streams'>('dashboard');
   const [customers, setCustomers] = React.useState<any[]>([]);
+  const [bouquets, setBouquets] = React.useState<any[]>([]);
   const [servers, setServers] = React.useState<any[]>([]);
   const [streams, setStreams] = React.useState<any[]>([]);
+  const [activeTab, setActiveTab] = React.useState<'details' | 'advanced' | 'restrictions' | 'bouquets'>('details');
   const [loading, setLoading] = React.useState(false);
   const [showAddUserModal, setShowAddUserModal] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<any | null>(null);
@@ -110,6 +123,7 @@ function Dashboard() {
     username: "",
     password: "",
     owner: "SuaFonte444",
+    member_id: 1,
     exp_days: 30,
     max_connections: 1,
     enabled: true,
@@ -129,15 +143,19 @@ function Dashboard() {
   const fetchUsersFn = useServerFn(getUsers);
   const fetchServersFn = useServerFn(getServers);
   const fetchStreamsFn = useServerFn(getStreams);
+  const fetchBouquetsFn = useServerFn(getBouquets);
   const createUserFn = useServerFn(createUser);
   const updateUserFn = useServerFn(updateUser);
   const deleteUserFn = useServerFn(deleteUser);
+  const killConnectionsFn = useServerFn(killUserConnections);
+  const toggleStatusFn = useServerFn(toggleUserStatus);
 
   const handleFetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetchUsersFn();
-      if (res.success) setCustomers(res.data || []);
+      const [uRes, bRes] = await Promise.all([fetchUsersFn(), fetchBouquetsFn()]);
+      if (uRes.success) setCustomers(uRes.data || []);
+      if (bRes.success) setBouquets(bRes.data || []);
     } catch (e) { toast.error("Erro ao carregar clientes"); }
     finally { setLoading(false); }
   };
@@ -163,10 +181,11 @@ function Dashboard() {
   const handleFetchDashboard = async () => {
     setLoading(true);
     try {
-      const [uRes, sRes, stRes] = await Promise.all([fetchUsersFn(), fetchServersFn(), fetchStreamsFn()]);
+      const [uRes, sRes, stRes, bRes] = await Promise.all([fetchUsersFn(), fetchServersFn(), fetchStreamsFn(), fetchBouquetsFn()]);
       if (uRes.success) setCustomers(uRes.data || []);
       if (sRes.success) setServers(sRes.data || []);
       if (stRes.success) setStreams(stRes.data || []);
+      if (bRes.success) setBouquets(bRes.data || []);
     } catch (e) { toast.error("Erro ao carregar dashboard"); }
     finally { setLoading(false); }
   };
@@ -277,52 +296,123 @@ function Dashboard() {
           )}
 
           {view === 'customers' && (
-             <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800 p-6 shadow-xl overflow-hidden">
-               <div className="flex justify-between items-center mb-6">
-                 <button onClick={() => { setEditingUser(null); setShowAddUserModal(true); }} className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2">
-                   <UserPlus size={18} /> Novo Cliente
-                 </button>
-                 <div className="text-xs font-mono text-zinc-600">{customers.length} utilizadores encontrados</div>
+             <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800 shadow-xl overflow-hidden">
+               <div className="p-6 border-b border-zinc-900 bg-zinc-950/30 flex justify-between items-center">
+                 <div className="flex gap-4">
+                   <button onClick={() => { setEditingUser(null); setActiveTab('details'); setShowAddUserModal(true); }} className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2 rounded-lg font-bold transition-all flex items-center gap-2 text-sm">
+                     <PlusCircle size={18} /> Adicionar um Utilizador
+                   </button>
+                   <div className="flex bg-zinc-900 rounded-lg p-1">
+                      <button className="px-4 py-1.5 text-xs font-bold text-zinc-400 bg-zinc-800 rounded-md shadow-sm">Modo Manual</button>
+                   </div>
+                 </div>
+                 <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <input type="text" placeholder="Pesquisar Utilizadores..." className="bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-4 text-xs text-zinc-300 w-64 focus:outline-none focus:border-blue-500" />
+                    </div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-zinc-600">
+                      {customers.length} Utilizadores
+                    </div>
+                 </div>
                </div>
                
                <div className="overflow-x-auto">
                  <table className="w-full">
                    <thead>
-                      <tr className="text-zinc-500 text-[10px] uppercase tracking-widest text-left border-b border-zinc-900">
-                          <th className="pb-4 px-4 font-black">Usuário</th>
-                          <th className="pb-4 px-4 font-black text-center">Status</th>
-                          <th className="pb-4 px-4 font-black text-center">Conexões</th>
-                          <th className="pb-4 px-4 font-black">Expiração</th>
-                          <th className="pb-4 px-4 font-black text-right">Ações</th>
+                      <tr className="bg-zinc-950/50 text-zinc-500 text-[10px] uppercase tracking-widest text-left border-b border-zinc-900">
+                          <th className="py-4 px-6 font-black">ID</th>
+                          <th className="py-4 px-6 font-black">Nome do Utilizador</th>
+                          <th className="py-4 px-6 font-black">Senha</th>
+                          <th className="py-4 px-6 font-black">Revendedor</th>
+                          <th className="py-4 px-6 font-black text-center">Estado</th>
+                          <th className="py-4 px-6 font-black text-center">Teste</th>
+                          <th className="py-4 px-6 font-black">Expiração</th>
+                          <th className="py-4 px-6 font-black">Dias</th>
+                          <th className="py-4 px-6 font-black text-center">Conns.</th>
+                          <th className="py-4 px-6 font-black">Info</th>
+                          <th className="py-4 px-6 font-black text-right">Ações</th>
                       </tr>
                    </thead>
                    <tbody className="divide-y divide-zinc-900/50">
-                    {customers.map(u => (
-                      <tr key={u.id} className="text-sm group hover:bg-zinc-800/20 transition-colors">
-                        <td className="py-4 px-4 font-bold text-zinc-200">{u.username}</td>
-                        <td className="py-4 px-4 text-center">
-                          <span className={u.enabled == 1 ? "text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter" : "text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter"}>
-                            {u.enabled == 1 ? 'Ativo' : 'Bloqueado'}
+                    {customers.map(u => {
+                      const daysLeft = u.exp_date ? Math.max(0, Math.ceil((u.exp_date - Date.now() / 1000) / 86400)) : null;
+                      return (
+                      <tr key={u.id} className="text-xs group hover:bg-blue-600/5 transition-colors border-b border-zinc-900/30">
+                        <td className="py-4 px-6 font-mono text-zinc-600">{u.id}</td>
+                        <td className="py-4 px-6 font-bold text-zinc-200">{u.username}</td>
+                        <td className="py-4 px-6 text-zinc-500 font-mono">{u.password}</td>
+                        <td className="py-4 px-6 text-zinc-400">{u.owner || 'SuaFonte444'}</td>
+                        <td className="py-4 px-6 text-center">
+                          <span className={u.enabled == 1 ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 rounded text-[9px] font-black uppercase" : "bg-red-500/10 text-red-500 border border-red-500/20 px-2 py-0.5 rounded text-[9px] font-black uppercase"}>
+                            {u.enabled == 1 ? 'Active' : 'Blocked'}
                           </span>
                         </td>
-                        <td className="py-4 px-4 text-center font-mono text-xs">
-                          <span className={u.active_cons > 0 ? "text-green-400 font-bold" : "text-zinc-600"}>
+                        <td className="py-4 px-6 text-center">
+                          <span className={u.is_trial == 1 ? "bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded text-[9px] font-black uppercase" : "bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[9px] font-black uppercase"}>
+                            {u.is_trial == 1 ? 'Trial' : 'Official'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 font-mono text-zinc-400">
+                          {u.exp_date ? new Date(u.exp_date * 1000).toLocaleDateString() : 'Unlimited'}
+                        </td>
+                        <td className="py-4 px-6 font-mono text-zinc-500">
+                          {daysLeft !== null ? `${daysLeft}d` : '-'}
+                        </td>
+                        <td className="py-4 px-6 text-center font-mono">
+                          <span className={u.active_cons > 0 ? "text-emerald-400 font-bold" : "text-zinc-600"}>
                             {u.active_cons}
                           </span>
-                          <span className="text-zinc-700 mx-1">/</span>
+                          <span className="text-zinc-800 mx-1">/</span>
                           <span className="text-zinc-500">{u.max_connections}</span>
                         </td>
-                        <td className="py-4 px-4 font-mono text-xs text-zinc-500">
-                          {u.exp_date ? new Date(u.exp_date * 1000).toLocaleDateString() : 'Nunca'}
+                        <td className="py-4 px-6 text-[10px] text-zinc-500 max-w-[150px] truncate">
+                          {u.isp_info || '-'}
                         </td>
-                        <td className="py-4 px-4 text-right">
-                          <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => { setEditingUser(u); setShowAddUserModal(true); }} className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors"><Settings size={14} /></button>
-                            <button onClick={() => handleDeleteUser(u)} className="p-2 hover:bg-red-900/20 rounded-lg text-red-500 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
+                        <td className="py-4 px-6 text-right">
+                          <div className="flex gap-1 justify-end">
+                            <button onClick={async () => {
+                              const res = await toggleStatusFn({ data: { id: u.id, enabled: u.enabled == 1 ? 0 : 1 } });
+                              if (res.success) { toast.success("Status alterado!"); handleFetchUsers(); }
+                            }} title="Toggle Status" className="p-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-400 hover:text-white transition-all"><ShieldAlert size={12} /></button>
+                            
+                            <button onClick={() => { 
+                              setEditingUser(u); 
+                              setNewUserData({
+                                id: u.id,
+                                username: u.username,
+                                password: u.password,
+                                owner: u.owner || 'SuaFonte444',
+                                member_id: u.member_id || 1,
+                                exp_days: daysLeft || 30,
+                                max_connections: u.max_connections,
+                                enabled: u.enabled == 1,
+                                admin_enabled: u.admin_enabled == 1,
+                                trial: u.is_trial == 1,
+                                forced_portal: u.forced_portal == 1,
+                                restreamer: u.is_restreamer == 1,
+                                force_country: u.forced_country || "Off",
+                                ip_lock: u.is_isplock == 1,
+                                allowed_ips: u.allowed_ips || "",
+                                allowed_agents: u.allowed_ua || "",
+                                notes_admin: u.admin_notes || "",
+                                notes_reseller: u.reseller_notes || "",
+                                bouquet_ids: u.bouquet || "[1]",
+                              });
+                              setActiveTab('details');
+                              setShowAddUserModal(true); 
+                            }} title="Editar" className="p-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-400 hover:text-white transition-all"><Settings size={12} /></button>
+                            
+                            <button onClick={async () => {
+                              const res = await killConnectionsFn({ data: { id: u.id } });
+                              if (res.success) toast.success("Conexões derrubadas!");
+                            }} title="Kill Connections" className="p-1.5 bg-zinc-900 hover:bg-red-900/20 border border-zinc-800 rounded text-zinc-400 hover:text-red-500 transition-all"><Play size={12} className="rotate-90" /></button>
+                            
+                            <button onClick={() => handleDeleteUser(u)} title="Remover" className="p-1.5 bg-zinc-900 hover:bg-red-900/20 border border-zinc-800 rounded text-red-900 hover:text-red-500 transition-all"><Trash2 size={12} /></button>
                           </div>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                    </tbody>
                  </table>
                </div>
@@ -475,30 +565,118 @@ function Dashboard() {
       </div>
       
       {showAddUserModal && (
-         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-           <div className="bg-[#0f0f12] p-10 rounded-3xl w-full max-w-2xl border border-zinc-800 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-             <div className="flex justify-between items-center mb-8">
-               <h3 className="text-2xl font-black uppercase tracking-tighter text-blue-500">
-                 {editingUser ? "Modificar Utilizador" : "Forjar Novo Acesso"}
-               </h3>
-               <button onClick={() => setShowAddUserModal(false)} className="text-zinc-600 hover:text-white transition-colors">
-                 <Trash2 size={24} />
-               </button>
-             </div>
-             
-             <div className="grid grid-cols-2 gap-6">
-                <Field label="Username"><input className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono" value={newUserData.username} onChange={e => setNewUserData({...newUserData, username: e.target.value})} /></Field>
-                <Field label="Password"><input className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono" value={newUserData.password} onChange={e => setNewUserData({...newUserData, password: e.target.value})} /></Field>
-                <Field label="Dias Expiração"><input type="number" className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono" value={newUserData.exp_days} onChange={e => setNewUserData({...newUserData, exp_days: Number(e.target.value)})} /></Field>
-                <Field label="Conexões Max"><input type="number" className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono" value={newUserData.max_connections} onChange={e => setNewUserData({...newUserData, max_connections: Number(e.target.value)})} /></Field>
-             </div>
-             
-             <div className="flex gap-4 mt-12">
-               <button onClick={() => setShowAddUserModal(false)} className="flex-1 py-4 bg-zinc-950 text-zinc-500 font-bold rounded-xl border border-zinc-900 hover:bg-zinc-900 transition-all uppercase tracking-widest text-xs">Descartar</button>
-               <button onClick={handleSaveUser} className="flex-1 py-4 bg-blue-600 text-white font-black rounded-xl shadow-lg shadow-blue-900/20 hover:bg-blue-500 transition-all uppercase tracking-widest text-xs">Confirmar Forja</button>
-             </div>
-           </div>
-         </div>
+          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+            <div className="bg-[#0f0f12] rounded-3xl w-full max-w-4xl border border-zinc-800 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden">
+              <div className="bg-zinc-950/80 p-6 border-b border-zinc-900 flex justify-between items-center">
+                <h3 className="text-xl font-black uppercase tracking-tighter text-zinc-100 flex items-center gap-3">
+                  <div className="p-2 bg-blue-600 rounded-lg"><UserPlus size={18} /></div>
+                  {editingUser ? "Editar Utilizador" : "Adicionar um Utilizador"}
+                </h3>
+                <div className="flex gap-2">
+                  <button onClick={() => setShowAddUserModal(false)} className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded text-[10px] font-bold uppercase transition-all">← Voltar para Utilizadores</button>
+                </div>
+              </div>
+
+              <div className="flex border-b border-zinc-900 bg-zinc-950/20">
+                <button onClick={() => setActiveTab('details')} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'details' ? 'bg-emerald-600 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>Detalhes</button>
+                <button onClick={() => setActiveTab('advanced')} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'advanced' ? 'bg-emerald-600 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>Avançado</button>
+                <button onClick={() => setActiveTab('restrictions')} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'restrictions' ? 'bg-emerald-600 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>Restrições</button>
+                <button onClick={() => setActiveTab('bouquets')} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'bouquets' ? 'bg-emerald-600 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>Bouquets</button>
+              </div>
+              
+              <div className="p-8 max-h-[60vh] overflow-y-auto bg-zinc-900/10">
+                {activeTab === 'details' && (
+                  <div className="grid grid-cols-2 gap-8">
+                    <Field label="Nome do utilizador"><input className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono text-sm" value={newUserData.username} onChange={e => setNewUserData({...newUserData, username: e.target.value})} /></Field>
+                    <Field label="Senha"><input className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono text-sm" value={newUserData.password} onChange={e => setNewUserData({...newUserData, password: e.target.value})} /></Field>
+                    <Field label="Dono"><input className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono text-sm" value={newUserData.owner} onChange={e => setNewUserData({...newUserData, owner: e.target.value})} /></Field>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Field label="Conexões máximas"><input type="number" className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono text-sm" value={newUserData.max_connections} onChange={e => setNewUserData({...newUserData, max_connections: Number(e.target.value)})} /></Field>
+                      <Field label="Validade (Dias)"><input type="number" className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono text-sm" value={newUserData.exp_days} onChange={e => setNewUserData({...newUserData, exp_days: Number(e.target.value)})} /></Field>
+                    </div>
+                    <div className="col-span-2 space-y-4">
+                      <Field label="Notas do Administrador"><textarea className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono text-sm min-h-[80px]" value={newUserData.notes_admin} onChange={e => setNewUserData({...newUserData, notes_admin: e.target.value})} /></Field>
+                      <Field label="Notas do Revendedor"><textarea className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono text-sm min-h-[80px]" value={newUserData.notes_reseller} onChange={e => setNewUserData({...newUserData, notes_reseller: e.target.value})} /></Field>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'advanced' && (
+                  <div className="grid grid-cols-2 gap-8">
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between p-4 bg-black/40 rounded-xl border border-zinc-900">
+                        <span className="text-[10px] font-black uppercase text-zinc-400">Restreamer</span>
+                        <button onClick={() => setNewUserData({...newUserData, restreamer: !newUserData.restreamer})} className={`w-12 h-6 rounded-full relative transition-all ${newUserData.restreamer ? 'bg-emerald-600' : 'bg-zinc-800'}`}>
+                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${newUserData.restreamer ? 'left-7' : 'left-1'}`} />
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between p-4 bg-black/40 rounded-xl border border-zinc-900">
+                        <span className="text-[10px] font-black uppercase text-zinc-400">Conta de Teste</span>
+                        <button onClick={() => setNewUserData({...newUserData, trial: !newUserData.trial})} className={`w-12 h-6 rounded-full relative transition-all ${newUserData.trial ? 'bg-emerald-600' : 'bg-zinc-800'}`}>
+                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${newUserData.trial ? 'left-7' : 'left-1'}`} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="space-y-6">
+                      <Field label="País Forçado">
+                        <select className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono text-sm" value={newUserData.force_country} onChange={e => setNewUserData({...newUserData, force_country: e.target.value})}>
+                          <option value="Off">Off</option>
+                          <option value="BR">Brasil</option>
+                          <option value="US">USA</option>
+                          <option value="PT">Portugal</option>
+                        </select>
+                      </Field>
+                      <div className="flex items-center justify-between p-4 bg-black/40 rounded-xl border border-zinc-900">
+                        <span className="text-[10px] font-black uppercase text-zinc-400">ISP Lock</span>
+                        <button onClick={() => setNewUserData({...newUserData, ip_lock: !newUserData.ip_lock})} className={`w-12 h-6 rounded-full relative transition-all ${newUserData.ip_lock ? 'bg-emerald-600' : 'bg-zinc-800'}`}>
+                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${newUserData.ip_lock ? 'left-7' : 'left-1'}`} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'restrictions' && (
+                  <div className="space-y-8">
+                    <Field label="Endereços IP permitidos (um por linha)">
+                      <textarea className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono text-sm min-h-[120px]" placeholder="Ex: 192.168.1.1" value={newUserData.allowed_ips} onChange={e => setNewUserData({...newUserData, allowed_ips: e.target.value})} />
+                    </Field>
+                    <Field label="Agente-utilizador autorizado (User-Agent)">
+                      <textarea className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono text-sm min-h-[120px]" placeholder="Ex: VLC/3.0.8" value={newUserData.allowed_agents} onChange={e => setNewUserData({...newUserData, allowed_agents: e.target.value})} />
+                    </Field>
+                  </div>
+                )}
+
+                {activeTab === 'bouquets' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    {bouquets.map(b => {
+                      const currentBouquets = JSON.parse(newUserData.bouquet_ids || "[]");
+                      const isSelected = currentBouquets.includes(b.id);
+                      return (
+                        <div key={b.id} onClick={() => {
+                          let next;
+                          if (isSelected) next = currentBouquets.filter((id: number) => id !== b.id);
+                          else next = [...currentBouquets, b.id];
+                          setNewUserData({...newUserData, bouquet_ids: JSON.stringify(next)});
+                        }} className={`p-4 rounded-xl border cursor-pointer transition-all flex justify-between items-center ${isSelected ? 'bg-blue-600/20 border-blue-600 text-blue-400' : 'bg-black/40 border-zinc-900 text-zinc-500 hover:border-zinc-700'}`}>
+                          <span className="text-xs font-bold">{b.name}</span>
+                          {isSelected && <Activity size={12} />}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-zinc-950/80 p-6 border-t border-zinc-900 flex justify-between items-center">
+                <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">Mago Engine v6.0.3</div>
+                <div className="flex gap-3">
+                  <button onClick={() => setShowAddUserModal(false)} className="px-6 py-2 bg-zinc-900 text-zinc-400 font-black rounded-lg text-[10px] uppercase hover:bg-zinc-800 transition-all">Anterior</button>
+                  <button onClick={handleSaveUser} className="px-8 py-2 bg-emerald-600 text-white font-black rounded-lg text-[10px] uppercase shadow-lg shadow-emerald-900/20 hover:bg-emerald-500 transition-all">Próximo</button>
+                </div>
+              </div>
+            </div>
+          </div>
       )}
     </div>
   );
