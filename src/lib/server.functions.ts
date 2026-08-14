@@ -60,6 +60,16 @@ function execMysql(ssh: NodeSSH, cfg: ReturnType<typeof getOdinConfig>, sql: str
   return ssh.execCommand(command);
 }
 
+export type SSHResponse = {
+  success: true;
+  stdout: string;
+  stderr: string;
+  exitCode: number | null;
+} | {
+  success: false;
+  error: any;
+};
+
 export const runSSHCommand = createServerFn({ method: "POST" })
   .inputValidator((data) =>
     z
@@ -72,7 +82,7 @@ export const runSSHCommand = createServerFn({ method: "POST" })
       })
       .parse(data),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<SSHResponse> => {
     try {
       return await withSsh(
         {
@@ -88,7 +98,7 @@ export const runSSHCommand = createServerFn({ method: "POST" })
             stdout: result.stdout,
             stderr: result.stderr,
             exitCode: result.code,
-          };
+          } as const;
         },
       );
     } catch (error: any) {
@@ -156,7 +166,28 @@ export const connectServer = createServerFn({ method: "POST" })
     };
   });
 
-export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
+export type User = {
+  id: number;
+  username: string;
+  password: string;
+  exp_date: number;
+  admin_enabled: number;
+  enabled: number;
+  active_cons: number;
+  max_connections: number;
+  member_id: number;
+  created_at: number;
+};
+
+export type UsersResponse = {
+  success: true;
+  data: User[];
+} | {
+  success: false;
+  error: any;
+};
+
+export const getUsers = createServerFn({ method: "GET" }).handler(async (): Promise<UsersResponse> => {
   try {
     const cfg = getOdinConfig();
     return await withSsh(
@@ -210,13 +241,20 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
           };
         });
 
-        return { success: true, data: rows };
+        return { success: true, data: rows } as const;
       },
     );
   } catch (error: any) {
     return { success: false, error: error.message };
   }
 });
+
+export type CreateUserResponse = {
+  success: true;
+} | {
+  success: false;
+  error: any;
+};
 
 export const createUser = createServerFn({ method: "POST" })
   .inputValidator((data) =>
@@ -228,7 +266,7 @@ export const createUser = createServerFn({ method: "POST" })
       })
       .parse(data),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<CreateUserResponse> => {
     try {
       const cfg = getOdinConfig();
       return await withSsh(
@@ -249,7 +287,7 @@ export const createUser = createServerFn({ method: "POST" })
         if (result.stderr && result.stderr.trim()) {
           return { success: false, error: result.stderr.trim() };
         }
-        return { success: true };
+        return { success: true } as const;
       },
       );
     } catch (error: any) {
