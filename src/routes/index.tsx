@@ -115,6 +115,50 @@ function Dashboard() {
           </div>
           <div className="absolute right-0 top-0 h-full w-1/3 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] pointer-events-none" />
         </div>
+
+        {/* SSH Connection Helper */}
+        <section className="mt-12 p-8 rounded-2xl bg-[#0f0f12] border border-zinc-800/50">
+          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Terminal size={20} className="text-primary" />
+            Conectar Servidor SSH
+          </h3>
+          <p className="text-zinc-400 mb-6 text-sm">
+            Para conectar seu servidor Odin ao painel, rode o comando abaixo no terminal SSH do seu servidor. Isso vai gerar o token e a URL de acesso automaticamente.
+          </p>
+          
+          <div className="bg-black/40 p-4 rounded-xl border border-zinc-800 font-mono text-sm relative group">
+            <code className="text-primary break-all">
+              bash &lt;(curl -sSL https://71a12a47-d6b3-4362-a2b3-4497a0a13af3.lovableproject.com/api/install)
+            </code>
+            <button 
+              onClick={() => {
+                navigator.clipboard.writeText("bash <(curl -sSL https://71a12a47-d6b3-4362-a2b3-4497a0a13af3.lovableproject.com/api/install)");
+                alert("Comando copiado!");
+              }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded text-xs text-white"
+            >
+              COPIAR
+            </button>
+          </div>
+          
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50">
+              <h4 className="text-xs font-bold uppercase text-zinc-500 mb-2">Instruções</h4>
+              <ol className="text-xs text-zinc-400 space-y-2 list-decimal ml-4">
+                <li>Acesse seu servidor via SSH.</li>
+                <li>Cole o comando acima e aperte Enter.</li>
+                <li>O script vai configurar a API e mostrar o <span className="text-white">TOKEN</span> na tela.</li>
+                <li>Copie o Token e o IP do servidor para finalizar a conexão aqui no painel.</li>
+              </ol>
+            </div>
+            <div className="bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50">
+              <h4 className="text-xs font-bold uppercase text-zinc-500 mb-2">Segurança</h4>
+              <p className="text-xs text-zinc-400">
+                O script cria um diretório seguro em <code className="text-zinc-300">/home/xtreamcodes/iptv_xtream_codes/wwwdir/mago-api</code> e gera um token único de 32 caracteres.
+              </p>
+            </div>
+          </div>
+        </section>
       </main>
     </div>
   );
