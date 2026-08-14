@@ -370,7 +370,9 @@ function Dashboard() {
                     </Field>
                   </div>
                 </div>
+              </section>
               <section className="bg-[#0f0f12] p-8 rounded-2xl border border-zinc-800 shadow-xl">
+
                 <h2 className="text-xl font-black text-blue-500 uppercase tracking-tighter mb-6 flex items-center gap-2">
                   <Database size={20} /> Conexão MariaDB/MySQL
                 </h2>
