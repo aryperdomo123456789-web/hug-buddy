@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicInstallRouteImport } from './routes/api/public/install'
 import { Route as ApiPublicInstallFunctionsRouteImport } from './routes/api/public/install.functions'
 
 const IndexRoute = IndexRouteImport.update({
@@ -17,37 +18,45 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicInstallRoute = ApiPublicInstallRouteImport.update({
+  id: '/api/public/install',
+  path: '/api/public/install',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicInstallFunctionsRoute =
   ApiPublicInstallFunctionsRouteImport.update({
-    id: '/api/public/install/functions',
-    path: '/api/public/install/functions',
-    getParentRoute: () => rootRouteImport,
+    id: '/functions',
+    path: '/functions',
+    getParentRoute: () => ApiPublicInstallRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/public/install': typeof ApiPublicInstallRouteWithChildren
   '/api/public/install/functions': typeof ApiPublicInstallFunctionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/public/install': typeof ApiPublicInstallRouteWithChildren
   '/api/public/install/functions': typeof ApiPublicInstallFunctionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/public/install': typeof ApiPublicInstallRouteWithChildren
   '/api/public/install/functions': typeof ApiPublicInstallFunctionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/public/install/functions'
+  fullPaths: '/' | '/api/public/install' | '/api/public/install/functions'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/public/install/functions'
-  id: '__root__' | '/' | '/api/public/install/functions'
+  to: '/' | '/api/public/install' | '/api/public/install/functions'
+  id: '__root__' | '/' | '/api/public/install' | '/api/public/install/functions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ApiPublicInstallFunctionsRoute: typeof ApiPublicInstallFunctionsRoute
+  ApiPublicInstallRoute: typeof ApiPublicInstallRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -59,19 +68,37 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/install': {
+      id: '/api/public/install'
+      path: '/api/public/install'
+      fullPath: '/api/public/install'
+      preLoaderRoute: typeof ApiPublicInstallRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/install/functions': {
       id: '/api/public/install/functions'
-      path: '/api/public/install/functions'
+      path: '/functions'
       fullPath: '/api/public/install/functions'
       preLoaderRoute: typeof ApiPublicInstallFunctionsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiPublicInstallRoute
     }
   }
 }
 
+interface ApiPublicInstallRouteChildren {
+  ApiPublicInstallFunctionsRoute: typeof ApiPublicInstallFunctionsRoute
+}
+
+const ApiPublicInstallRouteChildren: ApiPublicInstallRouteChildren = {
+  ApiPublicInstallFunctionsRoute: ApiPublicInstallFunctionsRoute,
+}
+
+const ApiPublicInstallRouteWithChildren =
+  ApiPublicInstallRoute._addFileChildren(ApiPublicInstallRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ApiPublicInstallFunctionsRoute: ApiPublicInstallFunctionsRoute,
+  ApiPublicInstallRoute: ApiPublicInstallRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
