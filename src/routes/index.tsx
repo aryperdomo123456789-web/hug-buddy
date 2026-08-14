@@ -24,7 +24,7 @@ import {
   CheckCircle2,
   XCircle
 } from "lucide-react";
-import { runSSHCommand, getUsers, createUser } from "@/lib/server.functions";
+import { runSSHCommand, getUsers, createUser, getServers, getStreams } from "@/lib/server.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
