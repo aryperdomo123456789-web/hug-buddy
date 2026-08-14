@@ -24,20 +24,30 @@ async function withSsh<T>(
 ) {
   const cfg = getOdinConfig();
   const ssh = new NodeSSH();
+  
+  // Timeout mais longo para o handshake inicial
+  const connectPromise = ssh.connect({
+    host: connection.host,
+    port: connection.port,
+    username: connection.username,
+    password: connection.password,
+    readyTimeout: 30000, 
+    keepaliveInterval: 5000,
+  });
+
   try {
-    await ssh.connect({
-      host: connection.host,
-      port: connection.port,
-      username: connection.username,
-      password: connection.password,
-      readyTimeout: 15000,
-    });
+    await connectPromise;
     return await task(ssh, cfg);
+  } catch (error) {
+    console.error(`[SSH ERROR] Host: ${connection.host}:`, error);
+    throw error;
   } finally {
     try {
-      await ssh.dispose();
-    } catch {
-      // Ignore dispose failures so the actual response is preserved.
+      // Pequeno delay antes de fechar para garantir flush de streams
+      await new Promise(resolve => setTimeout(resolve, 100));
+      ssh.dispose();
+    } catch (e) {
+      console.warn("[SSH DISPOSE ERROR]:", e);
     }
   }
 }
