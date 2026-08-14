@@ -10,6 +10,8 @@ import {
   Activity,
   UserPlus
 } from "lucide-react";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
