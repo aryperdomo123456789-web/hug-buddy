@@ -2,9 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { getInstallScript } from '@/lib/server.functions';
 
 export const Route = {
-  GET: async ({ request }: { request: Request }) => {
+  handler: async ({ request }: { request: Request }) => {
     const script = await getInstallScript();
-    
     return new Response(script, {
       status: 200,
       headers: {
