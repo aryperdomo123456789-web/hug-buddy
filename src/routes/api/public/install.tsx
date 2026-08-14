@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { getInstallScript } from '@/lib/server.functions'
 
-export const Route = createFileRoute('/api/install')({
+export const Route = createFileRoute('/api/public/install')({
   server: {
     handlers: {
       GET: async () => {
