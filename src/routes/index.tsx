@@ -191,9 +191,9 @@ function Dashboard() {
           <>
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-              <StatCard icon={<Users className="text-blue-500" />} label="Usuários Ativos" value="1,284" change="+12%" />
-              <StatCard icon={<Activity className="text-green-500" />} label="Canais Online" value="15,402" change="99.9%" />
-              <StatCard icon={<Server className="text-purple-500" />} label="Carga CPU" value="42%" change="Estável" />
+              <StatCard icon={<Users className="text-blue-500" />} label="Usuários Ativos" value="-" change="Consultando..." />
+              <StatCard icon={<Activity className="text-green-500" />} label="Canais Online" value="-" change="Consultando..." />
+              <StatCard icon={<Server className="text-purple-500" />} label="Servidor Lab" value="23.158.72.30" change="Conectado" />
               <StatCard icon={<ShieldAlert className="text-yellow-500" />} label="Alertas" value="0" change="Limpo" />
             </div>
 
