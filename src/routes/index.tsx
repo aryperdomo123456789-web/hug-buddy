@@ -377,7 +377,7 @@ function Dashboard() {
             
             <div className="bg-black/40 p-4 rounded-xl border border-zinc-800 font-mono text-sm relative group mb-6">
               <code className="text-primary break-all">
-                curl -sSL -H "Accept: text/plain" {window.location.origin}/api/public/install | bash
+                {typeof window !== 'undefined' ? `curl -sSL -H "Accept: text/plain" ${window.location.origin}/api/public/install | bash` : 'Carregando comando...'}
               </code>
               <button 
                 onClick={() => {
