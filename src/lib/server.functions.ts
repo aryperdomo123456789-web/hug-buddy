@@ -6,7 +6,6 @@ const ssh = new NodeSSH();
 
 /**
  * Função para executar comandos no servidor via SSH e retornar o output.
- * Isso permite que o Mago Panel diagnostique o servidor Odin diretamente.
  */
 export const runSSHCommand = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({
@@ -23,12 +22,10 @@ export const runSSHCommand = createServerFn({ method: "POST" })
         port: data.port,
         username: data.username,
         password: data.password,
-        // Timeout de conexão curto para feedback rápido
         readyTimeout: 10000 
       });
 
       const result = await ssh.execCommand(data.command);
-      
       await ssh.dispose();
 
       return {
@@ -47,6 +44,7 @@ export const runSSHCommand = createServerFn({ method: "POST" })
 
 export const getInstallScript = createServerFn({ method: "GET" })
   .handler(async () => {
+    // Agora o script gera o IP e Token e tenta salvá-los no Odin
     const script = `#!/bin/bash
 # ==========================================================
 # MAGO PANEL - INSTALADOR DE API (ODIN SPECIAL EDITION)
@@ -77,13 +75,15 @@ fi
 
 # Detecta IP Público
 IP_PUBLICO=$(curl -s https://ifconfig.me)
+if [ -z "$IP_PUBLICO" ]; then
+    IP_PUBLICO=$(hostname -I | awk '{print $1}')
+fi
 
 echo ""
 echo "------------------------------------------"
 echo "   ODIN CONECTADO COM SUCESSO!          "
-# Garantindo que o IP e Token apareçam no stdout
-printf "   IP: %s\n" "$IP_PUBLICO"
-printf "   TOKEN: %s\n" "$TOKEN"
+echo "   IP: $IP_PUBLICO"
+echo "   TOKEN: $TOKEN"
 echo "------------------------------------------"
 echo ""
 echo "Copie os dados acima e cole no Mago Panel."
@@ -98,10 +98,9 @@ export const connectServer = createServerFn({ method: "POST" })
     label: z.string().optional()
   }).parse(data))
   .handler(async ({ data }) => {
-    console.log("Tentando conectar ao servidor:", data.ip);
     return { 
       success: true, 
-      message: "Servidor conectado com sucesso! O império está crescendo.",
+      message: "Servidor conectado com sucesso!",
       serverId: "srv_" + Math.random().toString(36).substr(2, 9)
     };
   });
