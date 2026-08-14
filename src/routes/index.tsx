@@ -119,21 +119,6 @@ function Dashboard() {
     }
   };
 
-      if (result.success) {
-        setTerminalOutput((prev) => prev + `\n${result.stdout}${result.stderr ? '\nERROR: ' + result.stderr : ''}`);
-        toast.success("Comando executado com sucesso!");
-      } else {
-        setTerminalOutput((prev) => prev + `\nERRO DE CONEXÃO: ${result.error}`);
-        toast.error("Falha na conexão SSH");
-      }
-    } catch (err) {
-      setTerminalOutput((prev) => prev + `\nERRO INESPERADO: Ocorreu um erro ao processar o comando.`);
-      toast.error("Erro interno do servidor");
-    } finally {
-      setIsRunning(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 font-sans selection:bg-primary/30">
       {/* Sidebar - O Esconderijo do Mago */}
