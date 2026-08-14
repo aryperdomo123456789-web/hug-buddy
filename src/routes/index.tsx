@@ -1,5 +1,6 @@
 import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { 
   Users, 
   Server, 
@@ -9,8 +10,13 @@ import {
   Settings,
   PlusCircle,
   Activity,
-  UserPlus
+  UserPlus,
+  Play,
+  CheckCircle2,
+  XCircle
 } from "lucide-react";
+import { runSSHCommand } from "@/lib/server.functions";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
