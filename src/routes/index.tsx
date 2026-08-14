@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { 
   Users, 
-  Server, 
+  Server as ServerIcon, 
   Terminal, 
   ShieldAlert, 
   LayoutDashboard, 
@@ -12,7 +12,11 @@ import {
   Activity,
   UserPlus,
   Play,
-  Trash2
+  Trash2,
+  Database,
+  Globe,
+  Cpu,
+  Monitor
 } from "lucide-react";
 import { 
   runSSHCommand, 
@@ -72,10 +76,34 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+function StatCard({ label, value, icon: Icon, color = "blue" }: { label: string, value: string | number, icon: any, color?: string }) {
+  const colors: Record<string, string> = {
+    blue: "text-blue-500 bg-blue-500/10",
+    green: "text-green-500 bg-green-500/10",
+    red: "text-red-500 bg-red-500/10",
+    purple: "text-purple-500 bg-purple-500/10",
+  };
+
+  return (
+    <div className="bg-[#0f0f12] p-6 rounded-2xl border border-zinc-800 shadow-lg">
+      <div className="flex justify-between items-start mb-4">
+        <div className={`p-3 rounded-xl ${colors[color]}`}>
+          <Icon size={24} />
+        </div>
+      </div>
+      <div className="text-2xl font-bold text-zinc-100">{value}</div>
+      <div className="text-sm text-zinc-500 font-medium uppercase tracking-wider mt-1">{label}</div>
+    </div>
+  );
+}
+
 function Dashboard() {
   const { odin } = Route.useLoaderData();
   const [view, setView] = React.useState<'dashboard' | 'customers' | 'servers' | 'streams'>('dashboard');
   const [customers, setCustomers] = React.useState<any[]>([]);
+  const [servers, setServers] = React.useState<any[]>([]);
+  const [streams, setStreams] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
   const [showAddUserModal, setShowAddUserModal] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<any | null>(null);
   const [newUserData, setNewUserData] = React.useState<UserEditorState>({
@@ -99,16 +127,56 @@ function Dashboard() {
   });
 
   const fetchUsersFn = useServerFn(getUsers);
+  const fetchServersFn = useServerFn(getServers);
+  const fetchStreamsFn = useServerFn(getStreams);
   const createUserFn = useServerFn(createUser);
   const updateUserFn = useServerFn(updateUser);
   const deleteUserFn = useServerFn(deleteUser);
 
   const handleFetchUsers = async () => {
+    setLoading(true);
     try {
       const res = await fetchUsersFn();
       if (res.success) setCustomers(res.data || []);
     } catch (e) { toast.error("Erro ao carregar clientes"); }
+    finally { setLoading(false); }
   };
+
+  const handleFetchServers = async () => {
+    setLoading(true);
+    try {
+      const res = await fetchServersFn();
+      if (res.success) setServers(res.data || []);
+    } catch (e) { toast.error("Erro ao carregar servidores"); }
+    finally { setLoading(false); }
+  };
+
+  const handleFetchStreams = async () => {
+    setLoading(true);
+    try {
+      const res = await fetchStreamsFn();
+      if (res.success) setStreams(res.data || []);
+    } catch (e) { toast.error("Erro ao carregar streams"); }
+    finally { setLoading(false); }
+  };
+
+  const handleFetchDashboard = async () => {
+    setLoading(true);
+    try {
+      const [uRes, sRes, stRes] = await Promise.all([fetchUsersFn(), fetchServersFn(), fetchStreamsFn()]);
+      if (uRes.success) setCustomers(uRes.data || []);
+      if (sRes.success) setServers(sRes.data || []);
+      if (stRes.success) setStreams(stRes.data || []);
+    } catch (e) { toast.error("Erro ao carregar dashboard"); }
+    finally { setLoading(false); }
+  };
+
+  React.useEffect(() => {
+    if (view === 'dashboard') handleFetchDashboard();
+    else if (view === 'customers') handleFetchUsers();
+    else if (view === 'servers') handleFetchServers();
+    else if (view === 'streams') handleFetchStreams();
+  }, [view]);
 
   const handleSaveUser = async () => {
     if (!newUserData.username || !newUserData.password) {
@@ -156,67 +224,195 @@ function Dashboard() {
   };
 
   const handleDeleteUser = async (user: any) => {
+    if (!confirm(`Deseja realmente excluir o usuário ${user.username}?`)) return;
     const res = await deleteUserFn({ data: { id: user.id } });
     if (res.success) { toast.success("Removido!"); handleFetchUsers(); }
+    else { toast.error("Erro ao remover usuário"); }
   };
+
+  const onlineUsers = customers.reduce((acc, curr) => acc + (curr.active_cons || 0), 0);
+  const onlineStreams = streams.filter(s => s.is_online === 1).length;
 
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans">
       <div className="flex gap-10">
         <aside className="w-64 space-y-4">
-           <NavItem label="Dashboard" active={view === 'dashboard'} onClick={() => setView('dashboard')} />
-           <NavItem label="Clientes" active={view === 'customers'} onClick={() => { setView('customers'); handleFetchUsers(); }} />
+           <div className="mb-10 px-4">
+             <div className="text-2xl font-black text-blue-500 tracking-tighter flex items-center gap-2">
+               <ShieldAlert size={32} /> MAGO PANEL
+             </div>
+             <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em] mt-1">Odin v6 Engine</div>
+           </div>
+           
+           <NavItem icon={LayoutDashboard} label="Dashboard" active={view === 'dashboard'} onClick={() => setView('dashboard')} />
+           <NavItem icon={Users} label="Clientes" active={view === 'customers'} onClick={() => setView('customers')} />
+           <NavItem icon={Monitor} label="Streams" active={view === 'streams'} onClick={() => setView('streams')} />
+           <NavItem icon={ServerIcon} label="Servidores" active={view === 'servers'} onClick={() => setView('servers')} />
+           
+           <div className="mt-20 pt-10 border-t border-zinc-900 px-4">
+             <div className="flex items-center gap-3 text-zinc-500 mb-6">
+               <Database size={16} />
+               <div className="text-xs font-bold uppercase tracking-widest">Database</div>
+             </div>
+             <div className="space-y-3 opacity-50">
+               <div className="text-[10px] uppercase font-bold text-zinc-600">Host: {odin.dbHost}</div>
+               <div className="text-[10px] uppercase font-bold text-zinc-600">DB: {odin.dbName}</div>
+             </div>
+           </div>
         </aside>
+
         <main className="flex-1">
-          <h1 className="text-3xl font-bold mb-8 uppercase">{view}</h1>
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold uppercase tracking-tighter">{view}</h1>
+            {loading && <div className="animate-spin text-blue-500"><Activity size={20} /></div>}
+          </div>
+
+          {view === 'dashboard' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <StatCard label="Clientes Totais" value={customers.length} icon={Users} color="blue" />
+              <StatCard label="Usuários Online" value={onlineUsers} icon={Activity} color="green" />
+              <StatCard label="Streams Ativas" value={`${onlineStreams}/${streams.length}`} icon={Monitor} color="purple" />
+              <StatCard label="Servidores" value={servers.length} icon={ServerIcon} color="blue" />
+            </div>
+          )}
+
           {view === 'customers' && (
-             <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800 p-6 shadow-xl">
-               <button onClick={() => { setEditingUser(null); setShowAddUserModal(true); }} className="bg-primary px-5 py-2.5 rounded-xl font-bold mb-6 flex items-center gap-2">
-                 <UserPlus size={18} /> Novo Cliente
-               </button>
-               <table className="w-full">
-                 <thead>
-                    <tr className="text-zinc-500 text-xs uppercase text-left">
-                        <th className="p-4">Usuário</th>
-                        <th className="p-4 text-center">Status</th>
-                        <th className="p-4">Expiração</th>
-                        <th className="p-4 text-right">Ações</th>
-                    </tr>
-                 </thead>
-                 <tbody className="divide-y divide-zinc-800/50">
-                  {customers.map(u => (
-                    <tr key={u.id} className="text-sm">
-                      <td className="p-4 font-bold text-zinc-200">{u.username}</td>
-                      <td className="p-4 text-center">
-                        <span className={u.enabled == 1 ? "text-green-500 bg-green-500/10 px-2 py-1 rounded-full text-[10px]" : "text-red-500 bg-red-500/10 px-2 py-1 rounded-full text-[10px]"}>
-                          {u.enabled == 1 ? 'Ativo' : 'Bloqueado'}
-                        </span>
-                      </td>
-                      <td className="p-4 font-mono text-zinc-400">{new Date(u.exp_date * 1000).toLocaleDateString()}</td>
-                      <td className="p-4 text-right flex gap-2 justify-end">
-                        <button onClick={() => { setEditingUser(u); setShowAddUserModal(true); }} className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400"><Settings size={16} /></button>
-                        <button onClick={() => handleDeleteUser(u)} className="p-2 hover:bg-red-900/30 rounded-lg text-red-400"><Trash2 size={16} /></button>
-                      </td>
-                    </tr>
-                  ))}
-                 </tbody>
-               </table>
+             <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800 p-6 shadow-xl overflow-hidden">
+               <div className="flex justify-between items-center mb-6">
+                 <button onClick={() => { setEditingUser(null); setShowAddUserModal(true); }} className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2">
+                   <UserPlus size={18} /> Novo Cliente
+                 </button>
+                 <div className="text-xs font-mono text-zinc-600">{customers.length} utilizadores encontrados</div>
+               </div>
+               
+               <div className="overflow-x-auto">
+                 <table className="w-full">
+                   <thead>
+                      <tr className="text-zinc-500 text-[10px] uppercase tracking-widest text-left border-b border-zinc-900">
+                          <th className="pb-4 px-4 font-black">Usuário</th>
+                          <th className="pb-4 px-4 font-black text-center">Status</th>
+                          <th className="pb-4 px-4 font-black text-center">Conexões</th>
+                          <th className="pb-4 px-4 font-black">Expiração</th>
+                          <th className="pb-4 px-4 font-black text-right">Ações</th>
+                      </tr>
+                   </thead>
+                   <tbody className="divide-y divide-zinc-900/50">
+                    {customers.map(u => (
+                      <tr key={u.id} className="text-sm group hover:bg-zinc-800/20 transition-colors">
+                        <td className="py-4 px-4 font-bold text-zinc-200">{u.username}</td>
+                        <td className="py-4 px-4 text-center">
+                          <span className={u.enabled == 1 ? "text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter" : "text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter"}>
+                            {u.enabled == 1 ? 'Ativo' : 'Bloqueado'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 text-center font-mono text-xs">
+                          <span className={u.active_cons > 0 ? "text-green-400 font-bold" : "text-zinc-600"}>
+                            {u.active_cons}
+                          </span>
+                          <span className="text-zinc-700 mx-1">/</span>
+                          <span className="text-zinc-500">{u.max_connections}</span>
+                        </td>
+                        <td className="py-4 px-4 font-mono text-xs text-zinc-500">
+                          {u.exp_date ? new Date(u.exp_date * 1000).toLocaleDateString() : 'Nunca'}
+                        </td>
+                        <td className="py-4 px-4 text-right">
+                          <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => { setEditingUser(u); setShowAddUserModal(true); }} className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors"><Settings size={14} /></button>
+                            <button onClick={() => handleDeleteUser(u)} className="p-2 hover:bg-red-900/20 rounded-lg text-red-500 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                   </tbody>
+                 </table>
+               </div>
              </section>
+          )}
+
+          {view === 'servers' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {servers.map(s => (
+                <div key={s.id} className="bg-[#0f0f12] p-6 rounded-2xl border border-zinc-800 border-l-4 border-l-blue-600 shadow-xl">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-zinc-100">{s.server_name}</h3>
+                      <div className="text-xs font-mono text-zinc-600 uppercase tracking-widest mt-1">{s.server_ip}</div>
+                    </div>
+                    <span className={s.status == 1 ? "text-green-500" : "text-red-500"}>
+                      <Activity size={18} />
+                    </span>
+                  </div>
+                  <div className="mt-6 flex justify-between items-end">
+                    <div>
+                      <div className="text-[10px] text-zinc-600 font-black uppercase tracking-[0.2em]">Carga</div>
+                      <div className="text-xl font-bold text-zinc-300">{s.total_clients} <span className="text-xs text-zinc-600 font-medium">clientes</span></div>
+                    </div>
+                    <div className="px-3 py-1 bg-zinc-900 rounded-lg text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                      Porta: {s.server_port}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {view === 'streams' && (
+            <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800 p-6 shadow-xl">
+               <div className="overflow-x-auto">
+                 <table className="w-full">
+                   <thead>
+                      <tr className="text-zinc-500 text-[10px] uppercase tracking-widest text-left border-b border-zinc-900">
+                          <th className="pb-4 px-4 font-black">ID</th>
+                          <th className="pb-4 px-4 font-black">Nome do Canal</th>
+                          <th className="pb-4 px-4 font-black text-center">Status</th>
+                          <th className="pb-4 px-4 font-black">Bitrate</th>
+                          <th className="pb-4 px-4 font-black text-right">Server ID</th>
+                      </tr>
+                   </thead>
+                   <tbody className="divide-y divide-zinc-900/50">
+                    {streams.map(s => (
+                      <tr key={s.id} className="text-sm hover:bg-zinc-800/10 transition-colors">
+                        <td className="py-4 px-4 font-mono text-xs text-zinc-600">{s.id}</td>
+                        <td className="py-4 px-4 font-bold text-zinc-200">{s.stream_display_name}</td>
+                        <td className="py-4 px-4 text-center">
+                          <div className="flex justify-center">
+                            <div className={`w-2 h-2 rounded-full ${s.is_online ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)] animate-pulse' : 'bg-red-500'}`} />
+                          </div>
+                        </td>
+                        <td className="py-4 px-4 font-mono text-xs text-zinc-500">{s.bitrate || 0} kbps</td>
+                        <td className="py-4 px-4 text-right font-mono text-xs text-zinc-600">{s.server_id}</td>
+                      </tr>
+                    ))}
+                   </tbody>
+                 </table>
+               </div>
+            </section>
           )}
         </main>
       </div>
       
       {showAddUserModal && (
-         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-           <div className="bg-[#0f0f12] p-8 rounded-2xl w-full max-w-lg border border-zinc-800">
-             <h3 className="text-xl font-bold mb-6">{editingUser ? "Editar Cliente" : "Forjar Novo Cliente"}</h3>
-             <div className="space-y-4">
-                <Field label="Username"><input className="w-full bg-black/50 p-3 rounded-xl border border-zinc-800" value={newUserData.username} onChange={e => setNewUserData({...newUserData, username: e.target.value})} /></Field>
-                <Field label="Password"><input className="w-full bg-black/50 p-3 rounded-xl border border-zinc-800" type="password" value={newUserData.password} onChange={e => setNewUserData({...newUserData, password: e.target.value})} /></Field>
+         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+           <div className="bg-[#0f0f12] p-10 rounded-3xl w-full max-w-2xl border border-zinc-800 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+             <div className="flex justify-between items-center mb-8">
+               <h3 className="text-2xl font-black uppercase tracking-tighter text-blue-500">
+                 {editingUser ? "Modificar Utilizador" : "Forjar Novo Acesso"}
+               </h3>
+               <button onClick={() => setShowAddUserModal(false)} className="text-zinc-600 hover:text-white transition-colors">
+                 <Trash2 size={24} />
+               </button>
              </div>
-             <div className="flex gap-4 mt-8">
-               <button onClick={() => setShowAddUserModal(false)} className="flex-1 py-3 bg-zinc-900 rounded-xl">Cancelar</button>
-               <button onClick={handleSaveUser} className="flex-1 py-3 bg-primary rounded-xl font-bold">Salvar</button>
+             
+             <div className="grid grid-cols-2 gap-6">
+                <Field label="Username"><input className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono" value={newUserData.username} onChange={e => setNewUserData({...newUserData, username: e.target.value})} /></Field>
+                <Field label="Password"><input className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono" value={newUserData.password} onChange={e => setNewUserData({...newUserData, password: e.target.value})} /></Field>
+                <Field label="Dias Expiração"><input type="number" className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono" value={newUserData.exp_days} onChange={e => setNewUserData({...newUserData, exp_days: Number(e.target.value)})} /></Field>
+                <Field label="Conexões Max"><input type="number" className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono" value={newUserData.max_connections} onChange={e => setNewUserData({...newUserData, max_connections: Number(e.target.value)})} /></Field>
+             </div>
+             
+             <div className="flex gap-4 mt-12">
+               <button onClick={() => setShowAddUserModal(false)} className="flex-1 py-4 bg-zinc-950 text-zinc-500 font-bold rounded-xl border border-zinc-900 hover:bg-zinc-900 transition-all uppercase tracking-widest text-xs">Descartar</button>
+               <button onClick={handleSaveUser} className="flex-1 py-4 bg-blue-600 text-white font-black rounded-xl shadow-lg shadow-blue-900/20 hover:bg-blue-500 transition-all uppercase tracking-widest text-xs">Confirmar Forja</button>
              </div>
            </div>
          </div>
@@ -225,6 +421,18 @@ function Dashboard() {
   );
 }
 
-function NavItem({ label, active, onClick }: { label: string; active?: boolean; onClick?: () => void }) {
-  return <button onClick={onClick} className={`block w-full p-4 rounded-xl font-bold text-sm text-left ${active ? 'bg-primary text-white' : 'hover:bg-zinc-800'}`}>{label}</button>;
+function NavItem({ icon: Icon, label, active, onClick }: { icon: any, label: string; active?: boolean; onClick?: () => void }) {
+  return (
+    <button 
+      onClick={onClick} 
+      className={`flex items-center gap-3 w-full p-4 rounded-2xl font-bold text-sm text-left transition-all ${
+        active 
+          ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' 
+          : 'text-zinc-500 hover:bg-zinc-800/50 hover:text-zinc-200'
+      }`}
+    >
+      <Icon size={20} />
+      <span className="uppercase tracking-tighter">{label}</span>
+    </button>
+  );
 }
