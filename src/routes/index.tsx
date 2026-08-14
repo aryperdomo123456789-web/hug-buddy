@@ -88,13 +88,25 @@ function LegacyLab() {
 }
 
 function Dashboard() {
-  const [view, setView] = React.useState<'dashboard' | 'legacy'>('dashboard');
+  const [view, setView] = React.useState<'dashboard' | 'legacy' | 'customers'>('dashboard');
   const [terminalOutput, setTerminalOutput] = React.useState<string>("IP: 23.158.72.30\nAguardando comando...");
   const [command, setCommand] = React.useState("ls -la /home/xtreamcodes/iptv_xtream_codes/");
   const [isRunning, setIsRunning] = React.useState(false);
   const [isDeploying, setIsDeploying] = React.useState(false);
   
+  // States para Clientes
+  const [customers, setCustomers] = React.useState<any[]>([]);
+  const [isLoadingCustomers, setIsLoadingCustomers] = React.useState(false);
+  const [showAddUserModal, setShowAddUserModal] = React.useState(false);
+  const [newUserData, setNewUserData] = React.useState({
+    username: "",
+    password: "",
+    exp_days: 30
+  });
+
   const runCommand = useServerFn(runSSHCommand);
+  const fetchUsersFn = useServerFn(require("@/lib/server.functions").getUsers);
+  const createUserFn = useServerFn(require("@/lib/server.functions").createUser);
 
   const handleRunSSH = async () => {
     setIsRunning(true);
