@@ -1,8 +1,8 @@
-import { createAPIFileRoute } from '@tanstack/react-start/api';
+import { createFileRoute } from '@tanstack/react-router';
 import { getInstallScript } from '@/lib/server.functions';
 
-export const GET = createAPIFileRoute('/api/public/install')({
-  handler: async () => {
+export const Route = createFileRoute('/api/public/install')({
+  loader: async () => {
     const script = await getInstallScript();
     
     return new Response(script, {
@@ -13,4 +13,5 @@ export const GET = createAPIFileRoute('/api/public/install')({
       },
     });
   },
+  component: () => null,
 });
