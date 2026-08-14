@@ -196,7 +196,21 @@ function Dashboard() {
             active={view === 'dashboard'} 
             onClick={() => setView('dashboard')}
           />
-          <NavItem icon={<Users size={20} />} label="Usuários" />
+          <NavItem 
+            icon={<Users size={20} />} 
+            label="Clientes" 
+            active={view === 'customers'}
+            onClick={() => {
+              setView('customers');
+              if (customers.length === 0) {
+                setIsLoadingCustomers(true);
+                fetchUsersFn().then(res => {
+                  if (res.success) setCustomers(res.data);
+                  setIsLoadingCustomers(false);
+                });
+              }
+            }}
+          />
           <NavItem icon={<Terminal size={20} />} label="Terminal" />
           <NavItem icon={<Server size={20} />} label="Servidores" />
           <div className="my-2 border-t border-zinc-800/30 mx-2" />
