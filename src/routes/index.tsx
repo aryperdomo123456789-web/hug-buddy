@@ -105,8 +105,52 @@ function Dashboard() {
   });
 
   const runCommand = useServerFn(runSSHCommand);
+  // @ts-ignore
   const fetchUsersFn = useServerFn(require("@/lib/server.functions").getUsers);
+  // @ts-ignore
   const createUserFn = useServerFn(require("@/lib/server.functions").createUser);
+
+  const handleFetchUsers = async () => {
+    setIsLoadingCustomers(true);
+    try {
+      const res = await fetchUsersFn();
+      // @ts-ignore
+      if (res.success) setCustomers(res.data);
+    } catch (e) {
+      toast.error("Erro ao carregar clientes");
+    } finally {
+      setIsLoadingCustomers(false);
+    }
+  };
+
+  const handleCreateUser = async () => {
+    if (!newUserData.username || !newUserData.password) {
+      toast.error("Preencha todos os campos");
+      return;
+    }
+    
+    setIsRunning(true);
+    try {
+      const exp_date = Math.floor(Date.now() / 1000) + (newUserData.exp_days * 86400);
+      const res = await createUserFn({
+        data: {
+          username: newUserData.username,
+          password: newUserData.password,
+          exp_date: exp_date
+        }
+      });
+      // @ts-ignore
+      if (res.success) {
+        toast.success("Usuário criado com sucesso!");
+        setShowAddUserModal(false);
+        handleFetchUsers();
+      }
+    } catch (e) {
+      toast.error("Erro ao criar usuário");
+    } finally {
+      setIsRunning(false);
+    }
+  };
 
   const handleRunSSH = async () => {
     setIsRunning(true);
