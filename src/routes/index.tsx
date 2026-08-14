@@ -3,6 +3,9 @@
  * porta root: 22
  * senha root: fontemain123333
  * API TOKEN: p0P2pycjQooGKKO2fqdkIagwfNA03DFj
+ * 
+ * veja arrumei com codex https://github.com/aryperdomo123456789-web/hug-buddy/tree/backup
+ * ve ai se agora vai funciionar
  */
 import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
