@@ -568,6 +568,29 @@ export const getStreams = createServerFn({ method: "GET" }).handler(async () => 
   }
 });
 
+export const killUserConnections = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({ id: z.number() }).parse(data))
+  .handler(async ({ data }) => {
+    try {
+      const cfg = getOdinConfig();
+      return await withSsh(
+        {
+          host: cfg.sshHost,
+          port: cfg.sshPort,
+          username: cfg.sshUsername,
+          password: cfg.sshPassword,
+        },
+        async (ssh, cfg) => {
+          const sql = `DELETE FROM user_activity_now WHERE user_id = ${Number(data.id)}`;
+          await execMysql(ssh, cfg, sql);
+          return { success: true };
+        }
+      );
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
 export const getBouquets = createServerFn({ method: "GET" }).handler(async () => {
   try {
     const cfg = getOdinConfig();
