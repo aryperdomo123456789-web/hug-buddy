@@ -153,11 +153,18 @@ function Dashboard() {
   const handleFetchUsers = async () => {
     setLoading(true);
     try {
-      const [uRes, bRes] = await Promise.all([fetchUsersFn(), fetchBouquetsFn()]);
+      // Sequencial para evitar 'aborted' por múltiplas conexões SSH
+      const uRes = await fetchUsersFn();
       if (uRes.success) setCustomers(uRes.data || []);
+      
+      const bRes = await fetchBouquetsFn();
       if (bRes.success) setBouquets(bRes.data || []);
-    } catch (e) { toast.error("Erro ao carregar clientes"); }
-    finally { setLoading(false); }
+    } catch (e) { 
+      console.error("Erro ao carregar clientes:", e);
+      toast.error("Erro ao carregar dados dos clientes"); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const handleFetchServers = async () => {
@@ -181,13 +188,24 @@ function Dashboard() {
   const handleFetchDashboard = async () => {
     setLoading(true);
     try {
-      const [uRes, sRes, stRes, bRes] = await Promise.all([fetchUsersFn(), fetchServersFn(), fetchStreamsFn(), fetchBouquetsFn()]);
+      // Execução sequencial obrigatória para estabilidade do túnel SSH
+      const uRes = await fetchUsersFn();
       if (uRes.success) setCustomers(uRes.data || []);
+      
+      const sRes = await fetchServersFn();
       if (sRes.success) setServers(sRes.data || []);
+      
+      const stRes = await fetchStreamsFn();
       if (stRes.success) setStreams(stRes.data || []);
+      
+      const bRes = await fetchBouquetsFn();
       if (bRes.success) setBouquets(bRes.data || []);
-    } catch (e) { toast.error("Erro ao carregar dashboard"); }
-    finally { setLoading(false); }
+    } catch (e) { 
+      console.error("Erro no dashboard:", e);
+      toast.error("Erro ao atualizar dashboard"); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   React.useEffect(() => {
