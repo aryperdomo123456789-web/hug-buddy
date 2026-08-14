@@ -57,13 +57,14 @@ echo "------------------------------------------"
  */
 export const connectServer = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ 
-    ip: z.string().ip(),
+    ip: z.string(),
     token: z.string().min(32),
     label: z.string().optional()
   }).parse(data))
   .handler(async ({ data }) => {
     // Aqui você salvaria no Lovable Cloud (Supabase) os detalhes do servidor
     console.log("Tentando conectar ao servidor:", data.ip);
+    
     
     // Simulação de sucesso
     return { 
