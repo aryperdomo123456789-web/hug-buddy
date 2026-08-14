@@ -91,6 +91,7 @@ function Dashboard() {
   const [terminalOutput, setTerminalOutput] = React.useState<string>("IP: 23.158.72.30\nAguardando comando...");
   const [command, setCommand] = React.useState("ls -la /home/xtreamcodes/iptv_xtream_codes/");
   const [isRunning, setIsRunning] = React.useState(false);
+  const [isDeploying, setIsDeploying] = React.useState(false);
   
   const runCommand = useServerFn(runSSHCommand);
 
@@ -121,6 +122,41 @@ function Dashboard() {
       toast.error("Erro interno do servidor");
     } finally {
       setIsRunning(false);
+    }
+  };
+
+  const handleDeployScript = async () => {
+    setIsDeploying(true);
+    setTerminalOutput((prev) => prev + `\n\n> Iniciando implantação automática da API...`);
+    
+    try {
+      // 1. Criar diretório
+      // 2. Gerar token
+      // 3. Salvar token
+      // 4. Reportar sucesso
+      const deployCommand = `mkdir -p /home/xtreamcodes/iptv_xtream_codes/wwwdir/mago-api && cd /home/xtreamcodes/iptv_xtream_codes/wwwdir/mago-api && [ ! -f token.txt ] && cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1 > token.txt; echo "TOKEN: $(cat token.txt)" && echo "IP: $(curl -s https://ifconfig.me || hostname -I | awk '{print $1}')"`;
+      
+      const result = await runCommand({
+        data: {
+          host: "23.158.72.30",
+          port: 22,
+          username: "root",
+          password: "fontemain123333",
+          command: deployCommand
+        }
+      });
+
+      if (result.success) {
+        setTerminalOutput((prev) => prev + `\nIMPLANTAÇÃO CONCLUÍDA:\n${result.stdout}`);
+        toast.success("API Mago implantada com sucesso via SSH!");
+      } else {
+        setTerminalOutput((prev) => prev + `\nFALHA NA IMPLANTAÇÃO: ${result.error}`);
+        toast.error("Falha ao implantar API");
+      }
+    } catch (err) {
+      setTerminalOutput((prev) => prev + `\nERRO INESPERADO NA IMPLANTAÇÃO.`);
+    } finally {
+      setIsDeploying(false);
     }
   };
 
@@ -278,11 +314,19 @@ function Dashboard() {
             </div>
             
             <div className="grid grid-cols-1 gap-4">
-              <div className="bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50">
-                <h4 className="text-xs font-bold uppercase text-zinc-500 mb-2">Segurança</h4>
+              <div className="bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50 flex flex-col gap-3">
+                <h4 className="text-xs font-bold uppercase text-zinc-500">Ação Direta via SSH</h4>
                 <p className="text-xs text-zinc-400 leading-relaxed">
-                  O script cria um diretório seguro em <code className="text-zinc-300">/home/xtreamcodes/iptv_xtream_codes/wwwdir/mago-api</code> e gera um token único de 32 caracteres.
+                  Como já temos as chaves do laboratório, posso injetar a API diretamente para você sem precisar rodar comandos manuais.
                 </p>
+                <button 
+                  onClick={handleDeployScript}
+                  disabled={isDeploying}
+                  className="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2"
+                >
+                  {isDeploying ? <Activity size={14} className="animate-spin" /> : <PlusCircle size={14} />}
+                  INJETAR API AGORA (VIA SSH)
+                </button>
               </div>
             </div>
           </section>
