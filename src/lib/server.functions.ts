@@ -229,8 +229,8 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async (): Prom
           ] = columns;
           return {
             id: Number(id),
-            username,
-            password,
+            username: username || "",
+            password: password || "",
             exp_date: Number(exp_date),
             admin_enabled: Number(admin_enabled),
             enabled: Number(enabled),
