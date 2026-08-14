@@ -264,12 +264,12 @@ function Dashboard() {
             
             <div className="bg-black/40 p-4 rounded-xl border border-zinc-800 font-mono text-sm relative group mb-6">
               <code className="text-primary break-all">
-                curl -sSL https://71a12a47-d6b3-4362-a2b3-4497a0a13af3.lovableproject.com/api/public/install | bash
+                curl -sSL -H "Accept: text/plain" {window.location.origin}/api/public/install | bash
               </code>
               <button 
                 onClick={() => {
-                  navigator.clipboard.writeText("wget -qO- https://71a12a47-d6b3-4362-a2b3-4497a0a13af3.lovableproject.com/api/public/install | bash");
-                  alert("Comando copiado!");
+                  navigator.clipboard.writeText(`curl -sSL -H "Accept: text/plain" ${window.location.origin}/api/public/install | bash`);
+                  toast.success("Comando copiado!");
                 }}
                 className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded text-xs text-white"
               >
