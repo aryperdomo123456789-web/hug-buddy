@@ -25,7 +25,10 @@ import {
   updateUser, 
   deleteUser, 
   getServers, 
-  getStreams 
+  getStreams,
+  getBouquets,
+  killUserConnections,
+  toggleUserStatus
 } from "@/lib/server.functions";
 import { getOdinConfig } from "@/lib/odin";
 import { toast } from "sonner";
@@ -35,6 +38,7 @@ type UserEditorState = {
   username: string;
   password: string;
   owner: string;
+  member_id: number;
   exp_days: number;
   max_connections: number;
   enabled: boolean;
@@ -101,8 +105,10 @@ function Dashboard() {
   const { odin } = Route.useLoaderData();
   const [view, setView] = React.useState<'dashboard' | 'customers' | 'servers' | 'streams'>('dashboard');
   const [customers, setCustomers] = React.useState<any[]>([]);
+  const [bouquets, setBouquets] = React.useState<any[]>([]);
   const [servers, setServers] = React.useState<any[]>([]);
   const [streams, setStreams] = React.useState<any[]>([]);
+  const [activeTab, setActiveTab] = React.useState<'details' | 'advanced' | 'restrictions' | 'bouquets'>('details');
   const [loading, setLoading] = React.useState(false);
   const [showAddUserModal, setShowAddUserModal] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<any | null>(null);
