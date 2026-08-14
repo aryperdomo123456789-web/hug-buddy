@@ -1,3 +1,8 @@
+/**
+ * ip do lab: 23.158.72.30
+ * porta root: 22
+ * senha root: fontemain123333
+ */
 import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
