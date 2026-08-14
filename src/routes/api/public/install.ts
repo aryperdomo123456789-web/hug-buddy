@@ -1,11 +1,9 @@
-import { createServerFn } from "@tanstack/react-start";
+import { createAPIFileRoute } from '@tanstack/react-start/api';
 import { getInstallScript } from '@/lib/server.functions';
 
-export const Route = {
-  GET: async ({ request }: { request: Request }) => {
+export const Route = createAPIFileRoute('/api/public/install')({
+  GET: async ({ request }) => {
     const script = await getInstallScript();
-    
-    // Forçar a resposta a ser puramente texto e sem cache
     return new Response(script, {
       status: 200,
       headers: {
@@ -17,4 +15,4 @@ export const Route = {
       },
     });
   },
-};
+});
