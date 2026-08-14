@@ -233,10 +233,10 @@ function Dashboard() {
           <>
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-              <StatCard icon={<Users className="text-blue-500" />} label="Usuários Ativos" value="-" change="Consultando..." />
-              <StatCard icon={<Activity className="text-green-500" />} label="Canais Online" value="-" change="Consultando..." />
-              <StatCard icon={<Server className="text-purple-500" />} label="Servidor Lab" value="23.158.72.30" change="Conectado" />
-              <StatCard icon={<ShieldAlert className="text-yellow-500" />} label="Alertas" value="0" change="Limpo" />
+              <StatCard icon={<Users className="text-blue-500" />} label="Usuários Ativos" value="0" change="Conectado ao DB" />
+              <StatCard icon={<Activity className="text-green-500" />} label="Canais Online" value="0" change="Sync Odin" />
+              <StatCard icon={<Server className="text-purple-500" />} label="Servidor Lab" value="23.158.72.30" change="API ATIVA" />
+              <StatCard icon={<ShieldAlert className="text-yellow-500" />} label="Token de Acesso" value="p0P2..." change="p0P2pycjQooGKKO2fqdkIagwfNA03DFj" />
             </div>
 
             {/* Recent Activity / Users Table */}
