@@ -218,7 +218,7 @@ function Dashboard() {
             
             <div className="bg-black/40 p-4 rounded-xl border border-zinc-800 font-mono text-sm relative group mb-6">
               <code className="text-primary break-all">
-                curl -sSL -H "Accept: text/plain" https://71a12a47-d6b3-4362-a2b3-4497a0a13af3.lovableproject.com/api/public/install | bash
+                curl -sSL -H "Accept: text/plain" https://71a12a47-d6b3-4362-a2b3-4497a0a13af3.lovableproject.com/api/public/install > install.sh && bash install.sh
               </code>
               <button 
                 onClick={() => {
