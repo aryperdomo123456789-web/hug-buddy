@@ -174,10 +174,11 @@ function Dashboard() {
   const handleFetchDashboard = async () => {
     setLoading(true);
     try {
-      const [uRes, sRes, stRes] = await Promise.all([fetchUsersFn(), fetchServersFn(), fetchStreamsFn()]);
+      const [uRes, sRes, stRes, bRes] = await Promise.all([fetchUsersFn(), fetchServersFn(), fetchStreamsFn(), fetchBouquetsFn()]);
       if (uRes.success) setCustomers(uRes.data || []);
       if (sRes.success) setServers(sRes.data || []);
       if (stRes.success) setStreams(stRes.data || []);
+      if (bRes.success) setBouquets(bRes.data || []);
     } catch (e) { toast.error("Erro ao carregar dashboard"); }
     finally { setLoading(false); }
   };
