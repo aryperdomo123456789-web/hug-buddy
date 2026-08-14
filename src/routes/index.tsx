@@ -445,7 +445,7 @@ function Dashboard() {
                     <Field label="Comando de Instalação">
                       <div className="group relative">
                         <div className="bg-black p-4 rounded-xl border border-zinc-900 font-mono text-zinc-400 text-xs overflow-x-auto whitespace-pre group-hover:text-blue-400 transition-colors">
-                          bash &lt;(curl -sSL https://{typeof window !== 'undefined' ? window.location.host : 'mago.lovable.app'}/api/public/install)
+                          {`bash <(curl -sSL https://${typeof window !== 'undefined' ? window.location.host : 'mago.lovable.app'}/api/public/install)`}
                         </div>
                         <button 
                           onClick={() => {
