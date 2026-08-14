@@ -155,7 +155,7 @@ export const createUser = createServerFn({ method: "POST" })
       });
 
       // Comando simplificado para inserir usuário (conforme padrão do Odin v6)
-      const query = `mysql -u root -p'fontemain123333' -P 7999 -e "INSERT INTO xtream_iptvpro.users (username, password, exp_date, member_group_id, enabled) VALUES ('${data.username}', '${data.password}', '${data.exp_date}', 1, 1);"`;
+      const query = `mysql -u user_iptvpro -p'Y92RYuXHLP58AbOciQW' -h 23.158.72.30 -P 7999 -e "INSERT INTO xtream_iptvpro.users (username, password, exp_date, member_group_id, enabled) VALUES ('${data.username}', '${data.password}', '${data.exp_date}', 1, 1);"`;
       const result = await ssh.execCommand(query);
       
       await ssh.dispose();
