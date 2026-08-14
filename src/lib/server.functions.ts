@@ -23,7 +23,6 @@ export const runSSHCommand = createServerFn({ method: "POST" })
         port: data.port,
         username: data.username,
         password: data.password,
-        // Timeout de conexão curto para feedback rápido
         readyTimeout: 10000 
       });
 
@@ -47,6 +46,7 @@ export const runSSHCommand = createServerFn({ method: "POST" })
 
 export const getInstallScript = createServerFn({ method: "GET" })
   .handler(async () => {
+    // URL dinâmica do ambiente atual
     const script = `#!/bin/bash
 # ==========================================================
 # MAGO PANEL - INSTALADOR DE API (ODIN SPECIAL EDITION)
@@ -81,9 +81,8 @@ IP_PUBLICO=$(curl -s https://ifconfig.me)
 echo ""
 echo "------------------------------------------"
 echo "   ODIN CONECTADO COM SUCESSO!          "
-# Garantindo que o IP e Token apareçam no stdout
-printf "   IP: %s\n" "$IP_PUBLICO"
-printf "   TOKEN: %s\n" "$TOKEN"
+echo "   IP: $IP_PUBLICO"
+echo "   TOKEN: $TOKEN"
 echo "------------------------------------------"
 echo ""
 echo "Copie os dados acima e cole no Mago Panel."

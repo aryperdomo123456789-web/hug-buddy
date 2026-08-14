@@ -1,9 +1,11 @@
-import { createServerFn } from "@tanstack/react-start"
-import { getInstallScript } from '@/lib/server.functions'
+import { createServerFn } from "@tanstack/react-start";
+import { getInstallScript } from '@/lib/server.functions';
 
 export const Route = {
   GET: async ({ request }: { request: Request }) => {
     const script = await getInstallScript();
+    
+    // Forçar a resposta a ser puramente texto e sem cache
     return new Response(script, {
       status: 200,
       headers: {
@@ -15,4 +17,4 @@ export const Route = {
       },
     });
   },
-}
+};
