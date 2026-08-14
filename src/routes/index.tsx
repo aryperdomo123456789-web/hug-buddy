@@ -95,12 +95,29 @@ function Dashboard() {
     
     try {
       const result = await runCommand({
-        host: "23.158.72.30",
-        port: 22,
-        username: "root",
-        password: "fontemain123333",
-        command: command
+        data: {
+          host: "23.158.72.30",
+          port: 22,
+          username: "root",
+          password: "fontemain123333",
+          command: command
+        }
       });
+
+      if (result.success) {
+        setTerminalOutput((prev) => prev + `\n${result.stdout}${result.stderr ? '\nERROR: ' + result.stderr : ''}`);
+        toast.success("Comando executado com sucesso!");
+      } else {
+        setTerminalOutput((prev) => prev + `\nERRO DE CONEXÃO: ${result.error}`);
+        toast.error("Falha na conexão SSH");
+      }
+    } catch (err) {
+      setTerminalOutput((prev) => prev + `\nERRO INESPERADO: Ocorreu um erro ao processar o comando.`);
+      toast.error("Erro interno do servidor");
+    } finally {
+      setIsRunning(false);
+    }
+  };
 
       if (result.success) {
         setTerminalOutput((prev) => prev + `\n${result.stdout}${result.stderr ? '\nERROR: ' + result.stderr : ''}`);
