@@ -229,7 +229,11 @@ function Dashboard() {
               </p>
             </div>
           </div>
-        </section>
+            </section>
+          </>
+        ) : (
+          <LegacyLab />
+        )}
       </main>
     </div>
   );
