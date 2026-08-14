@@ -469,6 +469,57 @@ export const deleteUser = createServerFn({ method: "POST" })
     }
   });
 
+export const getBouquets = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const cfg = getOdinConfig();
+    return await withSsh(
+      {
+        host: cfg.sshHost,
+        port: cfg.sshPort,
+        username: cfg.sshUsername,
+        password: cfg.sshPassword,
+      },
+      async (ssh, cfg) => {
+        const result = await execMysql(
+          ssh,
+          cfg,
+          "SELECT id, bouquet_name FROM bouquets ORDER BY bouquet_name ASC"
+        );
+        const rows = parseTabRows(result.stdout, (columns) => {
+          const [id, bouquet_name] = columns;
+          return { id: Number(id), name: bouquet_name };
+        });
+        return { success: true, data: rows };
+      }
+    );
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+});
+
+export const killUserConnections = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({ id: z.number() }).parse(data))
+  .handler(async ({ data }) => {
+    try {
+      const cfg = getOdinConfig();
+      return await withSsh(
+        {
+          host: cfg.sshHost,
+          port: cfg.sshPort,
+          username: cfg.sshUsername,
+          password: cfg.sshPassword,
+        },
+        async (ssh, cfg) => {
+          const sql = `DELETE FROM user_activity_now WHERE user_id = ${Number(data.id)}`;
+          await execMysql(ssh, cfg, sql);
+          return { success: true };
+        }
+      );
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
 export const getServers = createServerFn({ method: "GET" }).handler(async () => {
   try {
     const cfg = getOdinConfig();
