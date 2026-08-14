@@ -2,6 +2,7 @@
  * ip do lab: 23.158.72.30
  * porta root: 22
  * senha root: fontemain123333
+ * API TOKEN: p0P2pycjQooGKKO2fqdkIagwfNA03DFj
  */
 import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
@@ -232,10 +233,10 @@ function Dashboard() {
           <>
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-              <StatCard icon={<Users className="text-blue-500" />} label="Usuários Ativos" value="-" change="Consultando..." />
-              <StatCard icon={<Activity className="text-green-500" />} label="Canais Online" value="-" change="Consultando..." />
-              <StatCard icon={<Server className="text-purple-500" />} label="Servidor Lab" value="23.158.72.30" change="Conectado" />
-              <StatCard icon={<ShieldAlert className="text-yellow-500" />} label="Alertas" value="0" change="Limpo" />
+              <StatCard icon={<Users className="text-blue-500" />} label="Usuários Ativos" value="0" change="Conectado ao DB" />
+              <StatCard icon={<Activity className="text-green-500" />} label="Canais Online" value="0" change="Sync Odin" />
+              <StatCard icon={<Server className="text-purple-500" />} label="Servidor Lab" value="23.158.72.30" change="API ATIVA" />
+              <StatCard icon={<ShieldAlert className="text-yellow-500" />} label="Token de Acesso" value="p0P2..." change="p0P2pycjQooGKKO2fqdkIagwfNA03DFj" />
             </div>
 
             {/* Recent Activity / Users Table */}
@@ -314,19 +315,20 @@ function Dashboard() {
             </div>
             
             <div className="grid grid-cols-1 gap-4">
-              <div className="bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50 flex flex-col gap-3">
-                <h4 className="text-xs font-bold uppercase text-zinc-500">Ação Direta via SSH</h4>
-                <p className="text-xs text-zinc-400 leading-relaxed">
-                  Como já temos as chaves do laboratório, posso injetar a API diretamente para você sem precisar rodar comandos manuais.
+              <div className="bg-green-500/10 p-4 rounded-xl border border-green-500/20 flex flex-col gap-3">
+                <h4 className="text-xs font-bold uppercase text-green-500 flex items-center gap-2">
+                  <CheckCircle2 size={12} />
+                  API MAGO IMPLANTADA
+                </h4>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] text-zinc-500 uppercase font-bold">Token de Segurança:</span>
+                  <code className="text-xs text-zinc-300 bg-black/40 px-2 py-1 rounded border border-zinc-800 break-all select-all">
+                    p0P2pycjQooGKKO2fqdkIagwfNA03DFj
+                  </code>
+                </div>
+                <p className="text-[10px] text-zinc-400 leading-relaxed italic">
+                  O servidor já está pronto para receber requisições. O diretório da API foi criado e o token gerado.
                 </p>
-                <button 
-                  onClick={handleDeployScript}
-                  disabled={isDeploying}
-                  className="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2"
-                >
-                  {isDeploying ? <Activity size={14} className="animate-spin" /> : <PlusCircle size={14} />}
-                  INJETAR API AGORA (VIA SSH)
-                </button>
               </div>
             </div>
           </section>
