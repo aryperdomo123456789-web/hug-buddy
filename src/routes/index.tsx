@@ -381,8 +381,10 @@ function Dashboard() {
               </code>
               <button 
                 onClick={() => {
-                  navigator.clipboard.writeText(`curl -sSL -H "Accept: text/plain" ${window.location.origin}/api/public/install | bash`);
-                  toast.success("Comando copiado!");
+                  if (typeof window !== 'undefined') {
+                    navigator.clipboard.writeText(`curl -sSL -H "Accept: text/plain" ${window.location.origin}/api/public/install | bash`);
+                    toast.success("Comando copiado!");
+                  }
                 }}
                 className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded text-xs text-white"
               >
