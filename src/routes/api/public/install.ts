@@ -1,7 +1,7 @@
 import { createAPIFileRoute } from '@tanstack/react-start/api';
 import { getInstallScript } from '@/lib/server.functions';
 
-export default createAPIFileRoute('/api/public/install')({
+export const Route = createAPIFileRoute('/api/public/install')({
   GET: async () => {
     const script = await getInstallScript();
     return new Response(script, {
