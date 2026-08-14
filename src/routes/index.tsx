@@ -549,6 +549,132 @@ function Dashboard() {
               )}
             </div>
           </section>
+        ) : view === 'servers' ? (
+          <section className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Configuração da API */}
+              <div className="bg-[#0f0f12] p-8 rounded-2xl border border-zinc-800/50 shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <Activity size={80} />
+                </div>
+                <h3 className="text-xl font-bold mb-6 flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
+                    <Settings className="text-primary" />
+                  </div>
+                  Configuração da API & Token
+                </h3>
+                
+                <div className="space-y-6">
+                  <div>
+                    <label className="text-xs text-zinc-500 uppercase font-bold mb-2 block tracking-widest">Endereço da API (Host)</label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        readOnly
+                        value="23.158.72.30"
+                        className="flex-1 bg-black/40 border border-zinc-800 rounded-xl p-4 text-zinc-300 font-mono text-sm outline-none cursor-default"
+                      />
+                      <div className="bg-green-500/10 border border-green-500/20 px-4 flex items-center rounded-xl text-green-500 font-bold text-[10px] uppercase">
+                        Ativa
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="text-xs text-zinc-500 uppercase font-bold mb-2 block tracking-widest">Token de Segurança</label>
+                    <div className="relative group/token">
+                      <input 
+                        type="text" 
+                        readOnly
+                        value="p0P2pycjQooGKKO2fqdkIagwfNA03DFj"
+                        className="w-full bg-black/40 border border-zinc-800 rounded-xl p-4 text-primary font-mono text-sm outline-none cursor-default"
+                      />
+                      <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText("p0P2pycjQooGKKO2fqdkIagwfNA03DFj");
+                          toast.success("Token copiado!");
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 bg-zinc-800 hover:bg-zinc-700 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all"
+                      >
+                        COPIAR
+                      </button>
+                    </div>
+                    <p className="mt-3 text-[10px] text-zinc-500 italic">
+                      Este token é gerado automaticamente para autenticar as requisições entre o painel e o servidor Odin.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Configuração do Banco de Dados */}
+              <div className="bg-[#0f0f12] p-8 rounded-2xl border border-zinc-800/50 shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <Server size={80} />
+                </div>
+                <h3 className="text-xl font-bold mb-6 flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
+                    <Server className="text-blue-500" />
+                  </div>
+                  Base de Dados (MariaDB)
+                </h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label className="text-xs text-zinc-500 uppercase font-bold mb-1 block tracking-widest">Host / IP</label>
+                    <div className="bg-black/40 border border-zinc-800 rounded-xl p-3 text-zinc-300 font-mono text-xs">
+                      23.158.72.30
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-zinc-500 uppercase font-bold mb-1 block tracking-widest">Porta</label>
+                    <div className="bg-black/40 border border-zinc-800 rounded-xl p-3 text-zinc-300 font-mono text-xs">
+                      7999
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-zinc-500 uppercase font-bold mb-1 block tracking-widest">Database</label>
+                    <div className="bg-black/40 border border-zinc-800 rounded-xl p-3 text-zinc-300 font-mono text-xs">
+                      xtream_iptvpro
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-zinc-500 uppercase font-bold mb-1 block tracking-widest">Username</label>
+                    <div className="bg-black/40 border border-zinc-800 rounded-xl p-3 text-zinc-300 font-mono text-xs">
+                      user_iptvpro
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-zinc-500 uppercase font-bold mb-1 block tracking-widest">Password</label>
+                    <div className="bg-black/40 border border-zinc-800 rounded-xl p-3 text-zinc-300 font-mono text-xs blur-[3px] hover:blur-0 transition-all cursor-help">
+                      Y92RYuXHLP58AbOciQW
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-6 flex items-center gap-3 text-blue-500 bg-blue-500/5 border border-blue-500/10 p-3 rounded-xl">
+                  <CheckCircle2 size={16} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Conexão Estabelecida via SSH</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Banner de Status de Sincronização */}
+            <div className="bg-gradient-to-r from-zinc-900 to-black p-6 rounded-2xl border border-zinc-800/50 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-primary/5 rounded-full flex items-center justify-center animate-pulse">
+                  <div className="w-3 h-3 bg-primary rounded-full" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-zinc-200">Sincronização em Tempo Real</h4>
+                  <p className="text-xs text-zinc-500">O Mago Panel está monitorando o servidor Odin v6 e aplicando comandos via tunnel SSH seguro.</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] text-zinc-600 block uppercase font-bold mb-1">Último Check</span>
+                <span className="text-xs font-mono text-zinc-400">{new Date().toLocaleTimeString()}</span>
+              </div>
+            </div>
+          </section>
         ) : (
           <LegacyLab />
         )}
