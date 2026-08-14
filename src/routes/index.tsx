@@ -277,7 +277,7 @@ function Dashboard() {
         <header className="flex justify-between items-end mb-12">
           <div>
             <h1 className="text-4xl font-black mb-2 tracking-tight uppercase">
-              {view === 'dashboard' ? 'Dashboard' : 'Laboratório Legado'}
+              {view === 'dashboard' ? 'Dashboard' : view === 'customers' ? 'Clientes' : 'Laboratório Legado'}
             </h1>
             <p className="text-zinc-500">
               {view === 'dashboard' 
