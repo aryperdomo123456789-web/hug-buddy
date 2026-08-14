@@ -183,11 +183,11 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
           [
             "SELECT",
             "u.id, u.username, u.password, u.exp_date, u.admin_enabled, u.enabled,",
-            "COALESCE(COUNT(DISTINCT uan.container_id), 0) AS active_cons,",
+            "COALESCE(COUNT(DISTINCT uan.activity_id), 0) AS active_cons,",
             "u.max_connections, u.member_id, u.created_at,",
             "u.admin_notes, u.reseller_notes, u.bouquet, u.is_restreamer,",
             "u.allowed_ips, u.allowed_ua, u.is_trial, u.is_isplock, u.forced_country,",
-            "u.is_mag, u.is_e2, u.force_server_id, u.is_stalker, u.bypass_ua, u.access_output",
+            "u.is_mag, u.is_e2, u.force_server_id, u.is_stalker, u.bypass_ua",
             "FROM users u",
             "LEFT JOIN user_activity_now uan ON u.id = uan.user_id",
             "GROUP BY u.id",
@@ -222,7 +222,6 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
             force_server_id,
             is_stalker,
             bypass_ua,
-            access_output,
           ] = columns;
           return {
             id: Number(id),
@@ -249,7 +248,7 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
             force_server_id: Number(force_server_id),
             is_stalker: Number(is_stalker),
             bypass_ua: Number(bypass_ua),
-            access_output: Number(access_output),
+            access_output: 3, // Fallback fixo para Odin
           };
         });
 
@@ -303,8 +302,8 @@ export const createUser = createServerFn({ method: "POST" })
       async (ssh, cfg) => {
         const sql = [
           "INSERT INTO users",
-          "(username, password, member_id, exp_date, enabled, admin_enabled, max_connections, created_at, created_by, bouquet, admin_notes, reseller_notes, is_restreamer, allowed_ips, allowed_ua, is_trial, is_isplock, forced_country, is_mag, is_e2, force_server_id, is_stalker, bypass_ua, access_output)",
-          `VALUES ('${escapeSql(data.username)}', '${escapeSql(data.password)}', ${Number(data.member_id)}, ${Number(data.exp_date)}, ${Number(data.enabled)}, ${Number(data.admin_enabled)}, ${Number(data.max_connections)}, UNIX_TIMESTAMP(), ${Number(data.member_id)}, '${escapeSql(data.bouquet)}', '${escapeSql(data.admin_notes)}', '${escapeSql(data.reseller_notes)}', ${Number(data.is_restreamer)}, '${escapeSql(data.allowed_ips)}', '${escapeSql(data.allowed_ua)}', ${Number(data.is_trial)}, ${Number(data.is_isplock)}, '${escapeSql(data.forced_country)}', ${Number(data.is_mag)}, ${Number(data.is_e2)}, ${Number(data.force_server_id)}, ${Number(data.is_stalker)}, ${Number(data.bypass_ua)}, ${Number(data.access_output)})`,
+          "(username, password, member_id, exp_date, enabled, admin_enabled, max_connections, created_at, created_by, bouquet, admin_notes, reseller_notes, is_restreamer, allowed_ips, allowed_ua, is_trial, is_isplock, forced_country, is_mag, is_e2, force_server_id, is_stalker, bypass_ua)",
+          `VALUES ('${escapeSql(data.username)}', '${escapeSql(data.password)}', ${Number(data.member_id)}, ${Number(data.exp_date)}, ${Number(data.enabled)}, ${Number(data.admin_enabled)}, ${Number(data.max_connections)}, UNIX_TIMESTAMP(), ${Number(data.member_id)}, '${escapeSql(data.bouquet)}', '${escapeSql(data.admin_notes)}', '${escapeSql(data.reseller_notes)}', ${Number(data.is_restreamer)}, '${escapeSql(data.allowed_ips)}', '${escapeSql(data.allowed_ua)}', ${Number(data.is_trial)}, ${Number(data.is_isplock)}, '${escapeSql(data.forced_country)}', ${Number(data.is_mag)}, ${Number(data.is_e2)}, ${Number(data.force_server_id)}, ${Number(data.is_stalker)}, ${Number(data.bypass_ua)})`,
         ].join(" ");
 
         const result = await execMysql(ssh, cfg, sql);
@@ -383,7 +382,6 @@ export const updateUser = createServerFn({ method: "POST" })
             `, force_server_id=${Number(data.force_server_id)}`,
             `, is_stalker=${Number(data.is_stalker)}`,
             `, bypass_ua=${Number(data.bypass_ua)}`,
-            `, access_output=${Number(data.access_output)}`,
             `WHERE id=${Number(data.id)}`,
           ].join(" ");
 
