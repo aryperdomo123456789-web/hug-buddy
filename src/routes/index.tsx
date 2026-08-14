@@ -24,7 +24,7 @@ import {
   CheckCircle2,
   XCircle
 } from "lucide-react";
-import { runSSHCommand, getUsers, createUser } from "@/lib/server.functions";
+import { runSSHCommand, getUsers, createUser, getServers, getStreams } from "@/lib/server.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -91,7 +91,7 @@ function LegacyLab() {
 }
 
 function Dashboard() {
-  const [view, setView] = React.useState<'dashboard' | 'legacy' | 'customers' | 'servers'>('dashboard');
+  const [view, setView] = React.useState<'dashboard' | 'legacy' | 'customers' | 'servers' | 'streams'>('dashboard');
   const [terminalOutput, setTerminalOutput] = React.useState<string>("IP: 23.158.72.30\nAguardando comando...");
   const [command, setCommand] = React.useState("ls -la /home/xtreamcodes/iptv_xtream_codes/");
   const [isRunning, setIsRunning] = React.useState(false);
@@ -107,9 +107,17 @@ function Dashboard() {
     exp_days: 30
   });
 
+  // Novos estados para Streams e Servers
+  const [streams, setStreams] = React.useState<any[]>([]);
+  const [isLoadingStreams, setIsLoadingStreams] = React.useState(false);
+  const [odinServers, setOdinServers] = React.useState<any[]>([]);
+  const [isLoadingServers, setIsLoadingServers] = React.useState(false);
+
   const runCommand = useServerFn(runSSHCommand);
   const fetchUsersFn = useServerFn(getUsers);
   const createUserFn = useServerFn(createUser);
+  const fetchServersFn = useServerFn(getServers);
+  const fetchStreamsFn = useServerFn(getStreams);
 
   const handleFetchUsers = async () => {
     setIsLoadingCustomers(true);
@@ -135,8 +143,38 @@ function Dashboard() {
     }
   };
 
+  const handleFetchServers = async () => {
+    setIsLoadingServers(true);
+    try {
+      const res = await fetchServersFn();
+      if (res.success) {
+        setOdinServers(res.data || []);
+      }
+    } catch (e) {
+      console.error("Fetch Servers Error:", e);
+    } finally {
+      setIsLoadingServers(false);
+    }
+  };
+
+  const handleFetchStreams = async () => {
+    setIsLoadingStreams(true);
+    try {
+      const res = await fetchStreamsFn();
+      if (res.success) {
+        setStreams(res.data || []);
+      }
+    } catch (e) {
+      console.error("Fetch Streams Error:", e);
+    } finally {
+      setIsLoadingStreams(false);
+    }
+  };
+
   React.useEffect(() => {
     handleFetchUsers();
+    handleFetchServers();
+    handleFetchStreams();
   }, []);
 
   const handleCreateUser = async () => {
@@ -270,12 +308,24 @@ function Dashboard() {
               handleFetchUsers();
             }}
           />
+          <NavItem 
+            icon={<Play size={20} />} 
+            label="Streams" 
+            active={view === 'streams'}
+            onClick={() => {
+              setView('streams');
+              handleFetchStreams();
+            }}
+          />
           <NavItem icon={<Terminal size={20} />} label="Terminal" />
           <NavItem 
             icon={<Server size={20} />} 
             label="Servidores" 
             active={view === 'servers'}
-            onClick={() => setView('servers')}
+            onClick={() => {
+              setView('servers');
+              handleFetchServers();
+            }}
           />
           <div className="my-2 border-t border-zinc-800/30 mx-2" />
           <NavItem 
@@ -303,7 +353,7 @@ function Dashboard() {
         <header className="flex justify-between items-end mb-12">
           <div>
             <h1 className="text-4xl font-black mb-2 tracking-tight uppercase">
-              {view === 'dashboard' ? 'Dashboard' : view === 'customers' ? 'Clientes' : view === 'servers' ? 'Servidores' : 'Laboratório Legado'}
+              {view === 'dashboard' ? 'Dashboard' : view === 'customers' ? 'Clientes' : view === 'streams' ? 'Streams' : view === 'servers' ? 'Servidores' : 'Laboratório Legado'}
             </h1>
             <p className="text-zinc-500">
               {view === 'dashboard' 
@@ -327,8 +377,8 @@ function Dashboard() {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
               <StatCard icon={<Users className="text-blue-500" />} label="Usuários Ativos" value={customers.length.toString()} change="Conectado ao DB" />
-              <StatCard icon={<Activity className="text-green-500" />} label="Canais Online" value="0" change="Sync Odin" />
-              <StatCard icon={<Server className="text-purple-500" />} label="Servidor Lab" value="23.158.72.30" change="API ATIVA" />
+              <StatCard icon={<Activity className="text-green-500" />} label="Canais Online" value={streams.filter(s => s.is_online).length.toString()} change={`${streams.length} total`} />
+              <StatCard icon={<Server className="text-purple-500" />} label="Servidor Lab" value={odinServers[0]?.server_ip || "23.158.72.30"} change={odinServers.length > 0 ? `${odinServers.length} Servers` : "API ATIVA"} />
               <StatCard icon={<ShieldAlert className="text-yellow-500" />} label="Token de Acesso" value="p0P2..." change="p0P2pycjQooGKKO2fqdkIagwfNA03DFj" />
             </div>
 
@@ -404,7 +454,7 @@ function Dashboard() {
             
             <div className="bg-black/40 p-4 rounded-xl border border-zinc-800 font-mono text-sm relative group mb-6">
               <code className="text-primary break-all">
-                {typeof window !== 'undefined' ? `curl -sSL -H "Accept: text/plain" ${window.location.origin}/api/public/install | bash` : 'Carregando comando...'}
+                {`curl -sSL -H "Accept: text/plain" ${typeof window !== 'undefined' ? window.location.origin : ''}/api/public/install | bash`}
               </code>
               <button 
                 onClick={() => {
@@ -721,6 +771,102 @@ function Dashboard() {
                 <span className="text-xs font-mono text-zinc-400">{new Date().toLocaleTimeString()}</span>
               </div>
             </div>
+            {/* Listagem de Servidores Odin */}
+            <div className="mt-8 bg-[#0f0f12] rounded-2xl border border-zinc-800/50 overflow-hidden shadow-2xl">
+              <div className="p-6 border-b border-zinc-800/50 flex justify-between items-center bg-zinc-900/30">
+                <h3 className="font-bold text-lg flex items-center gap-2">
+                  <Server size={18} className="text-primary" />
+                  Streaming Servers (Odin v6)
+                </h3>
+                <button 
+                  onClick={handleFetchServers}
+                  className="text-xs text-zinc-400 hover:text-white transition-colors bg-zinc-800 px-3 py-1.5 rounded-lg flex items-center gap-2"
+                >
+                  <Activity size={12} className={isLoadingServers ? "animate-spin" : ""} />
+                  ATUALIZAR
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-black/20 text-zinc-500 text-xs uppercase tracking-wider font-bold">
+                      <th className="px-6 py-4">ID</th>
+                      <th className="px-6 py-4">Nome</th>
+                      <th className="px-6 py-4">IP</th>
+                      <th className="px-6 py-4 text-center">Porta</th>
+                      <th className="px-6 py-4 text-center">Clientes</th>
+                      <th className="px-6 py-4 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/30">
+                    {odinServers.map((srv, idx) => (
+                      <tr key={idx} className="hover:bg-white/[0.02] group transition-colors">
+                        <td className="px-6 py-4 text-xs font-mono text-zinc-500">{srv.id}</td>
+                        <td className="px-6 py-4 font-bold text-zinc-200">{srv.server_name}</td>
+                        <td className="px-6 py-4 text-xs font-mono text-zinc-400">{srv.server_ip}</td>
+                        <td className="px-6 py-4 text-center text-zinc-400">{srv.server_port}</td>
+                        <td className="px-6 py-4 text-center text-zinc-400">{srv.total_clients}</td>
+                        <td className="px-6 py-4 text-center">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${srv.status === 1 ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
+                            {srv.status === 1 ? 'Online' : 'Offline'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {odinServers.length === 0 && !isLoadingServers && (
+                      <tr><td colSpan={6} className="p-10 text-center text-zinc-600 italic">Nenhum servidor encontrado.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        ) : view === 'streams' ? (
+          <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800/50 overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+             <div className="p-6 border-b border-zinc-800/50 flex justify-between items-center bg-zinc-900/30">
+                <h2 className="font-bold text-lg flex items-center gap-2">
+                  <Play size={18} className="text-primary" />
+                  Gerenciamento de Streams (Canais)
+                </h2>
+                <button 
+                  onClick={handleFetchStreams}
+                  className="text-xs text-zinc-400 hover:text-white transition-colors bg-zinc-800 px-3 py-1.5 rounded-lg flex items-center gap-2"
+                >
+                  <Activity size={12} className={isLoadingStreams ? "animate-spin" : ""} />
+                  ATUALIZAR
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-black/20 text-zinc-500 text-xs uppercase tracking-wider font-bold">
+                      <th className="px-6 py-4">ID</th>
+                      <th className="px-6 py-4">Nome do Canal</th>
+                      <th className="px-6 py-4 text-center">Status</th>
+                      <th className="px-6 py-4 text-center">Bitrate</th>
+                      <th className="px-6 py-4 text-center">Servidor ID</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/30">
+                    {streams.map((stream, idx) => (
+                      <tr key={idx} className="hover:bg-white/[0.02] group transition-colors">
+                        <td className="px-6 py-4 text-xs font-mono text-zinc-500">{stream.id}</td>
+                        <td className="px-6 py-4 font-bold text-zinc-200">{stream.stream_display_name}</td>
+                        <td className="px-6 py-4 text-center">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${stream.is_online === 1 ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
+                            {stream.is_online === 1 ? 'Live' : 'Offline'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-center font-mono text-xs text-zinc-400">{stream.bitrate} kbps</td>
+                        <td className="px-6 py-4 text-center text-zinc-400">{stream.server_id}</td>
+                      </tr>
+                    ))}
+                    {streams.length === 0 && !isLoadingStreams && (
+                      <tr><td colSpan={5} className="p-10 text-center text-zinc-600 italic">Nenhum stream encontrado.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
           </section>
         ) : (
           <LegacyLab />
