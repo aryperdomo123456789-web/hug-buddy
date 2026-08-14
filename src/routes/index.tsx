@@ -289,52 +289,123 @@ function Dashboard() {
           )}
 
           {view === 'customers' && (
-             <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800 p-6 shadow-xl overflow-hidden">
-               <div className="flex justify-between items-center mb-6">
-                 <button onClick={() => { setEditingUser(null); setShowAddUserModal(true); }} className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2">
-                   <UserPlus size={18} /> Novo Cliente
-                 </button>
-                 <div className="text-xs font-mono text-zinc-600">{customers.length} utilizadores encontrados</div>
+             <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800 shadow-xl overflow-hidden">
+               <div className="p-6 border-b border-zinc-900 bg-zinc-950/30 flex justify-between items-center">
+                 <div className="flex gap-4">
+                   <button onClick={() => { setEditingUser(null); setActiveTab('details'); setShowAddUserModal(true); }} className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2 rounded-lg font-bold transition-all flex items-center gap-2 text-sm">
+                     <PlusCircle size={18} /> Adicionar um Utilizador
+                   </button>
+                   <div className="flex bg-zinc-900 rounded-lg p-1">
+                      <button className="px-4 py-1.5 text-xs font-bold text-zinc-400 bg-zinc-800 rounded-md shadow-sm">Modo Manual</button>
+                   </div>
+                 </div>
+                 <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <input type="text" placeholder="Pesquisar Utilizadores..." className="bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-4 text-xs text-zinc-300 w-64 focus:outline-none focus:border-blue-500" />
+                    </div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-zinc-600">
+                      {customers.length} Utilizadores
+                    </div>
+                 </div>
                </div>
                
                <div className="overflow-x-auto">
                  <table className="w-full">
                    <thead>
-                      <tr className="text-zinc-500 text-[10px] uppercase tracking-widest text-left border-b border-zinc-900">
-                          <th className="pb-4 px-4 font-black">Usuário</th>
-                          <th className="pb-4 px-4 font-black text-center">Status</th>
-                          <th className="pb-4 px-4 font-black text-center">Conexões</th>
-                          <th className="pb-4 px-4 font-black">Expiração</th>
-                          <th className="pb-4 px-4 font-black text-right">Ações</th>
+                      <tr className="bg-zinc-950/50 text-zinc-500 text-[10px] uppercase tracking-widest text-left border-b border-zinc-900">
+                          <th className="py-4 px-6 font-black">ID</th>
+                          <th className="py-4 px-6 font-black">Nome do Utilizador</th>
+                          <th className="py-4 px-6 font-black">Senha</th>
+                          <th className="py-4 px-6 font-black">Revendedor</th>
+                          <th className="py-4 px-6 font-black text-center">Estado</th>
+                          <th className="py-4 px-6 font-black text-center">Teste</th>
+                          <th className="py-4 px-6 font-black">Expiração</th>
+                          <th className="py-4 px-6 font-black">Dias</th>
+                          <th className="py-4 px-6 font-black text-center">Conns.</th>
+                          <th className="py-4 px-6 font-black">Info</th>
+                          <th className="py-4 px-6 font-black text-right">Ações</th>
                       </tr>
                    </thead>
                    <tbody className="divide-y divide-zinc-900/50">
-                    {customers.map(u => (
-                      <tr key={u.id} className="text-sm group hover:bg-zinc-800/20 transition-colors">
-                        <td className="py-4 px-4 font-bold text-zinc-200">{u.username}</td>
-                        <td className="py-4 px-4 text-center">
-                          <span className={u.enabled == 1 ? "text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter" : "text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter"}>
-                            {u.enabled == 1 ? 'Ativo' : 'Bloqueado'}
+                    {customers.map(u => {
+                      const daysLeft = u.exp_date ? Math.max(0, Math.ceil((u.exp_date - Date.now() / 1000) / 86400)) : null;
+                      return (
+                      <tr key={u.id} className="text-xs group hover:bg-blue-600/5 transition-colors border-b border-zinc-900/30">
+                        <td className="py-4 px-6 font-mono text-zinc-600">{u.id}</td>
+                        <td className="py-4 px-6 font-bold text-zinc-200">{u.username}</td>
+                        <td className="py-4 px-6 text-zinc-500 font-mono">{u.password}</td>
+                        <td className="py-4 px-6 text-zinc-400">{u.owner || 'SuaFonte444'}</td>
+                        <td className="py-4 px-6 text-center">
+                          <span className={u.enabled == 1 ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 rounded text-[9px] font-black uppercase" : "bg-red-500/10 text-red-500 border border-red-500/20 px-2 py-0.5 rounded text-[9px] font-black uppercase"}>
+                            {u.enabled == 1 ? 'Active' : 'Blocked'}
                           </span>
                         </td>
-                        <td className="py-4 px-4 text-center font-mono text-xs">
-                          <span className={u.active_cons > 0 ? "text-green-400 font-bold" : "text-zinc-600"}>
+                        <td className="py-4 px-6 text-center">
+                          <span className={u.is_trial == 1 ? "bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded text-[9px] font-black uppercase" : "bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[9px] font-black uppercase"}>
+                            {u.is_trial == 1 ? 'Trial' : 'Official'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 font-mono text-zinc-400">
+                          {u.exp_date ? new Date(u.exp_date * 1000).toLocaleDateString() : 'Unlimited'}
+                        </td>
+                        <td className="py-4 px-6 font-mono text-zinc-500">
+                          {daysLeft !== null ? `${daysLeft}d` : '-'}
+                        </td>
+                        <td className="py-4 px-6 text-center font-mono">
+                          <span className={u.active_cons > 0 ? "text-emerald-400 font-bold" : "text-zinc-600"}>
                             {u.active_cons}
                           </span>
-                          <span className="text-zinc-700 mx-1">/</span>
+                          <span className="text-zinc-800 mx-1">/</span>
                           <span className="text-zinc-500">{u.max_connections}</span>
                         </td>
-                        <td className="py-4 px-4 font-mono text-xs text-zinc-500">
-                          {u.exp_date ? new Date(u.exp_date * 1000).toLocaleDateString() : 'Nunca'}
+                        <td className="py-4 px-6 text-[10px] text-zinc-500 max-w-[150px] truncate">
+                          {u.isp_info || '-'}
                         </td>
-                        <td className="py-4 px-4 text-right">
-                          <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => { setEditingUser(u); setShowAddUserModal(true); }} className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors"><Settings size={14} /></button>
-                            <button onClick={() => handleDeleteUser(u)} className="p-2 hover:bg-red-900/20 rounded-lg text-red-500 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
+                        <td className="py-4 px-6 text-right">
+                          <div className="flex gap-1 justify-end">
+                            <button onClick={async () => {
+                              const res = await toggleStatusFn({ data: { id: u.id, enabled: u.enabled == 1 ? 0 : 1 } });
+                              if (res.success) { toast.success("Status alterado!"); handleFetchUsers(); }
+                            }} title="Toggle Status" className="p-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-400 hover:text-white transition-all"><ShieldAlert size={12} /></button>
+                            
+                            <button onClick={() => { 
+                              setEditingUser(u); 
+                              setNewUserData({
+                                id: u.id,
+                                username: u.username,
+                                password: u.password,
+                                owner: u.owner || 'SuaFonte444',
+                                member_id: u.member_id || 1,
+                                exp_days: daysLeft || 30,
+                                max_connections: u.max_connections,
+                                enabled: u.enabled == 1,
+                                admin_enabled: u.admin_enabled == 1,
+                                trial: u.is_trial == 1,
+                                forced_portal: u.forced_portal == 1,
+                                restreamer: u.is_restreamer == 1,
+                                force_country: u.forced_country || "Off",
+                                ip_lock: u.is_isplock == 1,
+                                allowed_ips: u.allowed_ips || "",
+                                allowed_agents: u.allowed_ua || "",
+                                notes_admin: u.admin_notes || "",
+                                notes_reseller: u.reseller_notes || "",
+                                bouquet_ids: u.bouquet || "[1]",
+                              });
+                              setActiveTab('details');
+                              setShowAddUserModal(true); 
+                            }} title="Editar" className="p-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded text-zinc-400 hover:text-white transition-all"><Settings size={12} /></button>
+                            
+                            <button onClick={async () => {
+                              const res = await killConnectionsFn({ data: { id: u.id } });
+                              if (res.success) toast.success("Conexões derrubadas!");
+                            }} title="Kill Connections" className="p-1.5 bg-zinc-900 hover:bg-red-900/20 border border-zinc-800 rounded text-zinc-400 hover:text-red-500 transition-all"><Play size={12} className="rotate-90" /></button>
+                            
+                            <button onClick={() => handleDeleteUser(u)} title="Remover" className="p-1.5 bg-zinc-900 hover:bg-red-900/20 border border-zinc-800 rounded text-red-900 hover:text-red-500 transition-all"><Trash2 size={12} /></button>
                           </div>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                    </tbody>
                  </table>
                </div>
