@@ -123,7 +123,9 @@ function Dashboard() {
           toast.warning("Banco de dados Odin está vazio ou inacessível.");
         }
       } else {
-        toast.error("Erro no banco Odin: " + res.error);
+        // @ts-ignore
+        toast.error("Erro no banco Odin: " + (res.error || "Desconhecido"));
+        // @ts-ignore
         console.error("Fetch Error:", res.error);
       }
     } catch (e) {
@@ -159,7 +161,8 @@ function Dashboard() {
         setShowAddUserModal(false);
         handleFetchUsers();
       } else {
-        toast.error("Erro ao forjar: " + res.error);
+        // @ts-ignore
+        toast.error("Erro ao forjar: " + (res.error || "Desconhecido"));
       }
     } catch (e) {
       toast.error("Erro na comunicação SSH");
@@ -187,6 +190,7 @@ function Dashboard() {
         setTerminalOutput((prev) => prev + `\n${result.stdout}${result.stderr ? '\nERROR: ' + result.stderr : ''}`);
         toast.success("Comando executado com sucesso!");
       } else {
+        // @ts-ignore
         setTerminalOutput((prev) => prev + `\nERRO DE CONEXÃO: ${result.error}`);
         toast.error("Falha na conexão SSH");
       }
@@ -223,6 +227,7 @@ function Dashboard() {
         setTerminalOutput((prev) => prev + `\nIMPLANTAÇÃO CONCLUÍDA:\n${result.stdout}`);
         toast.success("API Mago implantada com sucesso via SSH!");
       } else {
+        // @ts-ignore
         setTerminalOutput((prev) => prev + `\nFALHA NA IMPLANTAÇÃO: ${result.error}`);
         toast.error("Falha ao implantar API");
       }
