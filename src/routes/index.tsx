@@ -1,9 +1,3 @@
-/**
- * ip do lab: 23.158.72.30
- * porta root: 22
- * senha root: fontemain123333
- * API TOKEN: p0P2pycjQooGKKO2fqdkIagwfNA03DFj
- */
 import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -22,11 +16,24 @@ import {
   XCircle
 } from "lucide-react";
 import { runSSHCommand, getUsers, createUser } from "@/lib/server.functions";
+import { getOdinConfig } from "@/lib/odin";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
-  loader: () => ({}),
+  loader: () => {
+    const cfg = getOdinConfig();
+    return {
+      odin: {
+        sshHost: cfg.sshHost,
+        dbHost: cfg.dbHost,
+        dbPort: cfg.dbPort,
+        dbName: cfg.dbName,
+        dbUsername: cfg.dbUsername,
+        apiTokenLast4: cfg.apiToken ? cfg.apiToken.slice(-4) : "",
+      },
+    };
+  },
 });
 
 function LegacyLab() {
@@ -38,7 +45,7 @@ function LegacyLab() {
             <Activity size={18} className="text-primary" />
           </div>
           <h2 className="font-bold text-lg">
-            Laboratório Legado - Wolf Play
+            Laboratório Legado - Odin
           </h2>
         </div>
         <div className="flex gap-2">
@@ -52,32 +59,32 @@ function LegacyLab() {
         <div className="flex items-center gap-6 text-xs">
           <div className="flex items-center gap-2">
             <span className="text-zinc-500 font-bold uppercase tracking-tighter">Portal:</span>
-            <code className="text-zinc-300">https://wolfplay.mplll.com/</code>
+            <code className="text-zinc-300">Ambiente legado desativado</code>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-zinc-500 font-bold uppercase tracking-tighter">User:</span>
-            <code className="bg-black/30 px-2 py-1 rounded text-yellow-500/80">laboratoriolovable</code>
+            <code className="bg-black/30 px-2 py-1 rounded text-yellow-500/80">configurar no ambiente</code>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-zinc-500 font-bold uppercase tracking-tighter">Pass:</span>
-            <code className="bg-black/30 px-2 py-1 rounded text-yellow-500/80">iGNVgbAlTP3130</code>
+            <code className="bg-black/30 px-2 py-1 rounded text-yellow-500/80">protegido</code>
           </div>
         </div>
-        <a 
-          href="https://wolfplay.mplll.com/" 
+        <a
+          href="https://example.com"
           target="_blank" 
           rel="noopener noreferrer"
           className="text-xs bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 font-bold shadow-lg shadow-primary/20"
         >
           <PlusCircle size={14} />
-          ABRIR PORTAL EXTERNO
+          ABRIR AMBIENTE
         </a>
       </div>
 
       {/* Visualizador do Legado */}
       <div className="flex-1 bg-black/40 relative group">
-        <iframe 
-          src="https://wolfplay.mplll.com/" 
+        <iframe
+          src="about:blank"
           className="w-full h-full border-none opacity-90 group-hover:opacity-100 transition-opacity"
           title="Legacy Panel"
         />
@@ -88,8 +95,9 @@ function LegacyLab() {
 }
 
 function Dashboard() {
+  const { odin } = Route.useLoaderData();
   const [view, setView] = React.useState<'dashboard' | 'legacy' | 'customers' | 'servers'>('dashboard');
-  const [terminalOutput, setTerminalOutput] = React.useState<string>("IP: 23.158.72.30\nAguardando comando...");
+  const [terminalOutput, setTerminalOutput] = React.useState<string>(() => `IP: ${odin.sshHost}\nAguardando comando...`);
   const [command, setCommand] = React.useState("ls -la /home/xtreamcodes/iptv_xtream_codes/");
   const [isRunning, setIsRunning] = React.useState(false);
   const [isDeploying, setIsDeploying] = React.useState(false);
@@ -172,10 +180,10 @@ function Dashboard() {
     try {
       const result = await runCommand({
         data: {
-          host: "23.158.72.30",
+          host: odin.sshHost,
           port: 22,
           username: "root",
-          password: "fontemain123333",
+          password: "",
           command: command
         }
       });
@@ -208,10 +216,10 @@ function Dashboard() {
       
       const result = await runCommand({
         data: {
-          host: "23.158.72.30",
+          host: odin.sshHost,
           port: 22,
           username: "root",
-          password: "fontemain123333",
+          password: "",
           command: deployCommand
         }
       });
@@ -320,8 +328,8 @@ function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
               <StatCard icon={<Users className="text-blue-500" />} label="Usuários Ativos" value={customers.length.toString()} change="Conectado ao DB" />
               <StatCard icon={<Activity className="text-green-500" />} label="Canais Online" value="0" change="Sync Odin" />
-              <StatCard icon={<Server className="text-purple-500" />} label="Servidor Lab" value="23.158.72.30" change="API ATIVA" />
-              <StatCard icon={<ShieldAlert className="text-yellow-500" />} label="Token de Acesso" value="p0P2..." change="p0P2pycjQooGKKO2fqdkIagwfNA03DFj" />
+              <StatCard icon={<Server className="text-purple-500" />} label="Servidor Lab" value={odin.sshHost} change="API ATIVA" />
+              <StatCard icon={<ShieldAlert className="text-yellow-500" />} label="Token de Acesso" value={odin.apiTokenLast4 ? `••••${odin.apiTokenLast4}` : "Configurar"} change={odin.apiTokenLast4 ? "Token presente" : "Sem token"} />
             </div>
 
             {/* Recent Activity / Users Table */}
@@ -369,7 +377,7 @@ function Dashboard() {
           <div className="relative z-10 max-w-2xl">
             <h3 className="text-2xl font-black mb-4 uppercase">Odin Streaming System v6 Conectado</h3>
             <p className="text-zinc-400 mb-6 leading-relaxed">
-              Já estudei a arquitetura do Odin v6. Estamos operando na porta <span className="text-white font-bold">7999</span> com o banco <span className="text-white font-bold">xtream_iptvpro</span>. 
+              Já estudei a arquitetura do Odin v6. Estamos operando na porta <span className="text-white font-bold">{odin.dbPort}</span> com o banco <span className="text-white font-bold">{odin.dbName}</span>.
               O instalador já foi atualizado para extrair as credenciais automaticamente e preparar sua API.
               <span className="text-white font-bold ml-1">Bora pra cima!</span>
             </p>
@@ -420,7 +428,7 @@ function Dashboard() {
                 <div className="flex flex-col gap-1">
                   <span className="text-[10px] text-zinc-500 uppercase font-bold">Token de Segurança:</span>
                   <code className="text-xs text-zinc-300 bg-black/40 px-2 py-1 rounded border border-zinc-800 break-all select-all">
-                    p0P2pycjQooGKKO2fqdkIagwfNA03DFj
+                    {odin.apiTokenLast4 ? `••••${odin.apiTokenLast4}` : "Configure ODIN_API_TOKEN"}
                   </code>
                 </div>
                 <p className="text-[10px] text-zinc-400 leading-relaxed italic">
@@ -610,7 +618,7 @@ function Dashboard() {
                       <input 
                         type="text" 
                         readOnly
-                        value="23.158.72.30"
+                      value={odin.sshHost}
                         className="flex-1 bg-black/40 border border-zinc-800 rounded-xl p-4 text-zinc-300 font-mono text-sm outline-none cursor-default"
                       />
                       <div className="bg-green-500/10 border border-green-500/20 px-4 flex items-center rounded-xl text-green-500 font-bold text-[10px] uppercase">
@@ -625,13 +633,13 @@ function Dashboard() {
                       <input 
                         type="text" 
                         readOnly
-                        value="p0P2pycjQooGKKO2fqdkIagwfNA03DFj"
+                        value={odin.apiTokenLast4 ? `••••${odin.apiTokenLast4}` : "Configure ODIN_API_TOKEN"}
                         className="w-full bg-black/40 border border-zinc-800 rounded-xl p-4 text-primary font-mono text-sm outline-none cursor-default"
                       />
                       <button 
                         onClick={() => {
-                          navigator.clipboard.writeText("p0P2pycjQooGKKO2fqdkIagwfNA03DFj");
-                          toast.success("Token copiado!");
+                          navigator.clipboard.writeText(odin.apiTokenLast4 ? `••••${odin.apiTokenLast4}` : "Configure ODIN_API_TOKEN");
+                          toast.success("Valor copiado!");
                         }}
                         className="absolute right-3 top-1/2 -translate-y-1/2 bg-zinc-800 hover:bg-zinc-700 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all"
                       >
@@ -661,31 +669,31 @@ function Dashboard() {
                   <div className="col-span-2">
                     <label className="text-xs text-zinc-500 uppercase font-bold mb-1 block tracking-widest">Host / IP</label>
                     <div className="bg-black/40 border border-zinc-800 rounded-xl p-3 text-zinc-300 font-mono text-xs">
-                      23.158.72.30
+                      {odin.dbHost}
                     </div>
                   </div>
                   <div>
                     <label className="text-xs text-zinc-500 uppercase font-bold mb-1 block tracking-widest">Porta</label>
                     <div className="bg-black/40 border border-zinc-800 rounded-xl p-3 text-zinc-300 font-mono text-xs">
-                      7999
+                      {odin.dbPort}
                     </div>
                   </div>
                   <div>
                     <label className="text-xs text-zinc-500 uppercase font-bold mb-1 block tracking-widest">Database</label>
                     <div className="bg-black/40 border border-zinc-800 rounded-xl p-3 text-zinc-300 font-mono text-xs">
-                      xtream_iptvpro
+                      {odin.dbName}
                     </div>
                   </div>
                   <div>
                     <label className="text-xs text-zinc-500 uppercase font-bold mb-1 block tracking-widest">Username</label>
                     <div className="bg-black/40 border border-zinc-800 rounded-xl p-3 text-zinc-300 font-mono text-xs">
-                      user_iptvpro
+                      {odin.dbUsername}
                     </div>
                   </div>
                   <div>
                     <label className="text-xs text-zinc-500 uppercase font-bold mb-1 block tracking-widest">Password</label>
                     <div className="bg-black/40 border border-zinc-800 rounded-xl p-3 text-zinc-300 font-mono text-xs blur-[3px] hover:blur-0 transition-all cursor-help">
-                      Y92RYuXHLP58AbOciQW
+                      senha configurada no ambiente
                     </div>
                   </div>
                 </div>
@@ -847,4 +855,3 @@ function TableRow({ name, status, expiry, connections }: { name: string; status:
     </tr>
   );
 }
-
