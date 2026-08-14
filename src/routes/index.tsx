@@ -88,13 +88,75 @@ function LegacyLab() {
 }
 
 function Dashboard() {
-  const [view, setView] = React.useState<'dashboard' | 'legacy'>('dashboard');
+  const [view, setView] = React.useState<'dashboard' | 'legacy' | 'customers'>('dashboard');
   const [terminalOutput, setTerminalOutput] = React.useState<string>("IP: 23.158.72.30\nAguardando comando...");
   const [command, setCommand] = React.useState("ls -la /home/xtreamcodes/iptv_xtream_codes/");
   const [isRunning, setIsRunning] = React.useState(false);
   const [isDeploying, setIsDeploying] = React.useState(false);
   
+  // States para Clientes
+  const [customers, setCustomers] = React.useState<any[]>([]);
+  const [isLoadingCustomers, setIsLoadingCustomers] = React.useState(false);
+  const [showAddUserModal, setShowAddUserModal] = React.useState(false);
+  const [newUserData, setNewUserData] = React.useState({
+    username: "",
+    password: "",
+    exp_days: 30
+  });
+
   const runCommand = useServerFn(runSSHCommand);
+  // @ts-ignore
+  const fetchUsersFn = useServerFn(require("@/lib/server.functions").getUsers);
+  // @ts-ignore
+  const createUserFn = useServerFn(require("@/lib/server.functions").createUser);
+
+  const handleFetchUsers = async () => {
+    setIsLoadingCustomers(true);
+    try {
+      // @ts-ignore
+      const res = await fetchUsersFn();
+      if (res.success) {
+        setCustomers(res.data);
+      } else {
+        toast.error("Erro no banco Odin: " + res.error);
+      }
+    } catch (e) {
+      toast.error("Erro ao carregar clientes via SSH");
+    } finally {
+      setIsLoadingCustomers(false);
+    }
+  };
+
+  const handleCreateUser = async () => {
+    if (!newUserData.username || !newUserData.password) {
+      toast.error("Preencha todos os campos");
+      return;
+    }
+    
+    setIsRunning(true);
+    try {
+      const exp_date = Math.floor(Date.now() / 1000) + (newUserData.exp_days * 86400);
+      // @ts-ignore
+      const res = await createUserFn({
+        data: {
+          username: newUserData.username,
+          password: newUserData.password,
+          exp_date: exp_date
+        }
+      });
+      if (res.success) {
+        toast.success("Usuário forjado no Odin com sucesso!");
+        setShowAddUserModal(false);
+        handleFetchUsers();
+      } else {
+        toast.error("Erro ao forjar: " + res.error);
+      }
+    } catch (e) {
+      toast.error("Erro na comunicação SSH");
+    } finally {
+      setIsRunning(false);
+    }
+  };
 
   const handleRunSSH = async () => {
     setIsRunning(true);
@@ -184,7 +246,15 @@ function Dashboard() {
             active={view === 'dashboard'} 
             onClick={() => setView('dashboard')}
           />
-          <NavItem icon={<Users size={20} />} label="Usuários" />
+          <NavItem 
+            icon={<Users size={20} />} 
+            label="Clientes" 
+            active={view === 'customers'}
+            onClick={() => {
+              setView('customers');
+              handleFetchUsers();
+            }}
+          />
           <NavItem icon={<Terminal size={20} />} label="Terminal" />
           <NavItem icon={<Server size={20} />} label="Servidores" />
           <div className="my-2 border-t border-zinc-800/30 mx-2" />
@@ -213,7 +283,7 @@ function Dashboard() {
         <header className="flex justify-between items-end mb-12">
           <div>
             <h1 className="text-4xl font-black mb-2 tracking-tight uppercase">
-              {view === 'dashboard' ? 'Dashboard' : 'Laboratório Legado'}
+              {view === 'dashboard' ? 'Dashboard' : view === 'customers' ? 'Clientes' : 'Laboratório Legado'}
             </h1>
             <p className="text-zinc-500">
               {view === 'dashboard' 
@@ -221,8 +291,11 @@ function Dashboard() {
                 : 'Analise e extraia o melhor do sistema legado para a nossa forja.'}
             </p>
           </div>
-          {view === 'dashboard' && (
-            <button className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-primary/20">
+          {(view === 'dashboard' || view === 'customers') && (
+            <button 
+              onClick={() => setShowAddUserModal(true)}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-primary/20"
+            >
               <PlusCircle size={20} />
               CRIAR NOVO USUÁRIO
             </button>
@@ -401,10 +474,140 @@ function Dashboard() {
           </section>
         </div>
           </>
+        ) : view === 'customers' ? (
+          <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800/50 overflow-hidden shadow-2xl">
+            <div className="p-6 border-b border-zinc-800/50 flex justify-between items-center bg-zinc-900/30">
+              <h2 className="font-bold text-lg flex items-center gap-2">
+                <Users size={18} className="text-primary" />
+                Gerenciamento de Clientes (Odin v6)
+              </h2>
+              <div className="flex gap-2">
+                <button 
+                  onClick={handleFetchUsers}
+                  className="text-xs text-zinc-400 hover:text-white transition-colors bg-zinc-800 px-3 py-1.5 rounded-lg flex items-center gap-2"
+                >
+                  <Activity size={12} className={isLoadingCustomers ? "animate-spin" : ""} />
+                  ATUALIZAR
+                </button>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              {isLoadingCustomers ? (
+                <div className="p-20 text-center text-zinc-500 flex flex-col items-center gap-4">
+                  <Activity size={40} className="animate-spin text-primary opacity-20" />
+                  <p className="animate-pulse">Consultando base de dados do Odin...</p>
+                </div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-black/20 text-zinc-500 text-xs uppercase tracking-wider font-bold">
+                      <th className="px-6 py-4">Usuário</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4">Expiração</th>
+                      <th className="px-6 py-4 text-right">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/30">
+                    {customers.length > 0 ? customers.map((user: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-white/[0.02] group transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center font-bold text-xs text-zinc-400">
+                              {user.username.substring(0,2).toUpperCase()}
+                            </div>
+                            <span className="font-bold text-zinc-200">{user.username}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${user.enabled == 1 ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
+                            {user.enabled == 1 ? 'Ativo' : 'Bloqueado'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-zinc-400 text-sm">
+                          {new Date(user.exp_date * 1000).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button className="text-zinc-600 hover:text-primary transition-colors p-2">
+                            <Settings size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td colSpan={4} className="px-6 py-20 text-center text-zinc-600 italic">
+                          Nenhum cliente encontrado no banco de dados.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </section>
         ) : (
           <LegacyLab />
         )}
       </main>
+
+      {/* Modal de Criação de Usuário */}
+      {showAddUserModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#0f0f12] border border-zinc-800 w-full max-w-md rounded-2xl p-8 shadow-2xl animate-in zoom-in fade-in duration-200">
+            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+              <UserPlus className="text-primary" />
+              Forjar Novo Cliente
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs text-zinc-500 uppercase font-bold mb-2 block">Username</label>
+                <input 
+                  type="text" 
+                  className="w-full bg-black/40 border border-zinc-800 rounded-xl p-3 text-zinc-200 outline-none focus:border-primary/50 transition-colors"
+                  placeholder="Ex: cliente_premium"
+                  value={newUserData.username}
+                  onChange={e => setNewUserData({...newUserData, username: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-500 uppercase font-bold mb-2 block">Password</label>
+                <input 
+                  type="password" 
+                  className="w-full bg-black/40 border border-zinc-800 rounded-xl p-3 text-zinc-200 outline-none focus:border-primary/50 transition-colors"
+                  placeholder="••••••••"
+                  value={newUserData.password}
+                  onChange={e => setNewUserData({...newUserData, password: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-500 uppercase font-bold mb-2 block">Validade (Dias)</label>
+                <input 
+                  type="number" 
+                  className="w-full bg-black/40 border border-zinc-800 rounded-xl p-3 text-zinc-200 outline-none focus:border-primary/50 transition-colors"
+                  value={newUserData.exp_days}
+                  onChange={e => setNewUserData({...newUserData, exp_days: parseInt(e.target.value)})}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-8">
+              <button 
+                onClick={() => setShowAddUserModal(false)}
+                className="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 py-3 rounded-xl font-bold transition-all"
+              >
+                CANCELAR
+              </button>
+              <button 
+                onClick={handleCreateUser}
+                disabled={isRunning}
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+              >
+                {isRunning ? <Activity size={18} className="animate-spin" /> : "CRIAR AGORA"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
