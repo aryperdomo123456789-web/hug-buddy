@@ -1,9 +1,15 @@
 /**
- * Mago Panel - Odin v6 Mirror
- * A tela de clientes agora reflete exatamente as funções do painel original:
- * - Colunas detalhadas: ID, Senha, Revendedor, Estado, Teste, Conexões, Info ISP.
- * - Modal Multi-Abas: Detalhes, Avançado, Restrições e Bouquets reais.
- * - Ações: Kill connections, toggle status, edição completa.
+ * Analise completamente todo o projeto e identifique TODOS os bugs, erros, falhas, comportamentos inesperados e possíveis problemas existentes na aplicação.
+ *
+ * Seu objetivo é realizar uma auditoria técnica profunda no sistema inteiro, corrigindo problemas de lógica, frontend, backend, integração, renderização, estado, banco de dados, responsividade e performance.
+ *
+ * Antes de modificar qualquer coisa:
+ * - Analise toda a estrutura do projeto
+ * - Analise rotas, componentes, hooks, estados globais
+ * - Analise integrações, Supabase, APIs, banco de dados
+ * - Analise autenticação, permissões, carregamentos
+ *
+ * Depois de identificar todos os problemas, corrija TODOS de uma única vez.
  */
 import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
