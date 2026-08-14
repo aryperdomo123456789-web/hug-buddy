@@ -12,6 +12,14 @@ export const getInstallScript = createServerFn({ method: "GET" })
 # MAGO PANEL - INSTALADOR DE API (ODIN SPECIAL EDITION)
 # ==========================================================
 
+# Garantir que o output apareça mesmo em shells silenciosos
+exec > >(tee -a /tmp/mago_install.log) 2>&1
+
+echo "------------------------------------------"
+echo "   Iniciando a Forja no Odin...         "
+echo "------------------------------------------"
+
+
 echo "------------------------------------------"
 echo "   Iniciando a Forja no Odin...         "
 echo "------------------------------------------"
