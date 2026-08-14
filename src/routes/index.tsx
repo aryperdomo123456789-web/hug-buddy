@@ -558,30 +558,118 @@ function Dashboard() {
       </div>
       
       {showAddUserModal && (
-         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-           <div className="bg-[#0f0f12] p-10 rounded-3xl w-full max-w-2xl border border-zinc-800 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-             <div className="flex justify-between items-center mb-8">
-               <h3 className="text-2xl font-black uppercase tracking-tighter text-blue-500">
-                 {editingUser ? "Modificar Utilizador" : "Forjar Novo Acesso"}
-               </h3>
-               <button onClick={() => setShowAddUserModal(false)} className="text-zinc-600 hover:text-white transition-colors">
-                 <Trash2 size={24} />
-               </button>
-             </div>
-             
-             <div className="grid grid-cols-2 gap-6">
-                <Field label="Username"><input className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono" value={newUserData.username} onChange={e => setNewUserData({...newUserData, username: e.target.value})} /></Field>
-                <Field label="Password"><input className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono" value={newUserData.password} onChange={e => setNewUserData({...newUserData, password: e.target.value})} /></Field>
-                <Field label="Dias Expiração"><input type="number" className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono" value={newUserData.exp_days} onChange={e => setNewUserData({...newUserData, exp_days: Number(e.target.value)})} /></Field>
-                <Field label="Conexões Max"><input type="number" className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono" value={newUserData.max_connections} onChange={e => setNewUserData({...newUserData, max_connections: Number(e.target.value)})} /></Field>
-             </div>
-             
-             <div className="flex gap-4 mt-12">
-               <button onClick={() => setShowAddUserModal(false)} className="flex-1 py-4 bg-zinc-950 text-zinc-500 font-bold rounded-xl border border-zinc-900 hover:bg-zinc-900 transition-all uppercase tracking-widest text-xs">Descartar</button>
-               <button onClick={handleSaveUser} className="flex-1 py-4 bg-blue-600 text-white font-black rounded-xl shadow-lg shadow-blue-900/20 hover:bg-blue-500 transition-all uppercase tracking-widest text-xs">Confirmar Forja</button>
-             </div>
-           </div>
-         </div>
+          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+            <div className="bg-[#0f0f12] rounded-3xl w-full max-w-4xl border border-zinc-800 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden">
+              <div className="bg-zinc-950/80 p-6 border-b border-zinc-900 flex justify-between items-center">
+                <h3 className="text-xl font-black uppercase tracking-tighter text-zinc-100 flex items-center gap-3">
+                  <div className="p-2 bg-blue-600 rounded-lg"><UserPlus size={18} /></div>
+                  {editingUser ? "Editar Utilizador" : "Adicionar um Utilizador"}
+                </h3>
+                <div className="flex gap-2">
+                  <button onClick={() => setShowAddUserModal(false)} className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded text-[10px] font-bold uppercase transition-all">← Voltar para Utilizadores</button>
+                </div>
+              </div>
+
+              <div className="flex border-b border-zinc-900 bg-zinc-950/20">
+                <button onClick={() => setActiveTab('details')} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'details' ? 'bg-emerald-600 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>Detalhes</button>
+                <button onClick={() => setActiveTab('advanced')} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'advanced' ? 'bg-emerald-600 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>Avançado</button>
+                <button onClick={() => setActiveTab('restrictions')} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'restrictions' ? 'bg-emerald-600 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>Restrições</button>
+                <button onClick={() => setActiveTab('bouquets')} className={`px-8 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'bouquets' ? 'bg-emerald-600 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>Bouquets</button>
+              </div>
+              
+              <div className="p-8 max-h-[60vh] overflow-y-auto bg-zinc-900/10">
+                {activeTab === 'details' && (
+                  <div className="grid grid-cols-2 gap-8">
+                    <Field label="Nome do utilizador"><input className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono text-sm" value={newUserData.username} onChange={e => setNewUserData({...newUserData, username: e.target.value})} /></Field>
+                    <Field label="Senha"><input className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono text-sm" value={newUserData.password} onChange={e => setNewUserData({...newUserData, password: e.target.value})} /></Field>
+                    <Field label="Dono"><input className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono text-sm" value={newUserData.owner} onChange={e => setNewUserData({...newUserData, owner: e.target.value})} /></Field>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Field label="Conexões máximas"><input type="number" className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono text-sm" value={newUserData.max_connections} onChange={e => setNewUserData({...newUserData, max_connections: Number(e.target.value)})} /></Field>
+                      <Field label="Validade (Dias)"><input type="number" className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono text-sm" value={newUserData.exp_days} onChange={e => setNewUserData({...newUserData, exp_days: Number(e.target.value)})} /></Field>
+                    </div>
+                    <div className="col-span-2 space-y-4">
+                      <Field label="Notas do Administrador"><textarea className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono text-sm min-h-[80px]" value={newUserData.notes_admin} onChange={e => setNewUserData({...newUserData, notes_admin: e.target.value})} /></Field>
+                      <Field label="Notas do Revendedor"><textarea className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono text-sm min-h-[80px]" value={newUserData.notes_reseller} onChange={e => setNewUserData({...newUserData, notes_reseller: e.target.value})} /></Field>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'advanced' && (
+                  <div className="grid grid-cols-2 gap-8">
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between p-4 bg-black/40 rounded-xl border border-zinc-900">
+                        <span className="text-[10px] font-black uppercase text-zinc-400">Restreamer</span>
+                        <button onClick={() => setNewUserData({...newUserData, restreamer: !newUserData.restreamer})} className={`w-12 h-6 rounded-full relative transition-all ${newUserData.restreamer ? 'bg-emerald-600' : 'bg-zinc-800'}`}>
+                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${newUserData.restreamer ? 'left-7' : 'left-1'}`} />
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between p-4 bg-black/40 rounded-xl border border-zinc-900">
+                        <span className="text-[10px] font-black uppercase text-zinc-400">Conta de Teste</span>
+                        <button onClick={() => setNewUserData({...newUserData, trial: !newUserData.trial})} className={`w-12 h-6 rounded-full relative transition-all ${newUserData.trial ? 'bg-emerald-600' : 'bg-zinc-800'}`}>
+                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${newUserData.trial ? 'left-7' : 'left-1'}`} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="space-y-6">
+                      <Field label="País Forçado">
+                        <select className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono text-sm" value={newUserData.force_country} onChange={e => setNewUserData({...newUserData, force_country: e.target.value})}>
+                          <option value="Off">Off</option>
+                          <option value="BR">Brasil</option>
+                          <option value="US">USA</option>
+                          <option value="PT">Portugal</option>
+                        </select>
+                      </Field>
+                      <div className="flex items-center justify-between p-4 bg-black/40 rounded-xl border border-zinc-900">
+                        <span className="text-[10px] font-black uppercase text-zinc-400">ISP Lock</span>
+                        <button onClick={() => setNewUserData({...newUserData, ip_lock: !newUserData.ip_lock})} className={`w-12 h-6 rounded-full relative transition-all ${newUserData.ip_lock ? 'bg-emerald-600' : 'bg-zinc-800'}`}>
+                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${newUserData.ip_lock ? 'left-7' : 'left-1'}`} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'restrictions' && (
+                  <div className="space-y-8">
+                    <Field label="Endereços IP permitidos (um por linha)">
+                      <textarea className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono text-sm min-h-[120px]" placeholder="Ex: 192.168.1.1" value={newUserData.allowed_ips} onChange={e => setNewUserData({...newUserData, allowed_ips: e.target.value})} />
+                    </Field>
+                    <Field label="Agente-utilizador autorizado (User-Agent)">
+                      <textarea className="w-full bg-black p-3.5 rounded-xl border border-zinc-900 focus:border-blue-600 outline-none transition-all font-mono text-sm min-h-[120px]" placeholder="Ex: VLC/3.0.8" value={newUserData.allowed_agents} onChange={e => setNewUserData({...newUserData, allowed_agents: e.target.value})} />
+                    </Field>
+                  </div>
+                )}
+
+                {activeTab === 'bouquets' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    {bouquets.map(b => {
+                      const currentBouquets = JSON.parse(newUserData.bouquet_ids || "[]");
+                      const isSelected = currentBouquets.includes(b.id);
+                      return (
+                        <div key={b.id} onClick={() => {
+                          let next;
+                          if (isSelected) next = currentBouquets.filter((id: number) => id !== b.id);
+                          else next = [...currentBouquets, b.id];
+                          setNewUserData({...newUserData, bouquet_ids: JSON.stringify(next)});
+                        }} className={`p-4 rounded-xl border cursor-pointer transition-all flex justify-between items-center ${isSelected ? 'bg-blue-600/20 border-blue-600 text-blue-400' : 'bg-black/40 border-zinc-900 text-zinc-500 hover:border-zinc-700'}`}>
+                          <span className="text-xs font-bold">{b.name}</span>
+                          {isSelected && <Activity size={12} />}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-zinc-950/80 p-6 border-t border-zinc-900 flex justify-between items-center">
+                <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">Mago Engine v6.0.3</div>
+                <div className="flex gap-3">
+                  <button onClick={() => setShowAddUserModal(false)} className="px-6 py-2 bg-zinc-900 text-zinc-400 font-black rounded-lg text-[10px] uppercase hover:bg-zinc-800 transition-all">Anterior</button>
+                  <button onClick={handleSaveUser} className="px-8 py-2 bg-emerald-600 text-white font-black rounded-lg text-[10px] uppercase shadow-lg shadow-emerald-900/20 hover:bg-emerald-500 transition-all">Próximo</button>
+                </div>
+              </div>
+            </div>
+          </div>
       )}
     </div>
   );
