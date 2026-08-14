@@ -1,10 +1,50 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { NodeSSH } from 'node-ssh';
+
+const ssh = new NodeSSH();
 
 /**
- * Script de instalação customizado para o Mago Panel.
- * Inspirado na arquitetura do Sigma, mas focado na sua infra.
+ * Função para executar comandos no servidor via SSH e retornar o output.
+ * Isso permite que o Mago Panel diagnostique o servidor Odin diretamente.
  */
+export const runSSHCommand = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({
+    host: z.string(),
+    port: z.number().default(22),
+    username: z.string(),
+    password: z.string(),
+    command: z.string()
+  }).parse(data))
+  .handler(async ({ data }) => {
+    try {
+      await ssh.connect({
+        host: data.host,
+        port: data.port,
+        username: data.username,
+        password: data.password,
+        // Timeout de conexão curto para feedback rápido
+        readyTimeout: 10000 
+      });
+
+      const result = await ssh.execCommand(data.command);
+      
+      await ssh.dispose();
+
+      return {
+        success: true,
+        stdout: result.stdout,
+        stderr: result.stderr,
+        exitCode: result.code
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || "Erro desconhecido na conexão SSH"
+      };
+    }
+  });
+
 export const getInstallScript = createServerFn({ method: "GET" })
   .handler(async () => {
     const script = `#!/bin/bash
@@ -51,9 +91,6 @@ echo "Copie os dados acima e cole no Mago Panel."
     return script;
   });
 
-/**
- * Valida o token e conecta o servidor ao painel.
- */
 export const connectServer = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ 
     ip: z.string(),
@@ -61,11 +98,7 @@ export const connectServer = createServerFn({ method: "POST" })
     label: z.string().optional()
   }).parse(data))
   .handler(async ({ data }) => {
-    // Aqui você salvaria no Lovable Cloud (Supabase) os detalhes do servidor
     console.log("Tentando conectar ao servidor:", data.ip);
-    
-    
-    // Simulação de sucesso
     return { 
       success: true, 
       message: "Servidor conectado com sucesso! O império está crescendo.",
