@@ -1,3 +1,4 @@
+import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { 
   Users, 
@@ -16,7 +17,67 @@ export const Route = createFileRoute("/")({
   loader: () => ({}),
 });
 
+function LegacyLab() {
+  return (
+    <div className="flex flex-col h-[calc(100vh-120px)] bg-[#0f0f12] rounded-2xl border border-zinc-800/50 overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
+      <div className="p-4 border-b border-zinc-800/50 flex justify-between items-center bg-zinc-900/30">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center border border-primary/20">
+            <Activity size={18} className="text-primary" />
+          </div>
+          <h2 className="font-bold text-lg">
+            Laboratório Legado - Wolf Play
+          </h2>
+        </div>
+        <div className="flex gap-2">
+           <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 px-2 py-1 rounded uppercase font-bold tracking-wider">Modo Inspeção</span>
+           <span className="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-1 rounded uppercase font-bold tracking-wider">v3.89</span>
+        </div>
+      </div>
+      
+      {/* Informações de Acesso para o Desenvolvedor */}
+      <div className="p-4 bg-yellow-500/5 border-b border-yellow-500/10 flex items-center justify-between">
+        <div className="flex items-center gap-6 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-zinc-500 font-bold uppercase tracking-tighter">Portal:</span>
+            <code className="text-zinc-300">https://wolfplay.mplll.com/</code>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-zinc-500 font-bold uppercase tracking-tighter">User:</span>
+            <code className="bg-black/30 px-2 py-1 rounded text-yellow-500/80">laboratoriolovable</code>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-zinc-500 font-bold uppercase tracking-tighter">Pass:</span>
+            <code className="bg-black/30 px-2 py-1 rounded text-yellow-500/80">iGNVgbAlTP3130</code>
+          </div>
+        </div>
+        <a 
+          href="https://wolfplay.mplll.com/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-xs bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 font-bold shadow-lg shadow-primary/20"
+        >
+          <PlusCircle size={14} />
+          ABRIR PORTAL EXTERNO
+        </a>
+      </div>
+
+      {/* Visualizador do Legado */}
+      <div className="flex-1 bg-black/40 relative group">
+        <iframe 
+          src="https://wolfplay.mplll.com/" 
+          className="w-full h-full border-none opacity-90 group-hover:opacity-100 transition-opacity"
+          title="Legacy Panel"
+        />
+        <div className="absolute inset-0 pointer-events-none border-2 border-primary/10 group-hover:border-primary/20 transition-all" />
+      </div>
+    </div>
+  );
+}
+
 function Dashboard() {
+  const [view, setView] = React.useState<'dashboard' | 'legacy'>('dashboard');
+
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 font-sans selection:bg-primary/30">
       {/* Sidebar - O Esconderijo do Mago */}
@@ -25,14 +86,31 @@ function Dashboard() {
           <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
             <ShieldAlert className="w-6 h-6 text-primary" />
           </div>
-          <span className="font-bold text-xl tracking-tight uppercase">Mago <span className="text-primary">Panel</span></span>
+          <span 
+            className="font-bold text-xl tracking-tight uppercase cursor-pointer" 
+            onClick={() => setView('dashboard')}
+          >
+            Mago <span className="text-primary">Panel</span>
+          </span>
         </div>
 
         <nav className="flex flex-col gap-2 flex-1">
-          <NavItem icon={<LayoutDashboard size={20} />} label="Dashboard" active />
+          <NavItem 
+            icon={<LayoutDashboard size={20} />} 
+            label="Dashboard" 
+            active={view === 'dashboard'} 
+            onClick={() => setView('dashboard')}
+          />
           <NavItem icon={<Users size={20} />} label="Usuários" />
           <NavItem icon={<Terminal size={20} />} label="Terminal" />
           <NavItem icon={<Server size={20} />} label="Servidores" />
+          <div className="my-2 border-t border-zinc-800/30 mx-2" />
+          <NavItem 
+            icon={<Activity size={20} />} 
+            label="Laboratório Legado" 
+            active={view === 'legacy'}
+            onClick={() => setView('legacy')}
+          />
           <NavItem icon={<Settings size={20} />} label="Configurações" />
         </nav>
 
@@ -51,25 +129,35 @@ function Dashboard() {
       <main className="ml-64 p-10 max-w-7xl mx-auto">
         <header className="flex justify-between items-end mb-12">
           <div>
-            <h1 className="text-4xl font-black mb-2 tracking-tight">DASHBOARD</h1>
-            <p className="text-zinc-500">Bem-vindo à sua central de comando, mestre.</p>
+            <h1 className="text-4xl font-black mb-2 tracking-tight uppercase">
+              {view === 'dashboard' ? 'Dashboard' : 'Laboratório Legado'}
+            </h1>
+            <p className="text-zinc-500">
+              {view === 'dashboard' 
+                ? 'Bem-vindo à sua central de comando, mestre.' 
+                : 'Analise e extraia o melhor do sistema legado para a nossa forja.'}
+            </p>
           </div>
-          <button className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-primary/20">
-            <PlusCircle size={20} />
-            CRIAR NOVO USUÁRIO
-          </button>
+          {view === 'dashboard' && (
+            <button className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-primary/20">
+              <PlusCircle size={20} />
+              CRIAR NOVO USUÁRIO
+            </button>
+          )}
         </header>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-          <StatCard icon={<Users className="text-blue-500" />} label="Usuários Ativos" value="1,284" change="+12%" />
-          <StatCard icon={<Activity className="text-green-500" />} label="Canais Online" value="15,402" change="99.9%" />
-          <StatCard icon={<Server className="text-purple-500" />} label="Carga CPU" value="42%" change="Estável" />
-          <StatCard icon={<ShieldAlert className="text-yellow-500" />} label="Alertas" value="0" change="Limpo" />
-        </div>
+        {view === 'dashboard' ? (
+          <>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+              <StatCard icon={<Users className="text-blue-500" />} label="Usuários Ativos" value="1,284" change="+12%" />
+              <StatCard icon={<Activity className="text-green-500" />} label="Canais Online" value="15,402" change="99.9%" />
+              <StatCard icon={<Server className="text-purple-500" />} label="Carga CPU" value="42%" change="Estável" />
+              <StatCard icon={<ShieldAlert className="text-yellow-500" />} label="Alertas" value="0" change="Limpo" />
+            </div>
 
-        {/* Recent Activity / Users Table */}
-        <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800/50 overflow-hidden shadow-2xl">
+            {/* Recent Activity / Users Table */}
+            <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800/50 overflow-hidden shadow-2xl">
           <div className="p-6 border-b border-zinc-800/50 flex justify-between items-center bg-zinc-900/30">
             <h2 className="font-bold text-lg flex items-center gap-2">
               <Users size={18} className="text-primary" />
@@ -158,15 +246,21 @@ function Dashboard() {
               </p>
             </div>
           </div>
-        </section>
+            </section>
+          </>
+        ) : (
+          <LegacyLab />
+        )}
       </main>
     </div>
   );
 }
 
-function NavItem({ icon, label, active = false }: { icon: React.ReactNode; label: string; active?: boolean }) {
+function NavItem({ icon, label, active = false, onClick }: { icon: React.ReactNode; label: string; active?: boolean; onClick?: () => void }) {
   return (
-    <button className={`
+    <button 
+      onClick={onClick}
+      className={`
       flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all group
       ${active 
         ? 'bg-primary/10 text-primary border border-primary/20' 
