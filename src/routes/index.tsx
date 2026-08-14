@@ -15,9 +15,32 @@ import {
   CheckCircle2,
   XCircle
 } from "lucide-react";
-import { runSSHCommand, getUsers, createUser } from "@/lib/server.functions";
+import { runSSHCommand, getUsers, createUser, updateUser, toggleUserStatus, deleteUser } from "@/lib/server.functions";
 import { getOdinConfig } from "@/lib/odin";
 import { toast } from "sonner";
+
+type UserEditorTab = "detalhes" | "avancado" | "restricoes" | "bouquets";
+
+type UserEditorState = {
+  id?: number;
+  username: string;
+  password: string;
+  owner: string;
+  exp_days: number;
+  max_connections: number;
+  enabled: boolean;
+  admin_enabled: boolean;
+  trial: boolean;
+  forced_portal: boolean;
+  restreamer: boolean;
+  force_country: string;
+  ip_lock: boolean;
+  allowed_ips: string;
+  allowed_agents: string;
+  notes_admin: string;
+  notes_reseller: string;
+  bouquet_ids: string;
+};
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
@@ -35,6 +58,15 @@ export const Route = createFileRoute("/")({
     };
   },
 });
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="flex flex-col gap-2">
+      <span className="text-xs uppercase tracking-widest text-zinc-500 font-bold">{label}</span>
+      {children}
+    </label>
+  );
+}
 
 function LegacyLab() {
   return (
@@ -106,15 +138,34 @@ function Dashboard() {
   const [customers, setCustomers] = React.useState<any[]>([]);
   const [isLoadingCustomers, setIsLoadingCustomers] = React.useState(false);
   const [showAddUserModal, setShowAddUserModal] = React.useState(false);
-  const [newUserData, setNewUserData] = React.useState({
+  const [editingUser, setEditingUser] = React.useState<any | null>(null);
+  const [activeEditorTab, setActiveEditorTab] = React.useState<UserEditorTab>("detalhes");
+  const [newUserData, setNewUserData] = React.useState<UserEditorState>({
     username: "",
     password: "",
-    exp_days: 30
+    owner: "SuaFonte444",
+    exp_days: 30,
+    max_connections: 1,
+    enabled: true,
+    admin_enabled: true,
+    trial: false,
+    forced_portal: false,
+    restreamer: false,
+    force_country: "Off",
+    ip_lock: false,
+    allowed_ips: "",
+    allowed_agents: "",
+    notes_admin: "",
+    notes_reseller: "",
+    bouquet_ids: "[1]",
   });
 
   const runCommand = useServerFn(runSSHCommand);
   const fetchUsersFn = useServerFn(getUsers);
   const createUserFn = useServerFn(createUser);
+  const updateUserFn = useServerFn(updateUser);
+  const toggleUserStatusFn = useServerFn(toggleUserStatus);
+  const deleteUserFn = useServerFn(deleteUser);
 
   const handleFetchUsers = async () => {
     setIsLoadingCustomers(true);
@@ -142,7 +193,59 @@ function Dashboard() {
     handleFetchUsers();
   }, []);
 
-  const handleCreateUser = async () => {
+  const openCreateModal = () => {
+    setEditingUser(null);
+    setActiveEditorTab("detalhes");
+    setNewUserData({
+      username: "",
+      password: "",
+      owner: "SuaFonte444",
+      exp_days: 30,
+      max_connections: 1,
+      enabled: true,
+      admin_enabled: true,
+      trial: false,
+      forced_portal: false,
+      restreamer: false,
+      force_country: "Off",
+      ip_lock: false,
+      allowed_ips: "",
+      allowed_agents: "",
+      notes_admin: "",
+      notes_reseller: "",
+      bouquet_ids: "[1]",
+    });
+    setShowAddUserModal(true);
+  };
+
+  const openEditModal = (user: any) => {
+    setEditingUser(user);
+    setActiveEditorTab("detalhes");
+    setNewUserData({
+      username: user.username || "",
+      password: user.password || "",
+      owner: user.owner || "SuaFonte444",
+      exp_days: user.exp_date
+        ? Math.max(1, Math.ceil((user.exp_date - Date.now() / 1000) / 86400))
+        : 30,
+      max_connections: user.max_connections || 1,
+      enabled: user.enabled == 1,
+      admin_enabled: user.admin_enabled == 1,
+      trial: Boolean(user.trial),
+      forced_portal: Boolean(user.forced_portal),
+      restreamer: Boolean(user.restreamer),
+      force_country: user.force_country || "Off",
+      ip_lock: Boolean(user.ip_lock),
+      allowed_ips: user.allowed_ips || "",
+      allowed_agents: user.allowed_agents || "",
+      notes_admin: user.notes_admin || "",
+      notes_reseller: user.reseller_notes || "",
+      bouquet_ids: user.bouquet || "[1]",
+    });
+    setShowAddUserModal(true);
+  };
+
+  const handleSaveUser = async () => {
     if (!newUserData.username || !newUserData.password) {
       toast.error("Preencha todos os campos");
       return;
@@ -151,23 +254,140 @@ function Dashboard() {
     setIsRunning(true);
     try {
       const exp_date = Math.floor(Date.now() / 1000) + (newUserData.exp_days * 86400);
-      // @ts-ignore
-      const res = await createUserFn({
-        data: {
-          username: newUserData.username,
-          password: newUserData.password,
-          exp_date: exp_date
+      if (editingUser) {
+        const res = await updateUserFn({
+          data: {
+            id: editingUser.id,
+            username: newUserData.username,
+            password: newUserData.password,
+            exp_date,
+            enabled: newUserData.enabled ? 1 : 0,
+            max_connections: newUserData.max_connections,
+            member_id: editingUser.member_id ?? 1,
+            admin_enabled: newUserData.admin_enabled ? 1 : 0,
+            admin_notes: newUserData.notes_admin,
+            reseller_notes: newUserData.notes_reseller,
+            bouquet: newUserData.bouquet_ids,
+            is_restreamer: newUserData.restreamer ? 1 : 0,
+            allowed_ips: newUserData.allowed_ips,
+            allowed_ua: newUserData.allowed_agents,
+            is_trial: newUserData.trial ? 1 : 0,
+            is_isplock: newUserData.ip_lock ? 1 : 0,
+            forced_country: newUserData.force_country,
+            is_mag: 0,
+            is_e2: 0,
+            force_server_id: 0,
+            is_stalker: 0,
+            bypass_ua: 0,
+            access_output: 3,
+          }
+        });
+        if (res.success) {
+          toast.success("Usuário atualizado com sucesso!");
+          setShowAddUserModal(false);
+          setEditingUser(null);
+          handleFetchUsers();
+        } else {
+          toast.error("Erro ao atualizar: " + res.error);
         }
-      });
-      if (res.success) {
-        toast.success("Usuário forjado no Odin com sucesso!");
-        setShowAddUserModal(false);
-        handleFetchUsers();
       } else {
-        toast.error("Erro ao forjar: " + res.error);
+        const res = await createUserFn({
+          data: {
+            username: newUserData.username,
+            password: newUserData.password,
+            exp_date: exp_date,
+            max_connections: newUserData.max_connections,
+            member_id: 1,
+            admin_enabled: newUserData.admin_enabled ? 1 : 0,
+            enabled: newUserData.enabled ? 1 : 0,
+            admin_notes: newUserData.notes_admin,
+            reseller_notes: newUserData.notes_reseller,
+            bouquet: newUserData.bouquet_ids,
+            is_restreamer: newUserData.restreamer ? 1 : 0,
+            allowed_ips: newUserData.allowed_ips,
+            allowed_ua: newUserData.allowed_agents,
+            is_trial: newUserData.trial ? 1 : 0,
+            is_isplock: newUserData.ip_lock ? 1 : 0,
+            forced_country: newUserData.force_country,
+            is_mag: 0,
+            is_e2: 0,
+            force_server_id: 0,
+            is_stalker: 0,
+            bypass_ua: 0,
+            access_output: 3,
+          }
+        });
+        if (res.success) {
+          toast.success("Usuário criado com sucesso!");
+          setShowAddUserModal(false);
+          handleFetchUsers();
+        } else {
+          toast.error("Erro ao criar: " + res.error);
+        }
       }
     } catch (e) {
       toast.error("Erro na comunicação SSH");
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  const handleToggleUser = async (user: any) => {
+    setIsRunning(true);
+    try {
+      const res = await toggleUserStatusFn({
+        data: {
+          id: user.id,
+          enabled: user.enabled == 1 ? 0 : 1,
+        }
+      });
+      if (res.success) {
+        toast.success(user.enabled == 1 ? "Usuário bloqueado" : "Usuário ativado");
+        handleFetchUsers();
+      } else {
+        toast.error("Erro ao alterar status: " + res.error);
+      }
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  const handleDeleteUser = async (user: any) => {
+    if (!window.confirm(`Excluir o usuário ${user.username}?`)) return;
+    setIsRunning(true);
+    try {
+      const res = await deleteUserFn({ data: { id: user.id } });
+      if (res.success) {
+        toast.success("Usuário removido");
+        handleFetchUsers();
+      } else {
+        toast.error("Erro ao excluir: " + res.error);
+      }
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  const handleRenewDays = async (user: any, days: number) => {
+    const exp_date = Math.floor(Date.now() / 1000) + days * 86400;
+    setIsRunning(true);
+    try {
+      const res = await updateUserFn({
+        data: {
+          id: user.id,
+          username: user.username,
+          password: user.password,
+          exp_date,
+          enabled: user.enabled ?? 1,
+          max_connections: user.max_connections ?? 1,
+        }
+      });
+      if (res.success) {
+        toast.success(`Expiração renovada por ${days} dias`);
+        handleFetchUsers();
+      } else {
+        toast.error("Erro ao renovar: " + res.error);
+      }
     } finally {
       setIsRunning(false);
     }
@@ -313,7 +533,7 @@ function Dashboard() {
           </div>
           {(view === 'dashboard' || view === 'customers') && (
             <button 
-              onClick={() => setShowAddUserModal(true)}
+              onClick={openCreateModal}
               className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-primary/20"
             >
               <PlusCircle size={20} />
@@ -574,12 +794,41 @@ function Dashboard() {
                           {user.active_cons || 0} / {user.max_connections || 1}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-1">
-                            <button className="text-zinc-600 hover:text-white transition-colors p-1.5 bg-zinc-900/50 rounded-lg">
+                          <div className="flex justify-end gap-1 flex-wrap">
+                            <button
+                              onClick={() => handleRenewDays(user, 1)}
+                              className="text-zinc-600 hover:text-yellow-400 transition-colors p-1.5 bg-zinc-900/50 rounded-lg"
+                              title="Renovar 1 dia"
+                            >
+                              <Play size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleRenewDays(user, 30)}
+                              className="text-zinc-600 hover:text-yellow-400 transition-colors p-1.5 bg-zinc-900/50 rounded-lg"
+                              title="Renovar 30 dias"
+                            >
+                              <CheckCircle2 size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleToggleUser(user)}
+                              className="text-zinc-600 hover:text-white transition-colors p-1.5 bg-zinc-900/50 rounded-lg"
+                              title={user.enabled == 1 ? "Bloquear" : "Ativar"}
+                            >
                               <Activity size={14} />
                             </button>
-                            <button className="text-zinc-600 hover:text-primary transition-colors p-1.5 bg-zinc-900/50 rounded-lg">
+                            <button
+                              onClick={() => openEditModal(user)}
+                              className="text-zinc-600 hover:text-primary transition-colors p-1.5 bg-zinc-900/50 rounded-lg"
+                              title="Editar"
+                            >
                               <Settings size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(user)}
+                              className="text-zinc-600 hover:text-red-500 transition-colors p-1.5 bg-zinc-900/50 rounded-lg"
+                              title="Excluir"
+                            >
+                              <XCircle size={14} />
                             </button>
                           </div>
                         </td>
@@ -730,58 +979,164 @@ function Dashboard() {
       {/* Modal de Criação de Usuário */}
       {showAddUserModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0f0f12] border border-zinc-800 w-full max-w-md rounded-2xl p-8 shadow-2xl animate-in zoom-in fade-in duration-200">
-            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <UserPlus className="text-primary" />
-              Forjar Novo Cliente
-            </h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs text-zinc-500 uppercase font-bold mb-2 block">Username</label>
-                <input 
-                  type="text" 
-                  className="w-full bg-black/40 border border-zinc-800 rounded-xl p-3 text-zinc-200 outline-none focus:border-primary/50 transition-colors"
-                  placeholder="Ex: cliente_premium"
-                  value={newUserData.username}
-                  onChange={e => setNewUserData({...newUserData, username: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="text-xs text-zinc-500 uppercase font-bold mb-2 block">Password</label>
-                <input 
-                  type="password" 
-                  className="w-full bg-black/40 border border-zinc-800 rounded-xl p-3 text-zinc-200 outline-none focus:border-primary/50 transition-colors"
-                  placeholder="••••••••"
-                  value={newUserData.password}
-                  onChange={e => setNewUserData({...newUserData, password: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="text-xs text-zinc-500 uppercase font-bold mb-2 block">Validade (Dias)</label>
-                <input 
-                  type="number" 
-                  className="w-full bg-black/40 border border-zinc-800 rounded-xl p-3 text-zinc-200 outline-none focus:border-primary/50 transition-colors"
-                  value={newUserData.exp_days}
-                  onChange={e => setNewUserData({...newUserData, exp_days: parseInt(e.target.value)})}
-                />
-              </div>
+          <div className="bg-[#0f0f12] border border-zinc-800 w-full max-w-5xl rounded-2xl p-6 shadow-2xl animate-in zoom-in fade-in duration-200 max-h-[92vh] overflow-auto">
+            <div className="flex items-center justify-between mb-6 gap-4">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <UserPlus className="text-primary" />
+                {editingUser ? `Editar Utilizador #${editingUser.id}` : "Forjar Novo Cliente"}
+              </h3>
+              <button
+                onClick={() => setShowAddUserModal(false)}
+                className="px-3 py-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+              >
+                Fechar
+              </button>
             </div>
 
-            <div className="flex gap-3 mt-8">
-              <button 
-                onClick={() => setShowAddUserModal(false)}
-                className="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 py-3 rounded-xl font-bold transition-all"
-              >
-                CANCELAR
-              </button>
-              <button 
-                onClick={handleCreateUser}
-                disabled={isRunning}
-                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
-              >
-                {isRunning ? <Activity size={18} className="animate-spin" /> : "CRIAR AGORA"}
-              </button>
+            <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6">
+              <div className="rounded-2xl border border-zinc-800/60 bg-black/30 p-3">
+                {[
+                  { id: "detalhes", label: "Detalhes" },
+                  { id: "avancado", label: "Avançado" },
+                  { id: "restricoes", label: "Restrições" },
+                  { id: "bouquets", label: "Bouquets" },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveEditorTab(tab.id as UserEditorTab)}
+                    className={`w-full text-left px-4 py-3 rounded-xl mb-2 border transition-all ${
+                      activeEditorTab === tab.id
+                        ? "bg-primary/15 border-primary/30 text-white"
+                        : "bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+                <div className="mt-4 p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-xs text-zinc-400">
+                  Edite o utilizador no mesmo fluxo do painel principal, sem sair da tela.
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-zinc-800/60 bg-black/30 p-6">
+                {activeEditorTab === "detalhes" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Field label="Nome do utilizador">
+                      <input className={panelInputClass} value={newUserData.username} onChange={(e) => setNewUserData({ ...newUserData, username: e.target.value })} />
+                    </Field>
+                    <Field label="Senha">
+                      <input className={panelInputClass} type="password" value={newUserData.password} onChange={(e) => setNewUserData({ ...newUserData, password: e.target.value })} />
+                    </Field>
+                    <Field label="Dono">
+                      <input className={panelInputClass} value={newUserData.owner} onChange={(e) => setNewUserData({ ...newUserData, owner: e.target.value })} />
+                    </Field>
+                    <Field label="Conexões máximas">
+                      <input className={panelInputClass} type="number" min={1} value={newUserData.max_connections} onChange={(e) => setNewUserData({ ...newUserData, max_connections: Number(e.target.value) || 1 })} />
+                    </Field>
+                    <Field label="Validade (dias)">
+                      <input className={panelInputClass} type="number" min={1} value={newUserData.exp_days} onChange={(e) => setNewUserData({ ...newUserData, exp_days: Number(e.target.value) || 1 })} />
+                    </Field>
+                    <Field label="Estado">
+                      <div className="flex gap-3 items-center h-12 px-4 rounded-xl border border-zinc-800 bg-zinc-950 text-sm text-zinc-300">
+                        <label className="flex items-center gap-2"><input type="checkbox" checked={newUserData.enabled} onChange={(e) => setNewUserData({ ...newUserData, enabled: e.target.checked })} /> Ativo</label>
+                        <label className="flex items-center gap-2"><input type="checkbox" checked={newUserData.admin_enabled} onChange={(e) => setNewUserData({ ...newUserData, admin_enabled: e.target.checked })} /> Admin</label>
+                      </div>
+                    </Field>
+                    <Field label="Expiração calculada">
+                      <div className="h-12 flex items-center rounded-xl border border-zinc-800 bg-zinc-950 px-4 text-zinc-300">{new Date((Math.floor(Date.now() / 1000) + newUserData.exp_days * 86400) * 1000).toLocaleString()}</div>
+                    </Field>
+                  </div>
+                )}
+
+                {activeEditorTab === "avancado" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Field label="Conexão forçada">
+                      <div className="h-12 flex items-center rounded-xl border border-zinc-800 bg-zinc-950 px-4 text-zinc-300">desativado</div>
+                    </Field>
+                    <Field label="Ministra Portal">
+                      <div className="flex items-center gap-3 h-12 px-4 rounded-xl border border-zinc-800 bg-zinc-950 text-sm">
+                        <input type="checkbox" checked={newUserData.forced_portal} onChange={(e) => setNewUserData({ ...newUserData, forced_portal: e.target.checked })} />
+                        <span className="text-zinc-300">Ativar portal</span>
+                      </div>
+                    </Field>
+                    <Field label="Conta de teste">
+                      <div className="flex items-center gap-3 h-12 px-4 rounded-xl border border-zinc-800 bg-zinc-950 text-sm">
+                        <input type="checkbox" checked={newUserData.trial} onChange={(e) => setNewUserData({ ...newUserData, trial: e.target.checked })} />
+                        <span className="text-zinc-300">Trial</span>
+                      </div>
+                    </Field>
+                    <Field label="Restreamer">
+                      <div className="flex items-center gap-3 h-12 px-4 rounded-xl border border-zinc-800 bg-zinc-950 text-sm">
+                        <input type="checkbox" checked={newUserData.restreamer} onChange={(e) => setNewUserData({ ...newUserData, restreamer: e.target.checked })} />
+                        <span className="text-zinc-300">Permitir restream</span>
+                      </div>
+                    </Field>
+                    <Field label="País forçado">
+                      <select className={panelInputClass} value={newUserData.force_country} onChange={(e) => setNewUserData({ ...newUserData, force_country: e.target.value })}>
+                        <option value="Off">Off</option>
+                        <option value="BR">BR</option>
+                        <option value="US">US</option>
+                        <option value="PT">PT</option>
+                      </select>
+                    </Field>
+                    <Field label="ISP Lock Info">
+                      <input className={panelInputClass} value={newUserData.notes_reseller} onChange={(e) => setNewUserData({ ...newUserData, notes_reseller: e.target.value })} />
+                    </Field>
+                  </div>
+                )}
+
+                {activeEditorTab === "restricoes" && (
+                  <div className="grid grid-cols-1 gap-4">
+                    <Field label="Endereços IP permitidos">
+                      <textarea className={panelTextareaClass} value={newUserData.allowed_ips} onChange={(e) => setNewUserData({ ...newUserData, allowed_ips: e.target.value })} />
+                    </Field>
+                    <Field label="Agentes permitidos">
+                      <textarea className={panelTextareaClass} value={newUserData.allowed_agents} onChange={(e) => setNewUserData({ ...newUserData, allowed_agents: e.target.value })} />
+                    </Field>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <PanelToggle checked={newUserData.ip_lock} onChange={(e) => setNewUserData({ ...newUserData, ip_lock: e.target.checked })} label="IP Lock" />
+                      <PanelToggle checked={newUserData.forced_portal} onChange={(e) => setNewUserData({ ...newUserData, forced_portal: e.target.checked })} label="Portal forçado" />
+                      <PanelToggle checked={newUserData.trial} onChange={(e) => setNewUserData({ ...newUserData, trial: e.target.checked })} label="Conta de teste" />
+                    </div>
+                    <Field label="Notas do administrador">
+                      <textarea className={panelTextareaClass} value={newUserData.notes_admin} onChange={(e) => setNewUserData({ ...newUserData, notes_admin: e.target.value })} />
+                    </Field>
+                  </div>
+                )}
+
+                {activeEditorTab === "bouquets" && (
+                  <div className="grid grid-cols-1 gap-4">
+                    <Field label="Bouquets atribuídos">
+                      <textarea className={panelTextareaClass} value={newUserData.bouquet_ids} onChange={(e) => setNewUserData({ ...newUserData, bouquet_ids: e.target.value })} />
+                    </Field>
+                    <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-xs text-zinc-400 leading-relaxed">
+                      Seleção de bouquets pronta na interface. Se o schema remoto usar colunas/tabelas específicas para bouquet, eu amarro esse campo no próximo passo.
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {["Plano Completo", "24 HORAS", "Internacional", "Adultos"].map((name) => (
+                        <button key={name} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-3 text-left hover:border-primary/30 transition-colors">
+                          <div className="text-sm text-white font-semibold">{name}</div>
+                          <div className="text-[10px] text-zinc-500">Selecionar bouquet</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between mt-6 pt-6 border-t border-zinc-800/70">
+                  <div className="text-xs text-zinc-500">
+                    {editingUser ? `Editando usuário ID ${editingUser.id}` : "Novo usuário"}
+                  </div>
+                  <div className="flex gap-3">
+                    <button onClick={() => setShowAddUserModal(false)} className="px-5 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-semibold">
+                      Cancelar
+                    </button>
+                    <button onClick={handleSaveUser} disabled={isRunning} className="px-5 py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold flex items-center gap-2">
+                      {isRunning ? <Activity size={16} className="animate-spin" /> : editingUser ? "Salvar alterações" : "Criar usuário"}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -820,6 +1175,21 @@ function StatCard({ icon, label, value, change }: { icon: React.ReactNode; label
       <p className="text-zinc-500 text-xs uppercase font-bold tracking-widest mb-1">{label}</p>
       <h4 className="text-3xl font-black">{value}</h4>
     </div>
+  );
+}
+
+const panelInputClass =
+  "h-12 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 text-zinc-200 outline-none focus:border-primary/50 transition-colors";
+
+const panelTextareaClass =
+  "min-h-[120px] w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-200 outline-none focus:border-primary/50 transition-colors";
+
+function PanelToggle({ checked, onChange, label }: { checked: boolean; onChange: React.ChangeEventHandler<HTMLInputElement>; label: string }) {
+  return (
+    <label className="flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-300">
+      <input type="checkbox" checked={checked} onChange={onChange} />
+      <span>{label}</span>
+    </label>
   );
 }
 
