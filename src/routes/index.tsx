@@ -330,29 +330,72 @@ function Dashboard() {
           )}
 
           {view === 'servers' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {servers.map(s => (
-                <div key={s.id} className="bg-[#0f0f12] p-6 rounded-2xl border border-zinc-800 border-l-4 border-l-blue-600 shadow-xl">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-bold text-zinc-100">{s.server_name}</h3>
-                      <div className="text-xs font-mono text-zinc-600 uppercase tracking-widest mt-1">{s.server_ip}</div>
+            <div className="space-y-8">
+              <section className="bg-[#0f0f12] p-8 rounded-2xl border border-zinc-800 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-5">
+                  <ShieldAlert size={120} />
+                </div>
+                <h2 className="text-xl font-black text-blue-500 uppercase tracking-tighter mb-6 flex items-center gap-2">
+                  <Terminal size={20} /> API & Conexão SSH
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <Field label="Token de Acesso Mago">
+                      <div className="bg-black p-4 rounded-xl border border-zinc-900 font-mono text-blue-400 text-sm break-all">
+                        {odin.sshHost === '23.158.72.30' ? 'p0P2pycjQooGKKO2fqdkIagwfNA03DFj' : 'AGUARDANDO CONFIGURAÇÃO...'}
+                      </div>
+                    </Field>
+                    <div className="p-4 bg-blue-600/5 rounded-xl border border-blue-600/20">
+                      <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest leading-relaxed">
+                        Este token autentica seu servidor Odin v6 com este painel. Mantenha-o em segurança.
+                      </p>
                     </div>
-                    <span className={s.status == 1 ? "text-green-500" : "text-red-500"}>
-                      <Activity size={18} />
-                    </span>
                   </div>
-                  <div className="mt-6 flex justify-between items-end">
-                    <div>
-                      <div className="text-[10px] text-zinc-600 font-black uppercase tracking-[0.2em]">Carga</div>
-                      <div className="text-xl font-bold text-zinc-300">{s.total_clients} <span className="text-xs text-zinc-600 font-medium">clientes</span></div>
-                    </div>
-                    <div className="px-3 py-1 bg-zinc-900 rounded-lg text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                      Porta: {s.server_port}
-                    </div>
+                  <div className="space-y-4">
+                    <Field label="Comando de Instalação">
+                      <div className="group relative">
+                        <div className="bg-black p-4 rounded-xl border border-zinc-900 font-mono text-zinc-400 text-xs overflow-x-auto whitespace-pre group-hover:text-blue-400 transition-colors">
+                          bash &lt;(curl -sSL https://{typeof window !== 'undefined' ? window.location.host : 'mago.lovable.app'}/api/public/install)
+                        </div>
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(`bash <(curl -sSL https://${window.location.host}/api/public/install)`);
+                            toast.success("Comando copiado!");
+                          }}
+                          className="absolute right-2 top-2 p-2 bg-zinc-900 rounded-lg text-zinc-500 hover:text-white transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <Database size={14} />
+                        </button>
+                      </div>
+                    </Field>
                   </div>
                 </div>
-              ))}
+              </section>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {servers.map(s => (
+                  <div key={s.id} className="bg-[#0f0f12] p-6 rounded-2xl border border-zinc-800 border-l-4 border-l-blue-600 shadow-xl group hover:border-l-blue-400 transition-all">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-zinc-100">{s.server_name}</h3>
+                        <div className="text-xs font-mono text-zinc-600 uppercase tracking-widest mt-1">{s.server_ip}</div>
+                      </div>
+                      <span className={s.status == 1 ? "text-green-500 animate-pulse" : "text-red-500"}>
+                        <Activity size={18} />
+                      </span>
+                    </div>
+                    <div className="mt-6 flex justify-between items-end">
+                      <div>
+                        <div className="text-[10px] text-zinc-600 font-black uppercase tracking-[0.2em]">Carga</div>
+                        <div className="text-xl font-bold text-zinc-300 group-hover:text-blue-400 transition-colors">{s.total_clients} <span className="text-xs text-zinc-600 font-medium">clientes</span></div>
+                      </div>
+                      <div className="px-3 py-1 bg-zinc-900 rounded-lg text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                        Porta: {s.server_port}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
