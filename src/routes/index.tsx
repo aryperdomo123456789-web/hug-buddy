@@ -1,3 +1,4 @@
+import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { 
   Users, 
@@ -15,6 +16,64 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
   loader: () => ({}),
 });
+
+function LegacyLab() {
+  return (
+    <div className="flex flex-col h-[calc(100vh-120px)] bg-[#0f0f12] rounded-2xl border border-zinc-800/50 overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
+      <div className="p-4 border-b border-zinc-800/50 flex justify-between items-center bg-zinc-900/30">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center border border-primary/20">
+            <Activity size={18} className="text-primary" />
+          </div>
+          <h2 className="font-bold text-lg">
+            Laboratório Legado - Wolf Play
+          </h2>
+        </div>
+        <div className="flex gap-2">
+           <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 px-2 py-1 rounded uppercase font-bold tracking-wider">Modo Inspeção</span>
+           <span className="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-1 rounded uppercase font-bold tracking-wider">v3.89</span>
+        </div>
+      </div>
+      
+      {/* Informações de Acesso para o Desenvolvedor */}
+      <div className="p-4 bg-yellow-500/5 border-b border-yellow-500/10 flex items-center justify-between">
+        <div className="flex items-center gap-6 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-zinc-500 font-bold uppercase tracking-tighter">Portal:</span>
+            <code className="text-zinc-300">https://wolfplay.mplll.com/</code>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-zinc-500 font-bold uppercase tracking-tighter">User:</span>
+            <code className="bg-black/30 px-2 py-1 rounded text-yellow-500/80">laboratoriolovable</code>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-zinc-500 font-bold uppercase tracking-tighter">Pass:</span>
+            <code className="bg-black/30 px-2 py-1 rounded text-yellow-500/80">iGNVgbAlTP3130</code>
+          </div>
+        </div>
+        <a 
+          href="https://wolfplay.mplll.com/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-xs bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 font-bold shadow-lg shadow-primary/20"
+        >
+          <PlusCircle size={14} />
+          ABRIR PORTAL EXTERNO
+        </a>
+      </div>
+
+      {/* Visualizador do Legado */}
+      <div className="flex-1 bg-black/40 relative group">
+        <iframe 
+          src="https://wolfplay.mplll.com/" 
+          className="w-full h-full border-none opacity-90 group-hover:opacity-100 transition-opacity"
+          title="Legacy Panel"
+        />
+        <div className="absolute inset-0 pointer-events-none border-2 border-primary/10 group-hover:border-primary/20 transition-all" />
+      </div>
+    </div>
+  );
+}
 
 function Dashboard() {
   return (
