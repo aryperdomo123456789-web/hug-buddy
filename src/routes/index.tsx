@@ -111,7 +111,6 @@ function Dashboard() {
   const handleFetchUsers = async () => {
     setIsLoadingCustomers(true);
     try {
-      // @ts-ignore
       const res = await fetchUsersFn();
       if (res.success) {
         setCustomers(res.data);
@@ -124,6 +123,10 @@ function Dashboard() {
       setIsLoadingCustomers(false);
     }
   };
+
+  React.useEffect(() => {
+    handleFetchUsers();
+  }, []);
 
   const handleCreateUser = async () => {
     if (!newUserData.username || !newUserData.password) {
