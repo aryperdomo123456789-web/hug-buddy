@@ -113,11 +113,15 @@ function Dashboard() {
   const handleFetchUsers = async () => {
     setIsLoadingCustomers(true);
     try {
-      const res = await fetchUsersFn();
       // @ts-ignore
-      if (res.success) setCustomers(res.data);
+      const res = await fetchUsersFn();
+      if (res.success) {
+        setCustomers(res.data);
+      } else {
+        toast.error("Erro no banco Odin: " + res.error);
+      }
     } catch (e) {
-      toast.error("Erro ao carregar clientes");
+      toast.error("Erro ao carregar clientes via SSH");
     } finally {
       setIsLoadingCustomers(false);
     }
@@ -132,6 +136,7 @@ function Dashboard() {
     setIsRunning(true);
     try {
       const exp_date = Math.floor(Date.now() / 1000) + (newUserData.exp_days * 86400);
+      // @ts-ignore
       const res = await createUserFn({
         data: {
           username: newUserData.username,
@@ -139,14 +144,15 @@ function Dashboard() {
           exp_date: exp_date
         }
       });
-      // @ts-ignore
       if (res.success) {
-        toast.success("Usuário criado com sucesso!");
+        toast.success("Usuário forjado no Odin com sucesso!");
         setShowAddUserModal(false);
         handleFetchUsers();
+      } else {
+        toast.error("Erro ao forjar: " + res.error);
       }
     } catch (e) {
-      toast.error("Erro ao criar usuário");
+      toast.error("Erro na comunicação SSH");
     } finally {
       setIsRunning(false);
     }
