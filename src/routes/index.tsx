@@ -1,3 +1,10 @@
+/**
+ * Mago Panel - Odin v6 Mirror
+ * A tela de clientes agora reflete exatamente as funções do painel original:
+ * - Colunas detalhadas: ID, Senha, Revendedor, Estado, Teste, Conexões, Info ISP.
+ * - Modal Multi-Abas: Detalhes, Avançado, Restrições e Bouquets reais.
+ * - Ações: Kill connections, toggle status, edição completa.
+ */
 import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
