@@ -113,9 +113,15 @@ function Dashboard() {
     try {
       const res = await fetchUsersFn();
       if (res.success) {
-        setCustomers(res.data);
+        setCustomers(res.data || []);
+        if (res.data && res.data.length > 0) {
+          toast.success(`${res.data.length} usuários sincronizados!`);
+        } else {
+          toast.warning("Banco de dados Odin está vazio ou inacessível.");
+        }
       } else {
         toast.error("Erro no banco Odin: " + res.error);
+        console.error("Fetch Error:", res.error);
       }
     } catch (e) {
       toast.error("Erro ao carregar clientes via SSH");
