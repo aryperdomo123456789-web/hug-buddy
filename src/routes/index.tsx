@@ -63,11 +63,17 @@ function DashboardPage() {
   }, [hydrated]);
 
   const handleDeleteUser = async (user: User) => {
-    if (!user.id || !confirm(`Deseja realmente excluir ${user.username}?`)) return;
+    if (!user.id) return;
+    
+    // Usando confirm do navegador para exclusão
+    if (!window.confirm(`TEM CERTEZA? Deseja realmente EXCLUIR o utilizador "${user.username}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+
     try {
       const res = await actions.deleteUser({ data: { id: user.id } });
       if (res.success) {
-        toast.success("Usuário removido");
+        toast.success("Usuário removido com sucesso");
         fetchAll(false);
       }
     } catch (e) {
@@ -76,6 +82,9 @@ function DashboardPage() {
   };
 
   const handleSaveUser = async (userData: User) => {
+    if (!window.confirm(`CONFIRMAR: Deseja salvar as alterações para "${userData.username}"?`)) {
+      return;
+    }
     try {
       const exp_date = Math.floor(Date.now() / 1000) + (userData.exp_days * 86400);
       const data = {
@@ -257,6 +266,7 @@ function DashboardPage() {
           bouquets={bouquets}
           onClose={() => { setShowUserModal(false); setEditingUser(null); }}
           onSave={handleSaveUser}
+          loading={loading}
         />
       )}
     </div>
