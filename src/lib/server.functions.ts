@@ -1,6 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { NodeSSH } from "node-ssh";
 
+/**
+ * ODIN INFRASTRUCTURE CONFIGURATION
+ * These credentials are used to connect to the physical server and the local database.
+ */
 const ODIN_SSH = {
   host: "23.158.72.30",
   port: 22,
@@ -14,26 +18,44 @@ const ODIN_DB = {
   name: "xtream_iptvpro",
 };
 
+/**
+ * UTILITY: Execute a MySQL query via SSH
+ */
+async function executeQuery(sql: string) {
+  const ssh = new NodeSSH();
+  try {
+    console.log(`[SSH] Executing query: ${sql.substring(0, 100)}...`);
+    await ssh.connect({
+      ...ODIN_SSH,
+      readyTimeout: 60000,
+    });
+    
+    // -N: skip headers, -s: silent/raw output
+    const command = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -N -s -e "${sql}"`;
+    const result = await ssh.execCommand(command);
+    
+    ssh.dispose();
+    
+    if (result.code !== 0) {
+      console.error("[SSH] Command failed:", result.stderr);
+      throw new Error(result.stderr || "Database execution failed");
+    }
+    
+    return result.stdout;
+  } catch (error: any) {
+    if (ssh.isConnected()) ssh.dispose();
+    console.error("[SSH] Error:", error.message);
+    throw error;
+  }
+}
+
 export const getUsers = createServerFn({ method: "GET" })
   .handler(async () => {
-    console.log("[SERVER] Invocando getUsers via SSH...");
-    const ssh = new NodeSSH();
-    
     try {
-      await ssh.connect({
-        ...ODIN_SSH,
-        readyTimeout: 60000,
-      });
-      
       const sql = "SELECT id, username, password, exp_date, enabled, (SELECT count(*) FROM user_activity_now WHERE user_id = users.id) as active_cons FROM users ORDER BY id DESC LIMIT 100";
-      const command = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -N -s -e "${sql}"`;
-      const result = await ssh.execCommand(command);
+      const stdout = await executeQuery(sql);
       
-      ssh.dispose();
-      
-      if (result.code !== 0) throw new Error(result.stderr);
-      
-      const rows = result.stdout.trim().split("\n").filter(Boolean).map(line => {
+      const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
         const [id, username, password, exp_date, enabled, active_cons] = line.split("\t");
         return {
           id: Number(id),
@@ -47,74 +69,68 @@ export const getUsers = createServerFn({ method: "GET" })
       
       return { success: true, data: rows };
     } catch (error: any) {
-      console.error("[SERVER] Erro:", error.message);
-      if (ssh.isConnected()) ssh.dispose();
       return { success: false, error: error.message };
     }
   });
 
 export const getServers = createServerFn({ method: "GET" })
   .handler(async () => {
-    const ssh = new NodeSSH();
     try {
-      await ssh.connect(ODIN_SSH);
+      // In Odin v6, servers are often in 'streaming_servers'
       const sql = "SELECT server_id, server_name, status, last_check FROM streaming_servers";
-      const command = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -N -s -e "${sql}"`;
-      const result = await ssh.execCommand(command);
-      ssh.dispose();
-      const rows = result.stdout.trim().split("\n").filter(Boolean).map(line => {
+      const stdout = await executeQuery(sql);
+      
+      const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
         const [id, name, status, last] = line.split("\t");
-        return { id, name, status: Number(status), last_check: Number(last) };
+        return { 
+          id, 
+          name, 
+          status: Number(status), 
+          last_check: Number(last) 
+        };
       });
+      
       return { success: true, data: rows };
     } catch (e: any) {
-      if (ssh.isConnected()) ssh.dispose();
       return { success: false, error: e.message };
     }
   });
 
 export const getStreams = createServerFn({ method: "GET" })
   .handler(async () => {
-    const ssh = new NodeSSH();
     try {
-      await ssh.connect({ ...ODIN_SSH, readyTimeout: 60000 });
       const sql = "SELECT stream_id, stream_display_name, category_id, stream_icon, stream_source, stream_status FROM streams LIMIT 100";
-      const command = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -N -s -e "${sql}"`;
-      const result = await ssh.execCommand(command);
-      ssh.dispose();
+      const stdout = await executeQuery(sql);
       
-      if (result.code !== 0) throw new Error(result.stderr);
-      
-      const rows = result.stdout.trim().split("\n").filter(Boolean).map(line => {
+      const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
         const [id, name, cat, icon, source, status] = line.split("\t");
-        return { id: Number(id), name, category_id: Number(cat), icon, source, status: Number(status) };
+        return { 
+          id: Number(id), 
+          name, 
+          category_id: Number(cat), 
+          icon, 
+          source, 
+          status: Number(status) 
+        };
       });
       return { success: true, data: rows };
     } catch (e: any) {
-      if (ssh.isConnected()) ssh.dispose();
       return { success: false, error: e.message };
     }
   });
 
 export const getBouquets = createServerFn({ method: "GET" })
   .handler(async () => {
-    const ssh = new NodeSSH();
     try {
-      await ssh.connect({ ...ODIN_SSH, readyTimeout: 60000 });
       const sql = "SELECT id, bouquet_name FROM bouquets";
-      const command = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -N -s -e "${sql}"`;
-      const result = await ssh.execCommand(command);
-      ssh.dispose();
+      const stdout = await executeQuery(sql);
       
-      if (result.code !== 0) throw new Error(result.stderr);
-      
-      const rows = result.stdout.trim().split("\n").filter(Boolean).map(line => {
+      const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
         const [id, name] = line.split("\t");
         return { id: Number(id), name };
       });
       return { success: true, data: rows };
     } catch (e: any) {
-      if (ssh.isConnected()) ssh.dispose();
       return { success: false, error: e.message };
     }
   });
@@ -122,16 +138,11 @@ export const getBouquets = createServerFn({ method: "GET" })
 export const createUser = createServerFn({ method: "POST" })
   .validator((d: any) => d)
   .handler(async ({ data }) => {
-    const ssh = new NodeSSH();
     try {
-      await ssh.connect({ ...ODIN_SSH, readyTimeout: 30000 });
       const sql = `INSERT INTO users (username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet) VALUES ('${data.username}', '${data.password}', ${data.exp_date}, ${data.enabled}, ${data.admin_enabled}, ${data.is_trial}, ${data.is_restreamer}, ${data.is_isplock}, ${data.max_connections || 1}, '${JSON.stringify(data.bouquet || [])}')`;
-      const command = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -e "${sql}"`;
-      await ssh.execCommand(command);
-      ssh.dispose();
+      await executeQuery(sql);
       return { success: true };
     } catch (e: any) {
-      if (ssh.isConnected()) ssh.dispose();
       return { success: false, error: e.message };
     }
   });
@@ -139,16 +150,11 @@ export const createUser = createServerFn({ method: "POST" })
 export const updateUser = createServerFn({ method: "POST" })
   .validator((d: any) => d)
   .handler(async ({ data }) => {
-    const ssh = new NodeSSH();
     try {
-      await ssh.connect({ ...ODIN_SSH, readyTimeout: 30000 });
       const sql = `UPDATE users SET username='${data.username}', password='${data.password}', exp_date=${data.exp_date}, enabled=${data.enabled}, admin_enabled=${data.admin_enabled}, max_connections=${data.max_connections || 1}, bouquet='${JSON.stringify(data.bouquet || [])}' WHERE id=${data.id}`;
-      const command = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -e "${sql}"`;
-      await ssh.execCommand(command);
-      ssh.dispose();
+      await executeQuery(sql);
       return { success: true };
     } catch (e: any) {
-      if (ssh.isConnected()) ssh.dispose();
       return { success: false, error: e.message };
     }
   });
@@ -156,15 +162,11 @@ export const updateUser = createServerFn({ method: "POST" })
 export const deleteUser = createServerFn({ method: "POST" })
   .validator((d: any) => d)
   .handler(async ({ data }) => {
-    const ssh = new NodeSSH();
     try {
-      await ssh.connect({ ...ODIN_SSH, readyTimeout: 30000 });
-      const command = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -e "DELETE FROM users WHERE id=${data.id}"`;
-      await ssh.execCommand(command);
-      ssh.dispose();
+      const sql = `DELETE FROM users WHERE id=${data.id}`;
+      await executeQuery(sql);
       return { success: true };
     } catch (e: any) {
-      if (ssh.isConnected()) ssh.dispose();
       return { success: false, error: e.message };
     }
   });
@@ -172,15 +174,11 @@ export const deleteUser = createServerFn({ method: "POST" })
 export const toggleUserStatus = createServerFn({ method: "POST" })
   .validator((d: any) => d)
   .handler(async ({ data }) => {
-    const ssh = new NodeSSH();
     try {
-      await ssh.connect({ ...ODIN_SSH, readyTimeout: 30000 });
-      const command = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -e "UPDATE users SET enabled=${data.enabled} WHERE id=${data.id}"`;
-      await ssh.execCommand(command);
-      ssh.dispose();
+      const sql = `UPDATE users SET enabled=${data.enabled} WHERE id=${data.id}`;
+      await executeQuery(sql);
       return { success: true };
     } catch (e: any) {
-      if (ssh.isConnected()) ssh.dispose();
       return { success: false, error: e.message };
     }
   });
@@ -188,19 +186,15 @@ export const toggleUserStatus = createServerFn({ method: "POST" })
 export const killUserConnections = createServerFn({ method: "POST" })
   .validator((d: any) => d)
   .handler(async ({ data }) => {
-    const ssh = new NodeSSH();
     try {
-      await ssh.connect({ ...ODIN_SSH, readyTimeout: 30000 });
-      // No Odin v6, o kill é feito removendo da user_activity_now
-      const command = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -e "DELETE FROM user_activity_now WHERE user_id=${data.id}"`;
-      await ssh.execCommand(command);
-      ssh.dispose();
+      // In Odin v6, removing from activity table disconnects the user
+      const sql = `DELETE FROM user_activity_now WHERE user_id=${data.id}`;
+      await executeQuery(sql);
       return { success: true };
     } catch (e: any) {
-      if (ssh.isConnected()) ssh.dispose();
       return { success: false, error: e.message };
     }
   });
 
-export const getInstallScript = createServerFn({ method: "GET" }).handler(async () => "bash <(curl -sSL https://mago.panel/api/install)");
-export const generateBashScript = (t: string, h: string) => `#!/bin/bash\necho "Mago API token: ${t}"`;
+export const getInstallScript = createServerFn({ method: "GET" })
+  .handler(async () => "bash <(curl -sSL https://mago.panel/api/install)");
