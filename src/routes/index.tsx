@@ -164,7 +164,8 @@ function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans selection:bg-blue-500/30">
+    <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans selection:bg-blue-500/30 relative z-0">
+
       <div className="flex gap-10">
         <aside className="w-64 shrink-0">
           <div className="mb-10 px-4">
@@ -179,23 +180,27 @@ function DashboardPage() {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
               return (
-                <button 
+                <div 
                   key={item.id}
-                  type="button"
-                  onClick={() => {
-                    console.log("Tab change to:", item.id);
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log("CLIQUE FORÇADO NA ABA (DIV):", item.id);
                     setActiveTab(item.id);
                   }} 
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 border ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 border relative z-[9999] ${
                     isActive 
                       ? "bg-blue-600/10 text-blue-500 border-blue-600/20 shadow-[0_0_15px_rgba(37,99,235,0.05)]" 
                       : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50 border-transparent hover:translate-x-1"
                   }`}
                   id={`nav-${item.id}`}
+                  style={{ pointerEvents: 'auto' }}
                 >
                   <Icon size={20} />
-                  <span className="text-sm font-bold uppercase tracking-widest">{item.label}</span>
-                </button>
+                  <span className="text-sm font-bold uppercase tracking-widest pointer-events-none">{item.label}</span>
+                </div>
+
+
               );
             })}
           </div>
