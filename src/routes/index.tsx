@@ -60,6 +60,80 @@ function DashboardPage() {
     }
   }, [hydrated]);
 
+  const handleDeleteUser = async (user: User) => {
+    if (!user.id || !confirm(`Deseja realmente excluir ${user.username}?`)) return;
+    try {
+      const res = await actions.deleteUser({ data: { id: user.id } });
+      if (res.success) {
+        toast.success("Usuário removido");
+        fetchAll(false);
+      }
+    } catch (e) {
+      toast.error("Erro ao remover usuário");
+    }
+  };
+
+  const handleSaveUser = async (userData: User) => {
+    try {
+      const exp_date = Math.floor(Date.now() / 1000) + (userData.exp_days * 86400);
+      const data = {
+        ...userData,
+        exp_date,
+        enabled: userData.enabled ? 1 : 0,
+        admin_enabled: userData.admin_enabled ? 1 : 0,
+        is_trial: userData.is_trial ? 1 : 0,
+        is_restreamer: userData.is_restreamer ? 1 : 0,
+        is_isplock: userData.is_isplock ? 1 : 0,
+      };
+
+      let res;
+      if (editingUser?.id) {
+        res = await actions.updateUser({ data: { ...data, id: editingUser.id } as any });
+      } else {
+        res = await actions.createUser({ data: data as any });
+      }
+
+      if (res.success) {
+        toast.success(editingUser ? "Atualizado!" : "Criado!");
+        setShowUserModal(false);
+        setEditingUser(null);
+        fetchAll(false);
+      } else {
+        toast.error("Erro Odin: " + (res as any).error);
+      }
+    } catch (e) {
+      toast.error("Falha na comunicação");
+    }
+  };
+
+  const handleToggleStatus = async (user: User) => {
+    if (!user.id) return;
+    try {
+      const res = await actions.toggleStatus({ 
+        data: { id: user.id, enabled: user.enabled === 1 ? 0 : 1 } 
+      });
+      if (res.success) {
+        toast.success("Estado alterado");
+        fetchAll(false);
+      }
+    } catch (e) {
+      toast.error("Erro ao alterar estado");
+    }
+  };
+
+  const handleKillConnections = async (user: User) => {
+    if (!user.id) return;
+    try {
+      const res = await actions.killConnections({ data: { id: user.id } });
+      if (res.success) {
+        toast.success("Conexões derrubadas");
+        fetchAll(false);
+      }
+    } catch (e) {
+      toast.error("Erro ao derrubar conexões");
+    }
+  };
+
   if (!hydrated) {
     return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center text-zinc-500 font-bold uppercase tracking-widest">Iniciando Odin Engine...</div>;
   }
