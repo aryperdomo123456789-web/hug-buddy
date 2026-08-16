@@ -1,87 +1,40 @@
 import { createServerFn } from "@tanstack/react-start";
 import { NodeSSH } from "node-ssh";
-import { z } from "zod";
-import { escapeSql, getOdinConfig } from "./odin";
 
-// Helper for SSH connection
-type SshConnectionConfig = {
-  host: string;
-  port: number;
-  username: string;
-  password: string;
-};
-
-async function withSsh<T>(
-  connection: SshConnectionConfig,
-  task: (ssh: NodeSSH, cfg: ReturnType<typeof getOdinConfig>) => Promise<T>,
-) {
-  const cfg = getOdinConfig();
-  const ssh = new NodeSSH();
-  
-  try {
-    console.log(`[SSH] Connecting to ${connection.host}...`);
-    await ssh.connect({
-      host: connection.host,
-      port: connection.port,
-      username: connection.username,
-      password: connection.password,
-      readyTimeout: 30000,
-    });
-
-    return await task(ssh, cfg);
-  } finally {
-    if (ssh.isConnected()) ssh.dispose();
-  }
-}
-
-function execMysql(ssh: NodeSSH, cfg: ReturnType<typeof getOdinConfig>, sql: string) {
-  const command = [
-    "mysql",
-    "-h", "127.0.0.1",
-    "-P", String(cfg.dbPort),
-    "-u", cfg.dbUsername,
-    `-p'${escapeSql(cfg.dbPassword)}'`,
-    cfg.dbName,
-    "-N", "-s",
-    "-e", `"${sql.replace(/"/g, '\\"')}"`,
-  ].join(" ");
-  return ssh.execCommand(command);
-}
-
-// Exported Server Functions
 export const getUsers = createServerFn({ method: "GET" })
   .handler(async () => {
-    console.log("[SERVER FN] getUsers called");
+    console.log("[SERVER FN] getUsers EXECUTION START");
     try {
-      const cfg = getOdinConfig();
-      return await withSsh({
-        host: cfg.sshHost,
-        port: cfg.sshPort,
-        username: cfg.sshUsername,
-        password: cfg.sshPassword
-      }, async (ssh, cfg) => {
-        const sql = "SELECT id, username, password, exp_date, enabled, active_cons FROM users ORDER BY id DESC LIMIT 50";
-        const result = await execMysql(ssh, cfg, sql);
-        
-        if (result.code !== 0) throw new Error(result.stderr);
-        
-        const rows = result.stdout.trim().split("\n").filter(Boolean).map(line => {
-          const [id, username, password, exp_date, enabled, active_cons] = line.split("\t");
-          return {
-            id: Number(id),
-            username,
-            password,
-            exp_date: Number(exp_date),
-            enabled: Number(enabled),
-            active_cons: Number(active_cons || 0)
-          };
-        });
-        
-        return { success: true, data: rows };
+      const ssh = new NodeSSH();
+      console.log("[SERVER FN] Connecting SSH to 23.158.72.30...");
+      await ssh.connect({
+        host: "23.158.72.30",
+        port: 22,
+        username: "root",
+        password: "fontemain123333",
       });
-    } catch (error: any) {
-      console.error("[SERVER FN] getUsers error:", error);
-      return { success: false, error: error.message };
+
+      console.log("[SERVER FN] SSH Connected. Running MySQL...");
+      const result = await ssh.execCommand("mysql -h 127.0.0.1 -u user_iptvpro -p'Y92RYuXHLP58AbOciQW' xtream_iptvpro -N -s -e \"SELECT id, username, password, exp_date, enabled, 0 FROM users ORDER BY id DESC LIMIT 50\"");
+      
+      console.log("[SERVER FN] MySQL Result Code:", result.code);
+      ssh.dispose();
+
+      if (result.code !== 0) {
+        console.error("[SERVER FN] MySQL Error:", result.stderr);
+        return { success: false, error: result.stderr };
+      }
+      
+      const rows = result.stdout.trim().split("\n").filter(Boolean).map(line => {
+        const [id, username, password, exp_date, enabled, active] = line.split("\t");
+        return { id: Number(id), username, password, exp_date: Number(exp_date), enabled: Number(enabled), active_cons: Number(active) };
+      });
+      
+      console.log(`[SERVER FN] SUCCESS: Found ${rows.length} users`);
+      return { success: true, data: rows };
+    } catch (e: any) {
+      console.error("[SERVER FN] FATAL ERROR:", e.message);
+      return { success: false, error: e.message };
     }
   });
 
