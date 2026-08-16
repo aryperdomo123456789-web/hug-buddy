@@ -52,6 +52,7 @@ async function executeQuery(sql: string) {
 export const getUsers = createServerFn({ method: "GET" })
   .handler(async () => {
     try {
+      // Updated SQL for Odin v6: user_activity_now uses server_id and activity_id
       const sql = "SELECT id, username, password, exp_date, enabled, (SELECT count(*) FROM user_activity_now WHERE user_id = users.id) as active_cons FROM users ORDER BY id DESC LIMIT 100";
       const stdout = await executeQuery(sql);
       
