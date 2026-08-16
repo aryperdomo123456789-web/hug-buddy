@@ -88,7 +88,7 @@ export function CustomerList({
   }, [searchTerm, statusFilter, perPage]);
 
   return (
-    <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800 shadow-xl overflow-hidden">
+    <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800 shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="p-6 border-b border-zinc-900 bg-zinc-950/30 flex justify-between items-center">
         <div className="flex gap-4">
           <button 
@@ -173,7 +173,7 @@ export function CustomerList({
             {paginatedCustomers.map(u => {
               const daysLeft = u.exp_date ? Math.max(0, Math.ceil((u.exp_date - Date.now() / 1000) / 86400)) : null;
               return (
-                <tr key={u.id} className="text-xs group hover:bg-blue-600/5 transition-colors border-b border-zinc-900/30">
+                <tr key={u.id} className="text-xs group hover:bg-blue-600/5 transition-all duration-200 border-b border-zinc-900/30">
                   <td className="py-4 px-6 font-mono text-zinc-600">{u.id}</td>
                   <td className="py-4 px-6 font-bold text-zinc-200">{u.username}</td>
                   <td className="py-4 px-6 text-zinc-500 font-mono">{u.password}</td>
