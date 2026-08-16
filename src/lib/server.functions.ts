@@ -198,3 +198,13 @@ export const killUserConnections = createServerFn({ method: "POST" })
 
 export const getInstallScript = createServerFn({ method: "GET" })
   .handler(async () => "bash <(curl -sSL https://mago.panel/api/install)");
+
+export const generateBashScript = (t: string, h: string) => `#!/bin/bash
+# ODIN API INSTALLER
+# Token: ${t}
+# Host: ${h}
+echo "Instalando Mago API no Odin Engine..."
+mkdir -p /home/xtreamcodes/iptv_xtream_codes/mago-api
+echo "${t}" > /home/xtreamcodes/iptv_xtream_codes/mago-api/token.txt
+echo "Instalação concluída com sucesso!"
+`;
