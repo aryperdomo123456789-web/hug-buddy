@@ -36,14 +36,7 @@ export function useOdinData() {
     if (!quiet) setLoading(true);
 
     try {
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Timeout")), 12000)
-      );
-      
-      const response = await Promise.race([
-        getOdinFullData(),
-        timeoutPromise
-      ]) as any;
+      const response = await getOdinFullData();
       
       if (response?.success && response.data) {
         const { customers, streams, bouquets, servers, resellers } = response.data;
@@ -60,11 +53,7 @@ export function useOdinData() {
       }
     } catch (e: any) {
       if (!quiet) {
-        if (e.message === "Timeout") {
-          toast.error("O servidor demorou muito para responder. Tente novamente.");
-        } else {
-          toast.error("Erro na comunicação com o backend.");
-        }
+        toast.error("Erro na comunicação com o backend.");
       }
     } finally {
       setLoading(false);
