@@ -56,11 +56,9 @@ function DashboardPage() {
 
 
   React.useEffect(() => {
-    console.log("[Dashboard] Mounted, waiting for fetchAll...");
     const timer = setTimeout(() => {
-      console.log("[Dashboard] Triggering initial fetchAll(true)");
       fetchAll(true);
-    }, 2000);
+    }, 1500);
     
     return () => clearTimeout(timer);
   }, []);

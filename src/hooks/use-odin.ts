@@ -33,21 +33,16 @@ export function useOdinData() {
   const toggleStatusFn = useServerFn(toggleUserStatus);
 
   const fetchAll = async (quiet = false) => {
-    console.log("[Odin Hook] fetchAll triggered, isFetching:", isFetching.current);
     if (isFetching.current) return;
     isFetching.current = true;
     
     if (!quiet) setLoading(true);
-    console.log("[Odin Hook] QUIET:", quiet, "LOADING:", loading);
     try {
-      console.log("[Odin Hook] Calling fetchUsersFn...");
       const uRes = await fetchUsersFn();
-      console.log("[Odin Hook] fetchUsersFn result:", uRes);
       if (uRes && uRes.success && 'data' in uRes) {
         setCustomers(uRes.data as any);
       } else if (uRes && !uRes.success) {
         const errorMsg = (uRes as any).error || "Erro desconhecido";
-        console.error("[Odin Hook] Error loading users:", errorMsg);
         toast.error(`Erro Usuários: ${errorMsg}`);
       }
       
