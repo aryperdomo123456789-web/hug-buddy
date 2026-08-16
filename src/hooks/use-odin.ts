@@ -38,15 +38,16 @@ export function useOdinData() {
     if (!quiet) setLoading(true);
 
     try {
-      console.log("[useOdinData] Fetching users...");
+      console.log("[useOdinData] INICIANDO FETCH...");
       const uRes = await getUsers();
-      console.log("[useOdinData] Response:", uRes);
+      console.log("[useOdinData] RESULTADO RECEBIDO:", uRes);
       
       if (uRes?.success && Array.isArray(uRes.data)) {
         setCustomers(uRes.data as any);
       } else if (uRes && !uRes.success) {
         toast.error(`Erro: ${(uRes as any).error || 'Desconhecido'}`);
       }
+
 
 
 
