@@ -52,20 +52,14 @@ function DashboardPage() {
     actions 
   } = useOdinData();
 
-  console.log("[Dashboard] RENDER", { customers: customers.length, loading });
-
-
+  // Efeito de carga inicial com delay para estabilidade do bundle
   React.useEffect(() => {
-    console.log("[Dashboard] Mounted, waiting for initial fetch...");
     const timer = setTimeout(() => {
-      console.log("[Dashboard] Triggering initial fetchAll NOW");
-      fetchAll(true).catch(err => {
-        console.error("[Dashboard] Initial fetch failed:", err);
-      });
-    }, 3000);
-    
+      fetchAll(true);
+    }, 1500);
     return () => clearTimeout(timer);
   }, []);
+
 
 
 

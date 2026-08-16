@@ -12,7 +12,10 @@ import {
   toggleUserStatus
 } from "@/lib/server.functions";
 
-
+/**
+ * Hook central para gerenciamento de dados do Odin.
+ * Implementa carga progressiva e tratamento de erros.
+ */
 export function useOdinData() {
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
@@ -24,21 +27,30 @@ export function useOdinData() {
   const fetchAll = async (quiet = false) => {
     if (isFetching.current) return;
     isFetching.current = true;
+    
+    console.log("[useOdinData] Iniciando sincronização...");
     if (!quiet) setLoading(true);
 
     try {
-      console.log("[useOdinData] Iniciando carga...");
+      // 1. Carregar Usuários (Prioridade Máxima)
       const uRes = await getUsers();
-      console.log("[useOdinData] Resposta usuários:", uRes);
+      console.log("[useOdinData] getUsers Resposta:", uRes);
       
       if (uRes?.success && Array.isArray(uRes.data)) {
         setCustomers(uRes.data);
       } else if (uRes && !uRes.success) {
-        toast.error(`Erro: ${(uRes as any).error || 'Desconhecido'}`);
+        toast.error(`Falha no banco de dados: ${uRes.error}`);
       }
+
+      // 2. Carregar Servidores
+      const sRes = await getServers();
+      if (sRes?.success && Array.isArray(sRes.data)) {
+        setServers(sRes.data);
+      }
+
     } catch (e: any) {
-      console.error("[useOdinData] Erro fatal:", e);
-      toast.error("Falha na comunicação com o servidor");
+      console.error("[useOdinData] Erro crítico:", e);
+      toast.error("Erro de conexão com a API do servidor.");
     } finally {
       setLoading(false);
       isFetching.current = false;

@@ -1,9 +1,5 @@
-import { createStart, createCsrfMiddleware } from "@tanstack/react-start";
-
-const csrfMiddleware = createCsrfMiddleware({
-  filter: (ctx) => ctx.handlerType === "serverFn",
-});
+import { createStart } from "@tanstack/react-start";
 
 export const startInstance = createStart(() => ({
-  requestMiddleware: [csrfMiddleware],
+  // TanStack Start v1 options
 }));
