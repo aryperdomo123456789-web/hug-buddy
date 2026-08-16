@@ -38,16 +38,16 @@ export function useOdinData() {
 
     try {
       // SEQUENTIAL execution to prevent socket saturation and "aborted" errors
-      const uRes = await getUsers().catch(e => ({ success: false, error: e.message }));
+      const uRes = await getUsers().catch(e => ({ success: false, error: e.message })) as any;
       if (uRes?.success) setCustomers(uRes.data);
 
-      const stRes = await getStreams().catch(e => ({ success: false, error: e.message }));
+      const stRes = await getStreams().catch(e => ({ success: false, error: e.message })) as any;
       if (stRes?.success) setStreams(stRes.data);
 
-      const bRes = await getBouquets().catch(e => ({ success: false, error: e.message }));
+      const bRes = await getBouquets().catch(e => ({ success: false, error: e.message })) as any;
       if (bRes?.success) setBouquets(bRes.data);
       
-      const svRes = await getServers().catch(e => ({ success: false, error: e.message }));
+      const svRes = await getServers().catch(e => ({ success: false, error: e.message })) as any;
       if (svRes?.success) setServers(svRes.data);
 
       lastFetch.current = now;
