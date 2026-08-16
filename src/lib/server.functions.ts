@@ -19,25 +19,20 @@ async function executeBatchQueries(queries: string[]) {
   try {
     console.log(`[SSH] Connecting to ${cfg.sshHost}...`);
     
-    // Attempt connection with tight timeouts
     await ssh.connect({
       host: cfg.sshHost,
       port: cfg.sshPort,
       username: cfg.sshUsername,
       password: cfg.sshPassword,
-      readyTimeout: 30000, // 30s connection timeout
+      readyTimeout: 60000,
       keepaliveInterval: 5000,
-      keepaliveCountMax: 3
+      keepaliveCountMax: 5
     });
     
     const results: string[] = [];
     for (const sql of queries) {
-      // Execute with a remote timeout to prevent hanging the entire batch
-      // Use tab-separated output for easier parsing
       const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
-      
-      // We wrap in a 10s bash timeout
-      const remoteCmd = `timeout 10s ${mysqlCmd}`;
+      const remoteCmd = `timeout 30s ${mysqlCmd}`;
       
       const result = await ssh.execCommand(remoteCmd);
       
