@@ -179,7 +179,7 @@ function DashboardPage() {
             <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em] mt-1">Odin v6 Engine</div>
           </div>
           
-          <div className="space-y-2">
+          <div className="space-y-2 relative z-[9999]">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -187,10 +187,10 @@ function DashboardPage() {
                 <button 
                   key={item.id}
                   onClick={(e) => {
-                    e.stopPropagation();
+                    console.log("MAGO DEBUG: Clique bruto no botão", item.id);
                     handleTabChange(item.id);
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 border relative z-[9999] ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 border relative ${
                     isActive 
                       ? "bg-blue-600/10 text-blue-500 border-blue-600/20 shadow-[0_0_15px_rgba(37,99,235,0.05)]" 
                       : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50 border-transparent hover:translate-x-1"
@@ -198,8 +198,8 @@ function DashboardPage() {
                   id={`nav-${item.id}`}
                   type="button"
                 >
-                  <Icon size={20} style={{ pointerEvents: 'none' }} />
-                  <span className="text-sm font-bold uppercase tracking-widest style={{ pointerEvents: 'none' }}">{item.label}</span>
+                  <Icon size={20} className="pointer-events-none" />
+                  <span className="text-sm font-bold uppercase tracking-widest pointer-events-none">{item.label}</span>
                 </button>
 
 
