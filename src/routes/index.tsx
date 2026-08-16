@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Users, 
   Server as ServerIcon, 
@@ -11,15 +11,14 @@ import {
 } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { getOdinConfig } from "@/lib/odin";
-import { useOdinData, useHydrated } from "@/hooks/use-odin";
-import { NavItem } from "@/components/dashboard/NavItem";
+import { useOdinData } from "@/hooks/use-odin";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { CustomerList } from "@/components/dashboard/CustomerList";
 import { UserModal } from "@/components/dashboard/UserModal";
-import { User } from "@/types/odin";
-import { toast } from "sonner";
 import { ServerList } from "@/components/dashboard/ServerList";
 import { StreamList } from "@/components/dashboard/StreamList";
+import { User } from "@/types/odin";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   component: DashboardPage,
@@ -39,10 +38,10 @@ export const Route = createFileRoute("/")({
 
 function DashboardPage() {
   const { odin } = Route.useLoaderData();
-  const [view, setView] = React.useState<'dashboard' | 'customers' | 'servers' | 'streams'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'customers' | 'servers' | 'streams'>('dashboard');
   
-  const [showUserModal, setShowUserModal] = React.useState(false);
-  const [editingUser, setEditingUser] = React.useState<User | null>(null);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   
   const { 
     loading, 
@@ -55,13 +54,9 @@ function DashboardPage() {
     actions 
   } = useOdinData();
 
-  // Carga inicial
-  React.useEffect(() => {
+  useEffect(() => {
     fetchAll(true);
   }, []);
-
-
-
 
   const handleDeleteUser = async (user: User) => {
     if (!user.id || !confirm(`Deseja realmente excluir ${user.username}?`)) return;
@@ -82,7 +77,6 @@ function DashboardPage() {
       const data = {
         ...userData,
         exp_date,
-        // Garantir tipos para o Odin
         enabled: userData.enabled ? 1 : 0,
         admin_enabled: userData.admin_enabled ? 1 : 0,
         is_trial: userData.is_trial ? 1 : 0,
@@ -138,10 +132,6 @@ function DashboardPage() {
     }
   };
 
-  // Renderização direta sem depender de estado de hidratação manual
-  // para evitar loops de tela branca se o useEffect falhar.
-
-
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans">
       <div className="flex gap-10">
@@ -153,18 +143,55 @@ function DashboardPage() {
             <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em] mt-1">Odin v6 Engine</div>
           </div>
           
-          <button onClick={() => setView('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'dashboard' ? 'bg-blue-600/10 text-blue-500' : 'text-zinc-500 hover:bg-zinc-900'}`}>
-            <LayoutDashboard size={20} /> <span className="text-sm font-bold uppercase tracking-widest">Dashboard</span>
-          </button>
-          <button onClick={() => setView('customers')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'customers' ? 'bg-blue-600/10 text-blue-500' : 'text-zinc-500 hover:bg-zinc-900'}`}>
-            <Users size={20} /> <span className="text-sm font-bold uppercase tracking-widest">Clientes</span>
-          </button>
-          <button onClick={() => setView('streams')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'streams' ? 'bg-blue-600/10 text-blue-500' : 'text-zinc-500 hover:bg-zinc-900'}`}>
-            <Monitor size={20} /> <span className="text-sm font-bold uppercase tracking-widest">Streams</span>
-          </button>
-          <button onClick={() => setView('servers')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'servers' ? 'bg-blue-600/10 text-blue-500' : 'text-zinc-500 hover:bg-zinc-900'}`}>
-            <ServerIcon size={20} /> <span className="text-sm font-bold uppercase tracking-widest">Servidores</span>
-          </button>
+          <nav className="space-y-2">
+            <button 
+              onClick={() => setActiveTab('dashboard')} 
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+                activeTab === 'dashboard' 
+                  ? "bg-blue-600/10 text-blue-500 border border-blue-600/20" 
+                  : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
+              }`}
+            >
+              <LayoutDashboard size={20} className={activeTab === 'dashboard' ? "text-blue-500" : "group-hover:text-zinc-300"} />
+              <span className="text-sm font-bold uppercase tracking-widest">Dashboard</span>
+            </button>
+            
+            <button 
+              onClick={() => setActiveTab('customers')} 
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+                activeTab === 'customers' 
+                  ? "bg-blue-600/10 text-blue-500 border border-blue-600/20" 
+                  : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
+              }`}
+            >
+              <Users size={20} className={activeTab === 'customers' ? "text-blue-500" : "group-hover:text-zinc-300"} />
+              <span className="text-sm font-bold uppercase tracking-widest">Clientes</span>
+            </button>
+            
+            <button 
+              onClick={() => setActiveTab('streams')} 
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+                activeTab === 'streams' 
+                  ? "bg-blue-600/10 text-blue-500 border border-blue-600/20" 
+                  : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
+              }`}
+            >
+              <Monitor size={20} className={activeTab === 'streams' ? "text-blue-500" : "group-hover:text-zinc-300"} />
+              <span className="text-sm font-bold uppercase tracking-widest">Streams</span>
+            </button>
+            
+            <button 
+              onClick={() => setActiveTab('servers')} 
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+                activeTab === 'servers' 
+                  ? "bg-blue-600/10 text-blue-500 border border-blue-600/20" 
+                  : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
+              }`}
+            >
+              <ServerIcon size={20} className={activeTab === 'servers' ? "text-blue-500" : "group-hover:text-zinc-300"} />
+              <span className="text-sm font-bold uppercase tracking-widest">Servidores</span>
+            </button>
+          </nav>
           
           <div className="mt-20 pt-10 border-t border-zinc-900 px-4">
             <div className="flex items-center gap-3 text-zinc-500 mb-6">
@@ -180,24 +207,25 @@ function DashboardPage() {
 
         <main className="flex-1">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold uppercase tracking-tighter">{view}</h1>
+            <h1 className="text-3xl font-bold uppercase tracking-tighter">
+              {activeTab === 'dashboard' && 'Dashboard'}
+              {activeTab === 'customers' && 'Clientes'}
+              {activeTab === 'streams' && 'Streams'}
+              {activeTab === 'servers' && 'Servidores'}
+            </h1>
             <div className="flex items-center gap-4">
               <button 
-                onClick={() => {
-                  console.log("[Dashboard] Manual Refresh Clicked");
-                  fetchAll(false);
-                }}
+                onClick={() => fetchAll(false)}
                 disabled={loading}
                 className="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-blue-400 transition-all border border-zinc-800"
                 title="Sincronizar Agora"
               >
-
                 <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
               </button>
             </div>
           </div>
 
-          {view === 'dashboard' && (
+          {activeTab === 'dashboard' && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <StatCard label="Clientes Totais" value={stats.totalUsers} icon={Users} color="blue" />
               <StatCard label="Usuários Online" value={stats.onlineUsers} icon={Activity} color="green" />
@@ -206,7 +234,7 @@ function DashboardPage() {
             </div>
           )}
 
-          {view === 'customers' && (
+          {activeTab === 'customers' && (
              <CustomerList 
                customers={customers}
                loading={loading}
@@ -219,7 +247,7 @@ function DashboardPage() {
              />
           )}
 
-          {view === 'servers' && (
+          {activeTab === 'servers' && (
             <ServerList 
               servers={servers}
               loading={loading}
@@ -227,7 +255,7 @@ function DashboardPage() {
             />
           )}
 
-          {view === 'streams' && (
+          {activeTab === 'streams' && (
             <StreamList 
               streams={streams}
               loading={loading}
