@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { getOdinConfig } from "@/lib/odin";
-import { useOdinData } from "@/hooks/use-odin";
+import { useOdinData, useHydrated } from "@/hooks/use-odin";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { CustomerList } from "@/components/dashboard/CustomerList";
 import { UserModal } from "@/components/dashboard/UserModal";
@@ -38,6 +38,7 @@ export const Route = createFileRoute("/")({
 
 function DashboardPage() {
   const { odin } = Route.useLoaderData();
+  const hydrated = useHydrated();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -54,82 +55,14 @@ function DashboardPage() {
   } = useOdinData();
 
   useEffect(() => {
-    fetchAll(true);
-  }, []);
-
-  const handleDeleteUser = async (user: User) => {
-    if (!user.id || !confirm(`Deseja realmente excluir ${user.username}?`)) return;
-    try {
-      const res = await actions.deleteUser({ data: { id: user.id } });
-      if (res.success) {
-        toast.success("Usuário removido");
-        fetchAll(false);
-      }
-    } catch (e) {
-      toast.error("Erro ao remover usuário");
+    if (hydrated) {
+      fetchAll(true);
     }
-  };
+  }, [hydrated]);
 
-  const handleSaveUser = async (userData: User) => {
-    try {
-      const exp_date = Math.floor(Date.now() / 1000) + (userData.exp_days * 86400);
-      const data = {
-        ...userData,
-        exp_date,
-        enabled: userData.enabled ? 1 : 0,
-        admin_enabled: userData.admin_enabled ? 1 : 0,
-        is_trial: userData.is_trial ? 1 : 0,
-        is_restreamer: userData.is_restreamer ? 1 : 0,
-        is_isplock: userData.is_isplock ? 1 : 0,
-      };
-
-      let res;
-      if (editingUser?.id) {
-        res = await actions.updateUser({ data: { ...data, id: editingUser.id } as any });
-      } else {
-        res = await actions.createUser({ data: data as any });
-      }
-
-      if (res.success) {
-        toast.success(editingUser ? "Atualizado!" : "Criado!");
-        setShowUserModal(false);
-        setEditingUser(null);
-        fetchAll(false);
-      } else {
-        toast.error("Erro Odin: " + (res as any).error);
-      }
-    } catch (e) {
-      toast.error("Falha na comunicação");
-    }
-  };
-
-  const handleToggleStatus = async (user: User) => {
-    if (!user.id) return;
-    try {
-      const res = await actions.toggleStatus({ 
-        data: { id: user.id, enabled: user.enabled === 1 ? 0 : 1 } 
-      });
-      if (res.success) {
-        toast.success("Estado alterado");
-        fetchAll(false);
-      }
-    } catch (e) {
-      toast.error("Erro ao alterar estado");
-    }
-  };
-
-  const handleKillConnections = async (user: User) => {
-    if (!user.id) return;
-    try {
-      const res = await actions.killConnections({ data: { id: user.id } });
-      if (res.success) {
-        toast.success("Conexões derrubadas");
-        fetchAll(false);
-      }
-    } catch (e) {
-      toast.error("Erro ao derrubar conexões");
-    }
-  };
+  if (!hydrated) {
+    return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center text-zinc-500 font-bold uppercase tracking-widest">Iniciando Odin Engine...</div>;
+  }
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -156,10 +89,7 @@ function DashboardPage() {
               return (
                 <div 
                   key={item.id}
-                  onClick={() => {
-                    console.log("CLICK:", item.id);
-                    setActiveTab(item.id);
-                  }} 
+                  onClick={() => setActiveTab(item.id)} 
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
                     isActive 
                       ? "bg-blue-600/10 text-blue-500 border border-blue-600/20" 
