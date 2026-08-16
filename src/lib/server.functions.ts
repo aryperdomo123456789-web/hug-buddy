@@ -1,47 +1,48 @@
 import { createServerFn } from "@tanstack/react-start";
 import { NodeSSH } from "node-ssh";
+import { getOdinConfig, escapeSql } from "./odin";
 
 /**
  * ODIN INFRASTRUCTURE CONFIGURATION
- * These credentials are used to connect to the physical server and the local database.
+ * Fetches config from central odin.ts utility
  */
-const ODIN_SSH = {
-  host: "23.158.72.30",
-  port: 22,
-  username: "root",
-  password: "fontemain123333",
-};
-
-const ODIN_DB = {
-  user: "user_iptvpro",
-  pass: "Y92RYuXHLP58AbOciQW",
-  name: "xtream_iptvpro",
-  port: 7999,
-};
+const getConfig = () => getOdinConfig();
 
 /**
  * UTILITY: Execute multiple MySQL queries via a single SSH session
+ * Optimized for serverless environments with aggressive timeouts
  */
 async function executeBatchQueries(queries: string[]) {
+  const cfg = getConfig();
   const ssh = new NodeSSH();
+  
   try {
-    console.log(`[SSH] Connecting to ${ODIN_SSH.host}...`);
+    console.log(`[SSH] Connecting to ${cfg.sshHost}...`);
+    
+    // Attempt connection with tight timeouts
     await ssh.connect({
-      host: ODIN_SSH.host,
-      port: ODIN_SSH.port,
-      username: ODIN_SSH.username,
-      password: ODIN_SSH.password,
-      readyTimeout: 60000,
-      keepaliveInterval: 1000,
+      host: cfg.sshHost,
+      port: cfg.sshPort,
+      username: cfg.sshUsername,
+      password: cfg.sshPassword,
+      readyTimeout: 30000, // 30s connection timeout
+      keepaliveInterval: 5000,
+      keepaliveCountMax: 3
     });
     
-    console.log(`[SSH] Connected. Executing ${queries.length} queries...`);
     const results: string[] = [];
     for (const sql of queries) {
-      const mysqlCmd = `mysql -h 127.0.0.1 -P ${ODIN_DB.port} -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -N -s -e "${sql}"`;
-      const result = await ssh.execCommand(`timeout 5s ${mysqlCmd}`);
+      // Execute with a remote timeout to prevent hanging the entire batch
+      // Use tab-separated output for easier parsing
+      const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
+      
+      // We wrap in a 10s bash timeout
+      const remoteCmd = `timeout 10s ${mysqlCmd}`;
+      
+      const result = await ssh.execCommand(remoteCmd);
+      
       if (result.code !== 0) {
-        console.error(`[SSH] Query failed: ${sql.substring(0, 50)}... Error: ${result.stderr}`);
+        console.error(`[SSH] Query Error: ${result.stderr}`);
         results.push(""); 
       } else {
         results.push(result.stdout);
@@ -51,9 +52,9 @@ async function executeBatchQueries(queries: string[]) {
     ssh.dispose();
     return results;
   } catch (error: any) {
-    console.error(`[SSH] Connection/Execution Error:`, error.message);
+    console.error(`[SSH] Critical Failure:`, error.message);
     if (ssh.isConnected()) ssh.dispose();
-    throw error;
+    throw new Error(`Odin Connection Failed: ${error.message}`);
   }
 }
 
@@ -230,7 +231,7 @@ export const createUser = createServerFn({ method: "POST" })
   .validator((d: any) => d)
   .handler(async ({ data }) => {
     try {
-      const sql = `INSERT INTO users (username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, allowed_ips, allowed_ua, forced_country) VALUES ('${data.username}', '${data.password}', ${data.exp_date}, ${data.enabled}, ${data.admin_enabled}, ${data.is_trial}, ${data.is_restreamer}, ${data.is_isplock}, ${data.max_connections || 1}, '${data.bouquet || "[]"}', '${data.admin_notes || ""}', '${data.allowed_ips || ""}', '${data.allowed_ua || ""}', '${data.forced_country || "Off"}')`;
+      const sql = `INSERT INTO users (username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, allowed_ips, allowed_ua, forced_country) VALUES ('${escapeSql(data.username)}', '${escapeSql(data.password)}', ${Number(data.exp_date)}, ${Number(data.enabled)}, ${Number(data.admin_enabled)}, ${Number(data.is_trial)}, ${Number(data.is_restreamer)}, ${Number(data.is_isplock)}, ${Number(data.max_connections || 1)}, '${escapeSql(data.bouquet || "[]")}', '${escapeSql(data.admin_notes || "")}', '${escapeSql(data.allowed_ips || "")}', '${escapeSql(data.allowed_ua || "")}', '${escapeSql(data.forced_country || "Off")}')`;
       await executeQuery(sql);
       return { success: true };
     } catch (e: any) {
@@ -242,7 +243,7 @@ export const updateUser = createServerFn({ method: "POST" })
   .validator((d: any) => d)
   .handler(async ({ data }) => {
     try {
-      const sql = `UPDATE users SET username='${data.username}', password='${data.password}', exp_date=${data.exp_date}, enabled=${data.enabled}, admin_enabled=${data.admin_enabled}, is_trial=${data.is_trial}, is_restreamer=${data.is_restreamer}, is_isplock=${data.is_isplock}, max_connections=${data.max_connections || 1}, bouquet='${data.bouquet || "[]"}', admin_notes='${data.admin_notes || ""}', allowed_ips='${data.allowed_ips || ""}', allowed_ua='${data.allowed_ua || ""}', forced_country='${data.forced_country || "Off"}' WHERE id=${data.id}`;
+      const sql = `UPDATE users SET username='${escapeSql(data.username)}', password='${escapeSql(data.password)}', exp_date=${Number(data.exp_date)}, enabled=${Number(data.enabled)}, admin_enabled=${Number(data.admin_enabled)}, is_trial=${Number(data.is_trial)}, is_restreamer=${Number(data.is_restreamer)}, is_isplock=${Number(data.is_isplock)}, max_connections=${Number(data.max_connections || 1)}, bouquet='${escapeSql(data.bouquet || "[]")}', admin_notes='${escapeSql(data.admin_notes || "")}', allowed_ips='${escapeSql(data.allowed_ips || "")}', allowed_ua='${escapeSql(data.allowed_ua || "")}', forced_country='${escapeSql(data.forced_country || "Off")}' WHERE id=${Number(data.id)}`;
       await executeQuery(sql);
       return { success: true };
     } catch (e: any) {

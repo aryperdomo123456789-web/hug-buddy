@@ -23,19 +23,24 @@ export function useOdinData() {
   const lastFetch = useRef(0);
 
   const fetchAll = async (quiet = false) => {
-    // Cache de 30 segundos para evitar sobrecarga SSH se não for "quiet" (refresh manual)
     const now = Date.now();
-    if (!quiet && now - lastFetch.current < 30000) return;
-
-    if (isFetching.current) return;
-    isFetching.current = true;
     
-    console.log("[useOdinData] Iniciando sincronização...");
+    // Prevent multiple simultaneous fetches
+    if (isFetching.current) return;
+    
+    // Manual refresh always bypasses cache
+    if (quiet && now - lastFetch.current < 10000) return;
+
+    isFetching.current = true;
     if (!quiet) setLoading(true);
 
     try {
-      // SINGLE fetch for all data to reduce SSH overhead and prevent "aborted" errors
-      const response = await getOdinFullData().catch(e => ({ success: false, error: e.message })) as any;
+      console.log("[useOdinData] Sincronizando com Odin...");
+      
+      const response = await getOdinFullData().catch(e => {
+        console.error("[useOdinData] Request aborted or failed:", e);
+        return { success: false, error: "Conexão interrompida (Timeout/Aborted). Tente novamente." };
+      }) as any;
       
       if (response?.success && response.data) {
         const { customers, streams, bouquets, servers } = response.data;
@@ -43,15 +48,16 @@ export function useOdinData() {
         if (streams) setStreams(streams);
         if (bouquets) setBouquets(bouquets);
         if (servers) setServers(servers);
-      } else if (!quiet) {
-        console.error("[useOdinData] Response failure:", response?.error);
-        toast.error("Erro ao sincronizar dados: " + (response?.error || "Desconhecido"));
+        
+        lastFetch.current = Date.now();
+      } else {
+        const errorMsg = response?.error || "Falha na resposta do servidor";
+        console.error("[useOdinData] Erro:", errorMsg);
+        if (!quiet) toast.error(errorMsg);
       }
-
-      lastFetch.current = now;
     } catch (e: any) {
-      console.error("[useOdinData] Erro crítico:", e);
-      if (!quiet) toast.error("Erro de conexão com o servidor.");
+      console.error("[useOdinData] Erro inesperado:", e);
+      if (!quiet) toast.error("Falha crítica de comunicação.");
     } finally {
       setLoading(false);
       isFetching.current = false;
