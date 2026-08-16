@@ -38,7 +38,6 @@ async function withSsh<T>(
       keepaliveCountMax: 30
     });
 
-    });
     
     // Executa a tarefa com a conexão ativa
     const result = await task(ssh, cfg);
