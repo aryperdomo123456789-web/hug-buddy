@@ -26,8 +26,13 @@ async function executeQuery(sql: string) {
   try {
     console.log(`[SSH] Executing query: ${sql.substring(0, 100)}...`);
     await ssh.connect({
-      ...ODIN_SSH,
+      host: ODIN_SSH.host,
+      port: ODIN_SSH.port,
+      username: ODIN_SSH.username,
+      password: ODIN_SSH.password,
       readyTimeout: 60000,
+      keepaliveInterval: 10000,
+      debug: (msg) => console.log(`[SSH DEBUG] ${msg}`)
     });
     
     // -N: skip headers, -s: silent/raw output
