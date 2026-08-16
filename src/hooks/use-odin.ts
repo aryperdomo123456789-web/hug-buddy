@@ -37,9 +37,10 @@ export function useOdinData() {
     isFetching.current = true;
     
     if (!quiet) setLoading(true);
-    console.log("fetchAll started, quiet:", quiet);
     try {
+      console.log("[Odin Hook] Calling fetchUsersFn...");
       const uRes = await fetchUsersFn().catch(e => {
+
         console.error("fetchUsersFn failed:", e);
         return { success: false, error: e.message };
       });
