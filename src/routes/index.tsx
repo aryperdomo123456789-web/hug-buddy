@@ -139,10 +139,6 @@ function DashboardPage() {
     { id: 'servers', label: 'Servidores', icon: ServerIcon },
   ];
 
-  if (!hydrated) {
-    return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center text-zinc-500 font-bold uppercase tracking-widest">Iniciando Odin Engine...</div>;
-  }
-
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans">
       <div className="flex gap-10">
