@@ -55,12 +55,11 @@ function DashboardPage() {
   } = useOdinData();
 
   useEffect(() => {
-    console.log("[DashboardPage] Mounting... Current Tab:", activeTab);
     fetchAll(true);
   }, []);
 
   const changeTab = (tab: string) => {
-    console.log("[DashboardPage] User action: setActiveTab ->", tab);
+    console.log("[DashboardPage] Re-rendering for tab:", tab);
     setActiveTab(tab);
   };
 
@@ -141,7 +140,7 @@ function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans">
       <div className="flex gap-10">
-        <aside className="w-64 space-y-4 shrink-0">
+        <aside className="w-64 shrink-0">
           <div className="mb-10 px-4">
             <div className="text-2xl font-black text-blue-500 tracking-tighter flex items-center gap-2">
               <ShieldAlert size={32} /> MAGO PANEL
@@ -149,68 +148,64 @@ function DashboardPage() {
             <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em] mt-1">Odin v6 Engine</div>
           </div>
           
-          <nav className="space-y-2">
-            <button 
-              type="button"
+          <div className="space-y-2">
+            <div 
               onClick={() => changeTab('dashboard')} 
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
                 activeTab === 'dashboard' 
                   ? "bg-blue-600/10 text-blue-500 border border-blue-600/20" 
                   : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 border border-transparent"
               }`}
             >
-              <LayoutDashboard size={20} className={activeTab === 'dashboard' ? "text-blue-500" : "group-hover:text-zinc-300"} />
-              <span className="text-sm font-bold uppercase tracking-widest pointer-events-none">Dashboard</span>
-            </button>
+              <LayoutDashboard size={20} />
+              <span className="text-sm font-bold uppercase tracking-widest">Dashboard</span>
+            </div>
             
-            <button 
-              type="button"
+            <div 
               onClick={() => changeTab('customers')} 
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
                 activeTab === 'customers' 
                   ? "bg-blue-600/10 text-blue-500 border border-blue-600/20" 
                   : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 border border-transparent"
               }`}
             >
-              <Users size={20} className={activeTab === 'customers' ? "text-blue-500" : "group-hover:text-zinc-300"} />
-              <span className="text-sm font-bold uppercase tracking-widest pointer-events-none">Clientes</span>
-            </button>
+              <Users size={20} />
+              <span className="text-sm font-bold uppercase tracking-widest">Clientes</span>
+            </div>
             
-            <button 
-              type="button"
+            <div 
               onClick={() => changeTab('streams')} 
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
                 activeTab === 'streams' 
                   ? "bg-blue-600/10 text-blue-500 border border-blue-600/20" 
                   : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 border border-transparent"
               }`}
             >
-              <Monitor size={20} className={activeTab === 'streams' ? "text-blue-500" : "group-hover:text-zinc-300"} />
-              <span className="text-sm font-bold uppercase tracking-widest pointer-events-none">Streams</span>
-            </button>
+              <Monitor size={20} />
+              <span className="text-sm font-bold uppercase tracking-widest">Streams</span>
+            </div>
             
-            <button 
-              type="button"
+            <div 
               onClick={() => changeTab('servers')} 
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
                 activeTab === 'servers' 
                   ? "bg-blue-600/10 text-blue-500 border border-blue-600/20" 
                   : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 border border-transparent"
               }`}
             >
-              <ServerIcon size={20} className={activeTab === 'servers' ? "text-blue-500" : "group-hover:text-zinc-300"} />
-              <span className="text-sm font-bold uppercase tracking-widest pointer-events-none">Servidores</span>
-            </button>
-          </nav>
+              <ServerIcon size={20} />
+              <span className="text-sm font-bold uppercase tracking-widest">Servidores</span>
+            </div>
+          </div>
           
           <div className="mt-20 pt-10 border-t border-zinc-900 px-4">
             <div className="flex items-center gap-3 text-zinc-500 mb-6">
               <Database size={16} />
               <div className="text-xs font-bold uppercase tracking-widest">Database</div>
             </div>
-            <div className="space-y-3 opacity-50">
-              <div className="text-[10px] uppercase font-bold text-zinc-600">Host: {odin.dbHost}</div>
-              <div className="text-[10px] uppercase font-bold text-zinc-600">DB: {odin.dbName}</div>
+            <div className="space-y-3 opacity-50 text-[10px] uppercase font-bold text-zinc-600">
+              <div>Host: {odin.dbHost}</div>
+              <div>DB: {odin.dbName}</div>
             </div>
           </div>
         </aside>
@@ -223,19 +218,16 @@ function DashboardPage() {
               {activeTab === 'streams' && 'Streams'}
               {activeTab === 'servers' && 'Servidores'}
             </h1>
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => fetchAll(false)}
-                disabled={loading}
-                className="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-blue-400 transition-all border border-zinc-800"
-                title="Sincronizar Agora"
-              >
-                <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
-              </button>
-            </div>
+            <button 
+              onClick={() => fetchAll(false)}
+              disabled={loading}
+              className="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-blue-400 border border-zinc-800"
+            >
+              <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+            </button>
           </div>
 
-          <div className="relative">
+          <div key={activeTab}>
             {activeTab === 'dashboard' && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard label="Clientes Totais" value={stats.totalUsers} icon={Users} color="blue" />
