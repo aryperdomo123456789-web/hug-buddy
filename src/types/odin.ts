@@ -27,12 +27,28 @@ export const UserSchema = z.object({
 
 export type User = z.infer<typeof UserSchema>;
 
+export const ResellerSchema = z.object({
+  id: z.number().optional(),
+  username: z.string().default(""),
+  password: z.string().default(""),
+  email: z.string().default(""),
+  owner_id: z.number().int().default(1),
+  credits: z.number().default(0),
+  active: z.number().int().default(1),
+  member_group_id: z.number().int().default(2), // 2 = Reseller, 5 = Subreseller?
+  last_login: z.number().optional(),
+  user_count: z.number().default(0),
+});
+
+export type Reseller = z.infer<typeof ResellerSchema>;
+
 export interface DashboardStats {
   totalUsers: number;
   onlineUsers: number;
   activeStreams: number;
   totalStreams: number;
   totalServers: number;
+  totalResellers: number;
 }
 
 export interface SSHResponse<T = any> {
