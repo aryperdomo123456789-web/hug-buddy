@@ -42,9 +42,10 @@ export function useOdinData() {
     if (!quiet) setLoading(true);
     console.log("[useOdinData] fetchAll started");
     try {
-      console.log("[useOdinData] fetching users...");
-      const uRes = await fetchUsersFn();
-      console.log("[useOdinData] users result:", uRes);
+      console.log("[useOdinData] fetching users via fetchUsersFn...");
+      // Forçar chamada direta para teste se fetchUsersFn (useServerFn) estiver falhando silenciosamente
+      const uRes = await getUsers(); 
+      console.log("[useOdinData] users result received:", uRes);
       
       if (uRes && uRes.success && 'data' in uRes) {
         setCustomers(uRes.data as any);
@@ -52,6 +53,7 @@ export function useOdinData() {
         const errorMsg = (uRes as any).error || "Erro desconhecido";
         toast.error(`Erro Usuários: ${errorMsg}`);
       }
+
 
       
       // Delay entre chamadas para não saturar o túnel SSH
