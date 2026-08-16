@@ -37,11 +37,6 @@ export const Route = createFileRoute("/")({
 
 function DashboardPage() {
   const { odin } = Route.useLoaderData();
-  const [hydrated, setHydrated] = React.useState(false);
-  
-  React.useEffect(() => {
-    setHydrated(true);
-  }, []);
   const [view, setView] = React.useState<'dashboard' | 'customers' | 'servers' | 'streams'>('dashboard');
   const [showUserModal, setShowUserModal] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
@@ -58,8 +53,6 @@ function DashboardPage() {
   } = useOdinData();
 
   React.useEffect(() => {
-    if (!hydrated) return;
-
     // Aumentar o delay inicial para garantir que o React se estabilize 
     // e o usuário veja o esqueleto do dashboard antes da carga pesada.
     const timer = setTimeout(() => {
@@ -67,7 +60,7 @@ function DashboardPage() {
     }, 1500);
     
     return () => clearTimeout(timer);
-  }, [hydrated]);
+  }, []);
 
   const handleDeleteUser = async (user: User) => {
     if (!user.id || !confirm(`Deseja realmente excluir ${user.username}?`)) return;
@@ -144,15 +137,8 @@ function DashboardPage() {
     }
   };
 
-  if (!hydrated) {
-    return (
-      <div className="min-h-screen bg-[#0a0a0c] flex flex-col items-center justify-center text-zinc-500">
-        <div className="w-12 h-12 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-4" />
-        <div className="text-[10px] uppercase font-bold tracking-[0.3em] animate-pulse">Iniciando Sistema Odin...</div>
-        <button onClick={() => setHydrated(true)} className="mt-4 text-[8px] opacity-20">Forçar Hidratação</button>
-      </div>
-    );
-  }
+  // Renderização direta sem depender de estado de hidratação manual
+  // para evitar loops de tela branca se o useEffect falhar.
 
 
   return (
