@@ -16,6 +16,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
+import { getDefaultDns } from "@/lib/dns.functions";
 
 interface CustomerListProps {
   customers: User[];
@@ -42,6 +43,11 @@ export function CustomerList({
   const [statusFilter, setStatusFilter] = React.useState("all");
   const [perPage, setPerPage] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
+  const [defaultDns, setDefaultDns] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    getDefaultDns().then(dns => setDefaultDns(dns));
+  }, []);
 
   const filteredCustomers = React.useMemo(() => {
     let result = customers;
@@ -214,7 +220,7 @@ export function CustomerList({
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button 
                         onClick={() => {
-                          const domain = window.location.hostname;
+                          const domain = defaultDns || window.location.hostname;
                           const port = "80"; // Odin default streaming port
                           const url = `http://${domain}:${port}/get.php?username=${u.username}&password=${u.password}&type=m3u_plus&output=ts`;
                           
