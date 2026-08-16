@@ -110,7 +110,7 @@ export const getServers = createServerFn({ method: "GET" })
 export const getStreams = createServerFn({ method: "GET" })
   .handler(async () => {
     try {
-      const sql = "SELECT stream_id, stream_display_name, category_id, stream_icon, stream_source, stream_status FROM streams LIMIT 100";
+      const sql = "SELECT id, stream_display_name, category_id, stream_icon, stream_source, 1 FROM streams LIMIT 100";
       const stdout = await executeQuery(sql) || "";
       
       const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
