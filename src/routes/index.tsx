@@ -185,14 +185,19 @@ function DashboardPage() {
               return (
                 <button 
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log("MAGO NAV:", item.id);
+                    setActiveTab(item.id);
+                  }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 border relative ${
                     isActive 
                       ? "bg-blue-600/10 text-blue-500 border-blue-600/20" 
                       : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50 border-transparent"
                   }`}
                   id={`nav-${item.id}`}
-                  style={{ cursor: 'pointer', pointerEvents: 'auto' }}
+                  style={{ cursor: 'pointer', pointerEvents: 'auto', display: 'flex' }}
                   type="button"
                 >
                   <Icon size={20} className="pointer-events-none" />
