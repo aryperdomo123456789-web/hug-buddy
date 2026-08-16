@@ -178,7 +178,7 @@ function DashboardPage() {
             <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em] mt-1">Odin v6 Engine</div>
           </div>
           
-          <div className="space-y-2 relative z-[9999]">
+          <nav className="space-y-2 relative z-[9999]">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -188,21 +188,19 @@ function DashboardPage() {
                   onClick={() => setActiveTab(item.id)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 border relative ${
                     isActive 
-                      ? "bg-blue-600/10 text-blue-500 border-blue-600/20 shadow-[0_0_15px_rgba(37,99,235,0.05)]" 
-                      : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50 border-transparent hover:translate-x-1"
+                      ? "bg-blue-600/10 text-blue-500 border-blue-600/20" 
+                      : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50 border-transparent"
                   }`}
                   id={`nav-${item.id}`}
-                  style={{ cursor: 'pointer', pointerEvents: 'all' }}
+                  style={{ cursor: 'pointer', pointerEvents: 'auto' }}
                   type="button"
                 >
                   <Icon size={20} className="pointer-events-none" />
                   <span className="text-sm font-bold uppercase tracking-widest pointer-events-none">{item.label}</span>
                 </button>
-
-
               );
             })}
-          </div>
+          </nav>
           
           <div className="mt-20 pt-10 border-t border-zinc-900 px-4">
             <div className="flex items-center gap-3 text-zinc-500 mb-6">
