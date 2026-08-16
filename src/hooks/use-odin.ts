@@ -40,11 +40,12 @@ export function useOdinData() {
     try {
       console.log("[Odin Hook] Calling fetchUsersFn...");
       const uRes = await fetchUsersFn();
-      console.log("[Odin Hook] fetchUsersFn response:", uRes);
+      console.log("[Odin Hook] fetchUsersFn result:", uRes);
       if (uRes && uRes.success && 'data' in uRes) {
         setCustomers(uRes.data as any);
       } else if (uRes && !uRes.success) {
         const errorMsg = (uRes as any).error || "Erro desconhecido";
+        console.error("[Odin Hook] Error loading users:", errorMsg);
         toast.error(`Erro Usuários: ${errorMsg}`);
       }
       

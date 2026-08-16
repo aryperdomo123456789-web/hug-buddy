@@ -33,14 +33,10 @@ async function withSsh<T>(
       port: connection.port,
       username: connection.username,
       password: connection.password,
-      readyTimeout: 120000, 
+      readyTimeout: 90000, 
       keepaliveInterval: 5000,
-      keepaliveCountMax: 30,
-      debug: (msg: string) => {
-        if (msg.includes('Successfully authenticated')) {
-           console.log(`[SSH AUTH SUCCESS] ${connection.host}`);
-        }
-      }
+      keepaliveCountMax: 30
+    });
 
     });
     
@@ -211,16 +207,15 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
       password: cfg.sshPassword,
     };
 
-
     return await withSsh(sshParams, async (ssh, cfg) => {
-      console.log(`[SSH CMD] Checking MySQL connectivity...`);
-      const checkMysql = await ssh.execCommand(`mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${escapeSql(cfg.dbPassword)}' -e "SELECT 1"`);
-      console.log(`[SQL CHECK] Code: ${checkMysql.code}, Out: ${checkMysql.stdout}, Err: ${checkMysql.stderr}`);
-
-      const sql = "SELECT id, username, password, exp_date, admin_enabled, enabled, member_id, 0 as active_cons, max_connections, created_at, created_by, admin_notes, reseller_notes, bouquet, is_restreamer, allowed_ips, allowed_ua, is_trial, is_isplock, forced_country, is_mag, is_e2, force_server_id, is_stalker, bypass_ua, as_number, isp_desc, 'Unknown' as isp_info FROM users ORDER BY id DESC LIMIT 10";
-      console.log(`[SQL EXEC] Querying users...`);
+      // Usar a mesma estratégia de detecção de IP/Host do instalador para o MySQL
+      const sql = "SELECT id, username, password, exp_date, admin_enabled, enabled, member_id, 0 as active_cons, max_connections, created_at, created_by, admin_notes, reseller_notes, bouquet, is_restreamer, allowed_ips, allowed_ua, is_trial, is_isplock, forced_country, is_mag, is_e2, force_server_id, is_stalker, bypass_ua, as_number, isp_desc, 'Unknown' as isp_info FROM users ORDER BY id DESC LIMIT 50";
+      
       const result = await execMysql(ssh, cfg, sql);
-      console.log(`[SQL RESULT] Code: ${result.code}, Len: ${result.stdout.length}, Err: ${result.stderr}`);
+      
+      if (result.code !== 0) {
+        throw new Error(`MySQL Error (${result.code}): ${result.stderr}`);
+      }
 
 
 
