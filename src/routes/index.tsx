@@ -1,16 +1,3 @@
-/**
- * Analise completamente todo o projeto e identifique TODOS os bugs, erros, falhas, comportamentos inesperados e possíveis problemas existentes na aplicação.
- *
- * Seu objetivo é realizar uma auditoria técnica profunda no sistema inteiro, corrigindo problemas de lógica, frontend, backend, integração, renderização, estado, banco de dados, responsividade e performance.
- *
- * Antes de modificar qualquer coisa:
- * - Analise toda a estrutura do projeto
- * - Analise rotas, componentes, hooks, estados globais
- * - Analise integrações, Supabase, APIs, banco de dados
- * - Analise autenticação, permissões, carregamentos
- *
- * Depois de identificar todos os problemas, corrija TODOS de uma única vez.
- */
 import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -29,7 +16,9 @@ import {
   Database,
   Globe,
   Cpu,
-  Monitor
+  Monitor,
+  RefreshCw,
+  Zap
 } from "lucide-react";
 import { 
   runSSHCommand, 
@@ -45,6 +34,15 @@ import {
 } from "@/lib/server.functions";
 import { getOdinConfig } from "@/lib/odin";
 import { toast } from "sonner";
+
+// Hook para evitar erros de hidratação
+function useHydrated() {
+  const [hydrated, setHydrated] = React.useState(false);
+  React.useEffect(() => {
+    setHydrated(true);
+  }, []);
+  return hydrated;
+}
 
 type UserEditorState = {
   id?: number;
@@ -307,7 +305,17 @@ function Dashboard() {
         <main className="flex-1">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold uppercase tracking-tighter">{view}</h1>
-            {loading && <div className="animate-spin text-blue-500"><Activity size={20} /></div>}
+            <div className="flex items-center gap-4">
+              {loading && <div className="animate-spin text-blue-500"><RefreshCw size={20} /></div>}
+              <button 
+                onClick={handleFetchDashboard}
+                disabled={loading}
+                className="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-blue-400 transition-all border border-zinc-800"
+                title="Sincronizar Agora"
+              >
+                <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+              </button>
+            </div>
           </div>
 
           {view === 'dashboard' && (
@@ -469,12 +477,14 @@ function Dashboard() {
                     <Field label="Comando de Instalação">
                       <div className="group relative">
                         <div className="bg-black p-4 rounded-xl border border-zinc-900 font-mono text-zinc-400 text-xs overflow-x-auto whitespace-pre group-hover:text-blue-400 transition-colors">
-                          {`bash <(curl -sSL https://${typeof window !== 'undefined' ? window.location.host : 'mago.lovable.app'}/api/public/install)`}
+                          {`bash <(curl -sSL https://${useHydrated() ? window.location.host : 'mago.lovable.app'}/api/public/install)`}
                         </div>
                         <button 
                           onClick={() => {
-                            navigator.clipboard.writeText(`bash <(curl -sSL https://${window.location.host}/api/public/install)`);
-                            toast.success("Comando copiado!");
+                            if (typeof window !== 'undefined') {
+                              navigator.clipboard.writeText(`bash <(curl -sSL https://${window.location.host}/api/public/install)`);
+                              toast.success("Comando copiado!");
+                            }
                           }}
                           className="absolute right-2 top-2 p-2 bg-zinc-900 rounded-lg text-zinc-500 hover:text-white transition-all opacity-0 group-hover:opacity-100"
                         >
