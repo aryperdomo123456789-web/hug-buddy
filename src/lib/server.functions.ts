@@ -39,7 +39,7 @@ async function executeBatchQueries(queries: string[]) {
     const results: string[] = [];
     for (const sql of queries) {
       const mysqlCmd = `mysql -h 127.0.0.1 -P ${ODIN_DB.port} -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -N -s -e "${sql}"`;
-      const result = await ssh.execCommand(`timeout 20s ${mysqlCmd}`);
+      const result = await ssh.execCommand(`timeout 5s ${mysqlCmd}`);
       if (result.code !== 0) {
         console.error(`[SSH] Query failed: ${sql.substring(0, 50)}... Error: ${result.stderr}`);
         results.push(""); 
