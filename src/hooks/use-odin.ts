@@ -27,42 +27,30 @@ export function useOdinData() {
   const lastFetch = useRef(0);
 
   const fetchAll = async (quiet = false) => {
-    const now = Date.now();
-    
-    // Prevent multiple simultaneous fetches
     if (isFetching.current) return;
     
-    // Manual refresh always bypasses cache
-    if (quiet && now - lastFetch.current < 10000) return;
-
     isFetching.current = true;
     if (!quiet) setLoading(true);
 
     try {
-      console.log("[useOdinData] Sincronizando com Odin...");
-      
-      const response = await getOdinFullData().catch(e => {
-        console.error("[useOdinData] Request failed:", e);
-        return { success: false, error: "Falha na conexão com o servidor. Verifique o SSH/MySQL." };
-      }) as any;
+      const response = await getOdinFullData();
       
       if (response?.success && response.data) {
         const { customers, streams, bouquets, servers, resellers } = response.data;
-        if (customers) setCustomers(customers);
-        if (streams) setStreams(streams);
-        if (bouquets) setBouquets(bouquets);
-        if (servers) setServers(servers);
-        if (resellers) setResellers(resellers);
+        
+        // Batched state updates for performance
+        setCustomers(customers || []);
+        setStreams(streams || []);
+        setBouquets(bouquets || []);
+        setServers(servers || []);
+        setResellers(resellers || []);
         
         lastFetch.current = Date.now();
-      } else {
-        const errorMsg = response?.error || "Falha na resposta do servidor";
-        console.error("[useOdinData] Erro:", errorMsg);
-        if (!quiet) toast.error(errorMsg);
+      } else if (!quiet) {
+        toast.error(response?.error || "Erro ao carregar dados do servidor");
       }
     } catch (e: any) {
-      console.error("[useOdinData] Erro inesperado:", e);
-      if (!quiet) toast.error("Falha crítica de comunicação.");
+      if (!quiet) toast.error("Falha na comunicação com o servidor");
     } finally {
       setLoading(false);
       isFetching.current = false;

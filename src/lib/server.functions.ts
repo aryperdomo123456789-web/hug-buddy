@@ -24,9 +24,9 @@ async function executeBatchQueries(queries: string[]) {
       port: cfg.sshPort,
       username: cfg.sshUsername,
       password: cfg.sshPassword,
-      readyTimeout: 60000,
-      keepaliveInterval: 5000,
-      keepaliveCountMax: 5
+      readyTimeout: 20000,
+      keepaliveInterval: 10000,
+      keepaliveCountMax: 3
     });
     
     const results: string[] = [];
