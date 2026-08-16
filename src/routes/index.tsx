@@ -52,21 +52,20 @@ function DashboardPage() {
     actions 
   } = useOdinData();
 
-  console.log("Dashboard rendering stats:", stats);
-
+  console.log("[Dashboard] Current state - Customers:", customers.length, "Loading:", loading);
 
   React.useEffect(() => {
-    console.log("[Dashboard] Initial fetch timer starting...");
+    console.log("[Dashboard] Mounted, waiting for initial fetch...");
     const timer = setTimeout(() => {
-      console.log("[Dashboard] Triggering initial fetchAll...");
-      fetchAll(true).catch(e => {
-        console.error("[Dashboard] fetchAll error:", e);
-        toast.error("Erro ao carregar dados iniciais");
+      console.log("[Dashboard] Triggering initial fetchAll NOW");
+      fetchAll(true).catch(err => {
+        console.error("[Dashboard] Initial fetch failed:", err);
       });
-    }, 2000);
+    }, 3000);
     
     return () => clearTimeout(timer);
   }, []);
+
 
 
   const handleDeleteUser = async (user: User) => {
