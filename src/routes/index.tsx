@@ -39,7 +39,6 @@ export const Route = createFileRoute("/")({
 function DashboardPage() {
   const { odin } = Route.useLoaderData();
   const [activeTab, setActiveTab] = useState('dashboard');
-  
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   
@@ -57,11 +56,6 @@ function DashboardPage() {
   useEffect(() => {
     fetchAll(true);
   }, []);
-
-  const changeTab = (tab: string) => {
-    console.log("[DashboardPage] Re-rendering for tab:", tab);
-    setActiveTab(tab);
-  };
 
   const handleDeleteUser = async (user: User) => {
     if (!user.id || !confirm(`Deseja realmente excluir ${user.username}?`)) return;
@@ -137,6 +131,13 @@ function DashboardPage() {
     }
   };
 
+  const navItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'customers', label: 'Clientes', icon: Users },
+    { id: 'streams', label: 'Streams', icon: Monitor },
+    { id: 'servers', label: 'Servidores', icon: ServerIcon },
+  ];
+
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans">
       <div className="flex gap-10">
@@ -149,53 +150,28 @@ function DashboardPage() {
           </div>
           
           <div className="space-y-2">
-            <div 
-              onClick={() => changeTab('dashboard')} 
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
-                activeTab === 'dashboard' 
-                  ? "bg-blue-600/10 text-blue-500 border border-blue-600/20" 
-                  : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 border border-transparent"
-              }`}
-            >
-              <LayoutDashboard size={20} />
-              <span className="text-sm font-bold uppercase tracking-widest">Dashboard</span>
-            </div>
-            
-            <div 
-              onClick={() => changeTab('customers')} 
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
-                activeTab === 'customers' 
-                  ? "bg-blue-600/10 text-blue-500 border border-blue-600/20" 
-                  : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 border border-transparent"
-              }`}
-            >
-              <Users size={20} />
-              <span className="text-sm font-bold uppercase tracking-widest">Clientes</span>
-            </div>
-            
-            <div 
-              onClick={() => changeTab('streams')} 
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
-                activeTab === 'streams' 
-                  ? "bg-blue-600/10 text-blue-500 border border-blue-600/20" 
-                  : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 border border-transparent"
-              }`}
-            >
-              <Monitor size={20} />
-              <span className="text-sm font-bold uppercase tracking-widest">Streams</span>
-            </div>
-            
-            <div 
-              onClick={() => changeTab('servers')} 
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
-                activeTab === 'servers' 
-                  ? "bg-blue-600/10 text-blue-500 border border-blue-600/20" 
-                  : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 border border-transparent"
-              }`}
-            >
-              <ServerIcon size={20} />
-              <span className="text-sm font-bold uppercase tracking-widest">Servidores</span>
-            </div>
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <div 
+                  key={item.id}
+                  onClick={() => {
+                    console.log("CLICK:", item.id);
+                    setActiveTab(item.id);
+                  }} 
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
+                    isActive 
+                      ? "bg-blue-600/10 text-blue-500 border border-blue-600/20" 
+                      : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 border border-transparent"
+                  }`}
+                  id={`nav-${item.id}`}
+                >
+                  <Icon size={20} />
+                  <span className="text-sm font-bold uppercase tracking-widest">{item.label}</span>
+                </div>
+              );
+            })}
           </div>
           
           <div className="mt-20 pt-10 border-t border-zinc-900 px-4">
@@ -213,10 +189,10 @@ function DashboardPage() {
         <main className="flex-1">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold uppercase tracking-tighter" id="page-title">
-              {activeTab === 'dashboard' && 'Dashboard'}
-              {activeTab === 'customers' && 'Clientes'}
-              {activeTab === 'streams' && 'Streams'}
-              {activeTab === 'servers' && 'Servidores'}
+              {activeTab === 'dashboard' ? 'Dashboard' : 
+               activeTab === 'customers' ? 'Clientes' : 
+               activeTab === 'streams' ? 'Streams' : 
+               activeTab === 'servers' ? 'Servidores' : ''}
             </h1>
             <button 
               onClick={() => fetchAll(false)}
