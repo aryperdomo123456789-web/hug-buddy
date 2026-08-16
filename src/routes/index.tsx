@@ -56,8 +56,6 @@ function DashboardPage() {
 
 
   React.useEffect(() => {
-    // Aumentar o delay inicial para garantir que o React se estabilize 
-    // e o usuário veja o esqueleto do dashboard antes da carga pesada.
     const timer = setTimeout(() => {
       fetchAll(true);
     }, 1500);

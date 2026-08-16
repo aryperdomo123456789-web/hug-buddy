@@ -26,18 +26,18 @@ async function withSsh<T>(
   const ssh = new NodeSSH();
   
   try {
+    console.log(`[SSH CONNECTING] Host: ${connection.host}:${connection.port} as ${connection.username}`);
     // Timeout e keepalive agressivos para evitar interrupções de socket
     await ssh.connect({
       host: connection.host,
       port: connection.port,
       username: connection.username,
       password: connection.password,
-      readyTimeout: 120000, 
-      keepaliveInterval: 10000,
-      keepaliveCountMax: 30,
-      debug: (msg: string) => console.log(`[SSH DEBUG] ${msg}`)
-
+      readyTimeout: 90000, 
+      keepaliveInterval: 5000,
+      keepaliveCountMax: 30
     });
+
     
     // Executa a tarefa com a conexão ativa
     const result = await task(ssh, cfg);
@@ -61,7 +61,7 @@ function execMysql(ssh: NodeSSH, cfg: ReturnType<typeof getOdinConfig>, sql: str
   const command =
     [
       "mysql",
-      "-h", cfg.dbHost,
+      "-h", "127.0.0.1",
       "-P", String(cfg.dbPort),
       "-u", cfg.dbUsername,
       `-p'${escapeSql(cfg.dbPassword)}'`,
@@ -206,10 +206,14 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
       password: cfg.sshPassword,
     };
 
-
     return await withSsh(sshParams, async (ssh, cfg) => {
       const sql = "SELECT id, username, password, exp_date, admin_enabled, enabled, member_id, 0 as active_cons, max_connections, created_at, created_by, admin_notes, reseller_notes, bouquet, is_restreamer, allowed_ips, allowed_ua, is_trial, is_isplock, forced_country, is_mag, is_e2, force_server_id, is_stalker, bypass_ua, as_number, isp_desc, 'Unknown' as isp_info FROM users ORDER BY id DESC LIMIT 50";
+      
       const result = await execMysql(ssh, cfg, sql);
+      
+      if (result.code !== 0) {
+        throw new Error(`MySQL Error (${result.code}): ${result.stderr}`);
+      }
 
 
 
