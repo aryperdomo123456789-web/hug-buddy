@@ -33,9 +33,8 @@ export function useOdinData() {
     if (!quiet) setLoading(true);
 
     try {
-      // Set a hard timeout for the client-side request
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Timeout")), 25000)
+        setTimeout(() => reject(new Error("Timeout")), 12000)
       );
       
       const response = await Promise.race([
