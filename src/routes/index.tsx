@@ -54,10 +54,13 @@ function DashboardPage() {
   } = useOdinData();
 
   React.useEffect(() => {
-    if (hydrated) {
-      // Inicia o carregamento silencioso em background após hidratação
+    if (!hydrated) return;
+
+    const timer = setTimeout(() => {
       fetchAll(true);
-    }
+    }, 500);
+    
+    return () => clearTimeout(timer);
   }, [hydrated]);
 
   const handleDeleteUser = async (user: User) => {
@@ -135,7 +138,7 @@ function DashboardPage() {
     }
   };
 
-  if (!hydrated) return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center text-zinc-500 uppercase tracking-widest font-bold text-xs">Carregando Mago Panel...</div>;
+  if (!hydrated) return null;
 
 
   return (

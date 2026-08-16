@@ -32,9 +32,9 @@ async function withSsh<T>(
       port: connection.port,
       username: connection.username,
       password: connection.password,
-      readyTimeout: 30000, 
-      keepaliveInterval: 5000,
-      keepaliveCountMax: 3
+      readyTimeout: 60000, 
+      keepaliveInterval: 10000,
+      keepaliveCountMax: 10
     });
     
     // Executa a tarefa com a conexão ativa

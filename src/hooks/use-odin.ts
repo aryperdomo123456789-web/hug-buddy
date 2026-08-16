@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { 
@@ -20,6 +20,7 @@ export function useOdinData() {
   const [servers, setServers] = useState<any[]>([]);
   const [streams, setStreams] = useState<any[]>([]);
   const [bouquets, setBouquets] = useState<any[]>([]);
+  const isFetching = useRef(false);
 
   const fetchUsersFn = useServerFn(getUsers);
   const fetchServersFn = useServerFn(getServers);
@@ -32,25 +33,32 @@ export function useOdinData() {
   const toggleStatusFn = useServerFn(toggleUserStatus);
 
   const fetchAll = async (quiet = false) => {
+    if (isFetching.current) return;
+    isFetching.current = true;
+    
     if (!quiet) setLoading(true);
     try {
-      // Chamadas sequenciais para estabilidade do túnel SSH (limitando concorrência)
+      // Chamadas sequenciais com delay para evitar sobrecarga do servidor Odin e socket 'aborted'
       const uRes = await fetchUsersFn();
-      if (uRes.success) setCustomers(uRes.data as any);
+      if (uRes.success && 'data' in uRes) setCustomers(uRes.data as any);
+      await new Promise(r => setTimeout(r, 400));
       
       const sRes = await fetchServersFn();
-      if (sRes.success) setServers(sRes.data || []);
+      if (sRes.success && 'data' in sRes) setServers(sRes.data || []);
+      await new Promise(r => setTimeout(r, 400));
       
       const stRes = await fetchStreamsFn();
-      if (stRes.success) setStreams(stRes.data || []);
+      if (stRes.success && 'data' in stRes) setStreams(stRes.data || []);
+      await new Promise(r => setTimeout(r, 400));
       
       const bRes = await fetchBouquetsFn();
-      if (bRes.success) setBouquets(bRes.data || []);
-    } catch (e) {
+      if (bRes.success && 'data' in bRes) setBouquets(bRes.data || []);
+    } catch (e: any) {
       console.error("Erro ao carregar dados do Odin:", e);
-      toast.error("Erro na comunicação com o servidor");
+      if (!quiet) toast.error("Erro na comunicação com o servidor: " + (e.message || "Desconhecido"));
     } finally {
       if (!quiet) setLoading(false);
+      isFetching.current = false;
     }
   };
 
