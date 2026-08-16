@@ -198,6 +198,7 @@ export const connectServer = createServerFn({ method: "POST" })
 
 export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
   try {
+    console.log("[SERVER] getUsers server function invoked");
     const cfg = getOdinConfig();
     console.log("[SERVER] Starting getUsers...");
     const sshParams = {

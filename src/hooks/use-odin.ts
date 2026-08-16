@@ -38,6 +38,7 @@ export function useOdinData() {
     isFetching.current = true;
     
     if (!quiet) setLoading(true);
+    console.log("[Odin Hook] QUIET:", quiet, "LOADING:", loading);
     try {
       console.log("[Odin Hook] Calling fetchUsersFn...");
       const uRes = await fetchUsersFn();
