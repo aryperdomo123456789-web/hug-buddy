@@ -31,8 +31,8 @@ async function executeBatchQueries(queries: string[]) {
       port: ODIN_SSH.port,
       username: ODIN_SSH.username,
       password: ODIN_SSH.password,
-      readyTimeout: 30000,
-      keepaliveInterval: 2000,
+      readyTimeout: 60000,
+      keepaliveInterval: 1000,
     });
     
     console.log(`[SSH] Connected. Executing ${queries.length} queries...`);
