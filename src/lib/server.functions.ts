@@ -198,6 +198,7 @@ export const connectServer = createServerFn({ method: "POST" })
 
 export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
   try {
+    const cfg = getOdinConfig();
     const sshParams = {
       host: cfg.sshHost,
       port: cfg.sshPort,
@@ -205,6 +206,7 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
       password: cfg.sshPassword,
     };
     console.log(`[SSH START] Connecting to ${sshParams.host}...`);
+
     return await withSsh(sshParams, async (ssh, cfg) => {
       const sql = "SELECT id, username, password, exp_date, admin_enabled, enabled, member_id, 0 as active_cons, max_connections, created_at, created_by, admin_notes, reseller_notes, bouquet, is_restreamer, allowed_ips, allowed_ua, is_trial, is_isplock, forced_country, is_mag, is_e2, force_server_id, is_stalker, bypass_ua, as_number, isp_desc, 'Unknown' as isp_info FROM users ORDER BY id DESC LIMIT 50";
       console.log(`[SQL EXEC] ${sql}`);
