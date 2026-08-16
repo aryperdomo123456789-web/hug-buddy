@@ -2,8 +2,8 @@ import { z } from "zod";
 
 export const UserSchema = z.object({
   id: z.number().optional(),
-  username: z.string().min(1),
-  password: z.string().min(1),
+  username: z.string().default(""),
+  password: z.string().default(""),
   owner: z.string().default("SuaFonte444"),
   member_id: z.number().int().default(1),
   exp_date: z.number().optional(),
@@ -20,8 +20,8 @@ export const UserSchema = z.object({
   reseller_notes: z.string().default(""),
   bouquet: z.string().default("[1]"),
   forced_country: z.string().default("Off"),
-  active_cons: z.number().optional(),
-  isp_info: z.string().optional(),
+  active_cons: z.number().default(0),
+  isp_info: z.string().default(""),
 });
 
 export type User = z.infer<typeof UserSchema>;

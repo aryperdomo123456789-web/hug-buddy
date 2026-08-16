@@ -36,7 +36,7 @@ export function useOdinData() {
     try {
       // Chamadas sequenciais para estabilidade do túnel SSH (limitando concorrência)
       const uRes = await fetchUsersFn();
-      if (uRes.success) setCustomers(uRes.data as User[]);
+      if (uRes.success) setCustomers(uRes.data as any);
       
       const sRes = await fetchServersFn();
       if (sRes.success) setServers(sRes.data || []);
