@@ -73,8 +73,52 @@ export const getServers = createServerFn({ method: "GET" })
     }
   });
 
-export const getStreams = createServerFn({ method: "GET" }).handler(async () => ({ success: true, data: [] }));
-export const getBouquets = createServerFn({ method: "GET" }).handler(async () => ({ success: true, data: [] }));
+export const getStreams = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const ssh = new NodeSSH();
+    try {
+      await ssh.connect({ ...ODIN_SSH, readyTimeout: 60000 });
+      const sql = "SELECT stream_id, stream_display_name, category_id, stream_icon, stream_source, stream_status FROM streams LIMIT 100";
+      const command = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -N -s -e "${sql}"`;
+      const result = await ssh.execCommand(command);
+      ssh.dispose();
+      
+      if (result.code !== 0) throw new Error(result.stderr);
+      
+      const rows = result.stdout.trim().split("\n").filter(Boolean).map(line => {
+        const [id, name, cat, icon, source, status] = line.split("\t");
+        return { id: Number(id), name, category_id: Number(cat), icon, source, status: Number(status) };
+      });
+      return { success: true, data: rows };
+    } catch (e: any) {
+      if (ssh.isConnected()) ssh.dispose();
+      return { success: false, error: e.message };
+    }
+  });
+
+export const getBouquets = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const ssh = new NodeSSH();
+    try {
+      await ssh.connect({ ...ODIN_SSH, readyTimeout: 60000 });
+      const sql = "SELECT id, bouquet_name FROM bouquets";
+      const command = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -N -s -e "${sql}"`;
+      const result = await ssh.execCommand(command);
+      ssh.dispose();
+      
+      if (result.code !== 0) throw new Error(result.stderr);
+      
+      const rows = result.stdout.trim().split("\n").filter(Boolean).map(line => {
+        const [id, name] = line.split("\t");
+        return { id: Number(id), name };
+      });
+      return { success: true, data: rows };
+    } catch (e: any) {
+      if (ssh.isConnected()) ssh.dispose();
+      return { success: false, error: e.message };
+    }
+  });
+
 export const createUser = createServerFn({ method: "POST" }).validator((d: any) => d).handler(async () => ({ success: true }));
 export const updateUser = createServerFn({ method: "POST" }).validator((d: any) => d).handler(async () => ({ success: true }));
 export const deleteUser = createServerFn({ method: "POST" }).validator((d: any) => d).handler(async () => ({ success: true }));

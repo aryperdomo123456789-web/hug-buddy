@@ -18,6 +18,8 @@ import { CustomerList } from "@/components/dashboard/CustomerList";
 import { UserModal } from "@/components/dashboard/UserModal";
 import { User } from "@/types/odin";
 import { toast } from "sonner";
+import { ServerList } from "@/components/dashboard/ServerList";
+import { StreamList } from "@/components/dashboard/StreamList";
 
 export const Route = createFileRoute("/")({
   component: DashboardPage,
@@ -202,13 +204,29 @@ function DashboardPage() {
              <CustomerList 
                customers={customers}
                loading={loading}
-               onRefresh={fetchAll}
+               onRefresh={() => fetchAll(false)}
                onAdd={() => { setEditingUser(null); setShowUserModal(true); }}
                onEdit={(user) => { setEditingUser(user); setShowUserModal(true); }}
                onDelete={handleDeleteUser}
                onToggleStatus={handleToggleStatus}
                onKill={handleKillConnections}
              />
+          )}
+
+          {view === 'servers' && (
+            <ServerList 
+              servers={servers}
+              loading={loading}
+              onRefresh={() => fetchAll(false)}
+            />
+          )}
+
+          {view === 'streams' && (
+            <StreamList 
+              streams={streams}
+              loading={loading}
+              onRefresh={() => fetchAll(false)}
+            />
           )}
         </main>
       </div>
