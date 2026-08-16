@@ -52,7 +52,8 @@ function DashboardPage() {
     actions 
   } = useOdinData();
 
-  console.log("[Dashboard] Current state - Customers:", customers.length, "Loading:", loading);
+  console.log("[Dashboard] RENDER", { customers: customers.length, loading });
+
 
   React.useEffect(() => {
     console.log("[Dashboard] Mounted, waiting for initial fetch...");
