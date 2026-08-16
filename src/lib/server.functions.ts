@@ -199,6 +199,7 @@ export const connectServer = createServerFn({ method: "POST" })
 export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
   try {
     const cfg = getOdinConfig();
+    console.log("[SERVER] Starting getUsers...");
     const sshParams = {
       host: cfg.sshHost,
       port: cfg.sshPort,
@@ -207,12 +208,14 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
     };
 
     return await withSsh(sshParams, async (ssh, cfg) => {
-      // Usar a mesma estratégia de detecção de IP/Host do instalador para o MySQL
+      console.log("[SERVER] SSH Connected, executing MySQL...");
       const sql = "SELECT id, username, password, exp_date, admin_enabled, enabled, member_id, 0 as active_cons, max_connections, created_at, created_by, admin_notes, reseller_notes, bouquet, is_restreamer, allowed_ips, allowed_ua, is_trial, is_isplock, forced_country, is_mag, is_e2, force_server_id, is_stalker, bypass_ua, as_number, isp_desc, 'Unknown' as isp_info FROM users ORDER BY id DESC LIMIT 50";
       
       const result = await execMysql(ssh, cfg, sql);
+      console.log(`[SERVER] MySQL result code: ${result.code}, stdout length: ${result.stdout.length}`);
       
       if (result.code !== 0) {
+        console.error("[SERVER] MySQL Error:", result.stderr);
         throw new Error(`MySQL Error (${result.code}): ${result.stderr}`);
       }
 
