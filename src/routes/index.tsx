@@ -54,13 +54,13 @@ function DashboardPage() {
   } = useOdinData();
 
   React.useEffect(() => {
-    if (hydrated) {
-      // Inicia o carregamento silencioso com um pequeno atraso para garantir que a UI respondeu
-      const timer = setTimeout(() => {
-        fetchAll(true);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
+    if (!hydrated) return;
+
+    const timer = setTimeout(() => {
+      fetchAll(true);
+    }, 500);
+    
+    return () => clearTimeout(timer);
   }, [hydrated]);
 
   const handleDeleteUser = async (user: User) => {
