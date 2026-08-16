@@ -84,7 +84,7 @@ export type SSHResponse = {
 };
 
 export const runSSHCommand = createServerFn({ method: "POST" })
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         host: z.string(),
@@ -177,7 +177,7 @@ export const getInstallScript = createServerFn({ method: "GET" }).handler(async 
 });
 
 export const connectServer = createServerFn({ method: "POST" })
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         ip: z.string(),
@@ -296,7 +296,7 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
 });
 
 export const createUser = createServerFn({ method: "POST" })
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         username: z.string().min(1),
@@ -354,7 +354,7 @@ export const createUser = createServerFn({ method: "POST" })
   });
 
 export const updateUser = createServerFn({ method: "POST" })
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         id: z.number(),
@@ -433,7 +433,7 @@ export const updateUser = createServerFn({ method: "POST" })
   });
 
 export const toggleUserStatus = createServerFn({ method: "POST" })
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         id: z.number(),
@@ -466,7 +466,7 @@ export const toggleUserStatus = createServerFn({ method: "POST" })
   });
 
 export const deleteUser = createServerFn({ method: "POST" })
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         id: z.number(),
