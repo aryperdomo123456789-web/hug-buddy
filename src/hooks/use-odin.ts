@@ -45,8 +45,9 @@ export function useOdinData() {
       if (uRes?.success && Array.isArray(uRes.data)) {
         setCustomers(uRes.data as any);
       } else if (uRes && !uRes.success) {
-        toast.error(`Erro: ${uRes.error}`);
+        toast.error(`Erro: ${(uRes as any).error || 'Desconhecido'}`);
       }
+
 
 
 
