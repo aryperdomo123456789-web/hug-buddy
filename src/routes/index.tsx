@@ -168,7 +168,7 @@ function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans selection:bg-blue-500/30">
+    <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans selection:bg-blue-500/30 overflow-x-hidden">
       <div className="flex gap-10 relative">
         <aside className="w-64 shrink-0 relative z-[100] bg-[#0a0a0c]">
           <div className="mb-10 px-4">
@@ -178,7 +178,7 @@ function DashboardPage() {
             <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em] mt-1">Odin v6 Engine</div>
           </div>
           
-          <nav className="space-y-2 relative z-[9999]">
+          <div className="space-y-2 relative z-[9999]">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -188,13 +188,13 @@ function DashboardPage() {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log("MAGO NAV:", item.id);
+                    console.log("NAV CLICK:", item.id);
                     setActiveTab(item.id);
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 border relative ${
                     isActive 
-                      ? "bg-blue-600/10 text-blue-500 border-blue-600/20" 
-                      : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50 border-transparent"
+                      ? "bg-blue-600/10 text-blue-500 border-blue-600/20 shadow-[0_0_15px_rgba(37,99,235,0.05)]" 
+                      : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50 border-transparent hover:translate-x-1"
                   }`}
                   id={`nav-${item.id}`}
                   style={{ cursor: 'pointer', pointerEvents: 'auto', display: 'flex' }}
@@ -205,7 +205,7 @@ function DashboardPage() {
                 </button>
               );
             })}
-          </nav>
+          </div>
           
           <div className="mt-20 pt-10 border-t border-zinc-900 px-4">
             <div className="flex items-center gap-3 text-zinc-500 mb-6">
@@ -219,7 +219,7 @@ function DashboardPage() {
           </div>
         </aside>
 
-        <main className="flex-1">
+        <main className="flex-1 relative z-10">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold uppercase tracking-tighter" id="page-title">
               {activeTab === 'dashboard' ? 'Dashboard' : 
