@@ -204,25 +204,25 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
       password: cfg.sshPassword,
     };
     return await withSsh(sshParams, async (ssh, cfg) => {
-        const result = await execMysql(
-          ssh,
-          cfg,
-          [
-            "SELECT",
-            "u.id, u.username, u.password, u.exp_date, u.admin_enabled, u.enabled, u.member_id,",
-            "COALESCE(COUNT(DISTINCT uan.activity_id), 0) AS active_cons,",
-            "u.max_connections, u.created_at, u.created_by,",
-            "u.admin_notes, u.reseller_notes, u.bouquet, u.is_restreamer,",
-            "u.allowed_ips, u.allowed_ua, u.is_trial, u.is_isplock, u.forced_country,",
-            "u.is_mag, u.is_e2, u.force_server_id, u.is_stalker, u.bypass_ua, u.as_number, u.isp_desc,",
-            "COALESCE(u.isp_desc, 'Unknown') as isp_info",
-            "FROM users u",
-            "LEFT JOIN user_activity_now uan ON u.id = uan.user_id",
-            "GROUP BY u.id",
-            "ORDER BY u.id DESC",
-            "LIMIT 50",
-          ].join(" "),
-        );
+      const sql = `
+        SELECT 
+          u.id, u.username, u.password, u.exp_date, u.admin_enabled, u.enabled, u.member_id, 
+          COALESCE(uan.conns, 0) as active_cons,
+          u.max_connections, u.created_at, u.created_by,
+          u.admin_notes, u.reseller_notes, u.bouquet, u.is_restreamer,
+          u.allowed_ips, u.allowed_ua, u.is_trial, u.is_isplock, u.forced_country,
+          u.is_mag, u.is_e2, u.force_server_id, u.is_stalker, u.bypass_ua, u.as_number, u.isp_desc,
+          COALESCE(u.isp_desc, 'Unknown') as isp_info
+        FROM users u
+        LEFT JOIN (
+          SELECT user_id, COUNT(*) as conns 
+          FROM user_activity_now 
+          GROUP BY user_id
+        ) uan ON u.id = uan.user_id
+        ORDER BY u.id DESC
+        LIMIT 50
+      `;
+      const result = await execMysql(ssh, cfg, sql);
 
         const rows = parseTabRows(result.stdout, (columns) => {
           const [
