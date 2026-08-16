@@ -55,8 +55,11 @@ function DashboardPage() {
 
   React.useEffect(() => {
     if (hydrated) {
-      // Inicia o carregamento silencioso em background após hidratação
-      fetchAll(true);
+      // Inicia o carregamento silencioso com um pequeno atraso para garantir que a UI respondeu
+      const timer = setTimeout(() => {
+        fetchAll(true);
+      }, 500);
+      return () => clearTimeout(timer);
     }
   }, [hydrated]);
 
