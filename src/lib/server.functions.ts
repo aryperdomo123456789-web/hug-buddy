@@ -87,8 +87,8 @@ export const getUsers = createServerFn({ method: "GET" })
 export const getServers = createServerFn({ method: "GET" })
   .handler(async () => {
     try {
-      // In Odin v6, servers are often in 'streaming_servers'
-      const sql = "SELECT server_id, server_name, status, last_check FROM streaming_servers";
+      // Em Odin v6, streaming_servers é a tabela correta
+      const sql = "SELECT id, server_name, status, 0 FROM streaming_servers";
       const stdout = await executeQuery(sql) || "";
       
       const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
@@ -97,7 +97,7 @@ export const getServers = createServerFn({ method: "GET" })
           id, 
           name, 
           status: Number(status), 
-          last_check: Number(last) 
+          last_check: Number(last || 0) 
         };
       });
       
