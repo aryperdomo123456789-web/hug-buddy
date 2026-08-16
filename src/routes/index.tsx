@@ -158,16 +158,15 @@ function Dashboard() {
     if (loading) return;
     setLoading(true);
     try {
-      // Chamadas sequenciais para estabilidade SSH
       const uRes = await fetchUsersFn();
       if (uRes.success) {
-        setCustomers(uRes.data || []);
+        setCustomers((uRes as any).data || []);
       } else {
-        toast.error("Erro Odin: " + uRes.error);
+        toast.error("Erro Odin: " + (uRes as any).error);
       }
       
       const bRes = await fetchBouquetsFn();
-      if (bRes.success) setBouquets(bRes.data || []);
+      if (bRes.success) setBouquets((bRes as any).data || []);
     } catch (e) { 
       console.error("Erro ao carregar clientes:", e);
       toast.error("Falha na conexão com o servidor"); 
