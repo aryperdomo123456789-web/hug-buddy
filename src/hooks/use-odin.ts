@@ -50,7 +50,7 @@ export function useOdinData() {
       console.error("Erro ao carregar dados do Odin:", e);
       toast.error("Erro na comunicação com o servidor");
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   };
 

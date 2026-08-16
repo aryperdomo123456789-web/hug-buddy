@@ -204,12 +204,15 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
       password: cfg.sshPassword,
     };
     return await withSsh(sshParams, async (ssh, cfg) => {
-      const sql = "SELECT u.id, u.username, u.password, u.exp_date, u.admin_enabled, u.enabled, u.member_id, 0 as active_cons, u.max_connections, u.created_at, u.created_by, u.admin_notes, u.reseller_notes, u.bouquet, u.is_restreamer, u.allowed_ips, u.allowed_ua, u.is_trial, u.is_isplock, u.forced_country, u.is_mag, u.is_e2, u.force_server_id, u.is_stalker, u.bypass_ua, u.as_number, u.isp_desc, 'Unknown' as isp_info FROM users u ORDER BY u.id DESC LIMIT 10";
-      console.log("[SQL DEBUG] Executing query:", sql);
+      const sql = "SELECT id, username, password, exp_date, admin_enabled, enabled, member_id, 0 as active_cons, max_connections, created_at, created_by, admin_notes, reseller_notes, bouquet, is_restreamer, allowed_ips, allowed_ua, is_trial, is_isplock, forced_country, is_mag, is_e2, force_server_id, is_stalker, bypass_ua, as_number, isp_desc, 'Unknown' as isp_info FROM users ORDER BY id DESC LIMIT 50";
       const result = await execMysql(ssh, cfg, sql);
-      console.log("[SQL DEBUG] Result:", JSON.stringify(result).slice(0, 200));
+      
+      if (result.stderr && result.stderr.trim()) {
+        console.error("[SQL ERROR]", result.stderr);
+        return { success: false, error: result.stderr.trim() };
+      }
 
-        const rows = parseTabRows(result.stdout, (columns) => {
+      const rows = parseTabRows(result.stdout, (columns) => {
           const [
             id,
             username,

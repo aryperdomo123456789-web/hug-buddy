@@ -137,8 +137,6 @@ function DashboardPage() {
 
   if (!hydrated) return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center text-zinc-500 uppercase tracking-widest font-bold text-xs" style={{ color: '#71717a', backgroundColor: '#0a0a0c' }}>Iniciando Mago Panel...</div>;
 
-  console.log("[DASHBOARD DEBUG] Render state:", { loading, customerCount: customers.length, view });
-
 
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans">
