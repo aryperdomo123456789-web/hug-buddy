@@ -153,7 +153,7 @@ export const getOdinFullData = createServerFn({ method: "GET" })
   .handler(async () => {
     try {
       const queries = [
-        "SELECT id, username, password, exp_date, enabled, (SELECT COUNT(*) FROM user_activity_now WHERE user_id = users.id) as active_cons FROM users ORDER BY id DESC LIMIT 100",
+        "SELECT id, username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, reseller_notes, allowed_ips, allowed_ua, forced_country, (SELECT COUNT(*) FROM user_activity_now WHERE user_id = users.id) as active_cons FROM users ORDER BY id DESC LIMIT 100",
         "SELECT id, stream_display_name, category_id, stream_icon, stream_source, 1 as stream_status FROM streams LIMIT 100",
         "SELECT id, bouquet_name FROM bouquets",
         "SELECT id, server_name, status, 0 as last_check FROM streaming_servers"
@@ -162,13 +162,30 @@ export const getOdinFullData = createServerFn({ method: "GET" })
       const [uRaw, stRaw, bRaw, svRaw] = await executeBatchQueries(queries);
 
       const customers = (uRaw || "").trim().split("\n").filter(Boolean).map(line => {
-        const [id, username, password, exp_date, enabled, active_cons] = line.split("\t");
+        const [
+          id, username, password, exp_date, enabled, admin_enabled, 
+          is_trial, is_restreamer, is_isplock, max_connections, 
+          bouquet, admin_notes, reseller_notes, allowed_ips, 
+          allowed_ua, forced_country, active_cons
+        ] = line.split("\t");
+        
         return {
           id: Number(id),
           username: username || "",
           password: password || "",
-          exp_date: Number(exp_date),
-          enabled: Number(enabled),
+          exp_date: Number(exp_date || 0),
+          enabled: Number(enabled || 0),
+          admin_enabled: Number(admin_enabled || 0),
+          is_trial: Number(is_trial || 0),
+          is_restreamer: Number(is_restreamer || 0),
+          is_isplock: Number(is_isplock || 0),
+          max_connections: Number(max_connections || 0),
+          bouquet: bouquet || "[]",
+          admin_notes: admin_notes || "",
+          reseller_notes: reseller_notes || "",
+          allowed_ips: allowed_ips || "",
+          allowed_ua: allowed_ua || "",
+          forced_country: forced_country || "Off",
           active_cons: Number(active_cons || 0)
         };
       });
@@ -177,26 +194,26 @@ export const getOdinFullData = createServerFn({ method: "GET" })
         const [id, name, cat, icon, source, status] = line.split("\t");
         return { 
           id: Number(id), 
-          name, 
-          category_id: Number(cat), 
-          icon, 
-          source, 
-          status: Number(status) 
+          name: name || "Stream", 
+          category_id: Number(cat || 0), 
+          icon: icon || "", 
+          source: source || "", 
+          status: Number(status || 0) 
         };
       });
 
       const bouquets = (bRaw || "").trim().split("\n").filter(Boolean).map(line => {
         const [id, name] = line.split("\t");
-        return { id: Number(id), name };
+        return { id: Number(id), name: name || "Bouquet" };
       });
 
       const servers = (svRaw || "").trim().split("\n").filter(Boolean).map(line => {
         const [id, name, status, last] = line.split("\t");
         return { 
-          id, 
-          name, 
-          status: Number(status), 
-          last_check: Number(last) 
+          id: id || "0", 
+          name: name || "Server", 
+          status: Number(status || 0), 
+          last_check: Number(last || 0) 
         };
       });
 
@@ -213,7 +230,7 @@ export const createUser = createServerFn({ method: "POST" })
   .validator((d: any) => d)
   .handler(async ({ data }) => {
     try {
-      const sql = `INSERT INTO users (username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet) VALUES ('${data.username}', '${data.password}', ${data.exp_date}, ${data.enabled}, ${data.admin_enabled}, ${data.is_trial}, ${data.is_restreamer}, ${data.is_isplock}, ${data.max_connections || 1}, '${JSON.stringify(data.bouquet || [])}')`;
+      const sql = `INSERT INTO users (username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, allowed_ips, allowed_ua, forced_country) VALUES ('${data.username}', '${data.password}', ${data.exp_date}, ${data.enabled}, ${data.admin_enabled}, ${data.is_trial}, ${data.is_restreamer}, ${data.is_isplock}, ${data.max_connections || 1}, '${data.bouquet || "[]"}', '${data.admin_notes || ""}', '${data.allowed_ips || ""}', '${data.allowed_ua || ""}', '${data.forced_country || "Off"}')`;
       await executeQuery(sql);
       return { success: true };
     } catch (e: any) {
@@ -225,7 +242,7 @@ export const updateUser = createServerFn({ method: "POST" })
   .validator((d: any) => d)
   .handler(async ({ data }) => {
     try {
-      const sql = `UPDATE users SET username='${data.username}', password='${data.password}', exp_date=${data.exp_date}, enabled=${data.enabled}, admin_enabled=${data.admin_enabled}, max_connections=${data.max_connections || 1}, bouquet='${JSON.stringify(data.bouquet || [])}' WHERE id=${data.id}`;
+      const sql = `UPDATE users SET username='${data.username}', password='${data.password}', exp_date=${data.exp_date}, enabled=${data.enabled}, admin_enabled=${data.admin_enabled}, is_trial=${data.is_trial}, is_restreamer=${data.is_restreamer}, is_isplock=${data.is_isplock}, max_connections=${data.max_connections || 1}, bouquet='${data.bouquet || "[]"}', admin_notes='${data.admin_notes || ""}', allowed_ips='${data.allowed_ips || ""}', allowed_ua='${data.allowed_ua || ""}', forced_country='${data.forced_country || "Off"}' WHERE id=${data.id}`;
       await executeQuery(sql);
       return { success: true };
     } catch (e: any) {

@@ -90,8 +90,8 @@ export function CustomerList({
               <th className="py-4 px-6 font-black text-center">Estado</th>
               <th className="py-4 px-6 font-black text-center">Teste</th>
               <th className="py-4 px-6 font-black">Expiração</th>
-              <th className="py-4 px-6 font-black">Dias</th>
               <th className="py-4 px-6 font-black text-center">Conns.</th>
+              <th className="py-4 px-6 font-black">Bouquets</th>
               <th className="py-4 px-6 font-black text-right">Ações</th>
             </tr>
           </thead>
@@ -119,9 +119,6 @@ export function CustomerList({
                   <td className="py-4 px-6 font-mono text-zinc-400">
                     {u.exp_date ? new Date(u.exp_date * 1000).toLocaleDateString() : 'Unlimited'}
                   </td>
-                  <td className="py-4 px-6 font-mono text-zinc-500">
-                    {daysLeft !== null ? `${daysLeft}d` : '-'}
-                  </td>
                   <td className="py-4 px-6 text-center font-mono">
                     <div className="flex items-center justify-center gap-2">
                       <span className={(u.active_cons || 0) > 0 ? "text-emerald-400 font-bold" : "text-zinc-600"}>
@@ -138,6 +135,11 @@ export function CustomerList({
                           <Activity size={12} />
                         </button>
                       )}
+                    </div>
+                  </td>
+                  <td className="py-4 px-6">
+                    <div className="text-[9px] text-zinc-600 font-mono truncate max-w-[100px]">
+                      {u.bouquet}
                     </div>
                   </td>
                   <td className="py-4 px-6 text-right">

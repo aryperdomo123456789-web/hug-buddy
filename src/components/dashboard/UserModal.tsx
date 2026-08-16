@@ -181,7 +181,12 @@ export function UserModal({ user, bouquets, onClose, onSave }: UserModalProps) {
                 <div key={b.id} className="flex items-center gap-3 p-4 bg-zinc-950/50 rounded-xl border border-zinc-900">
                   <input
                     type="checkbox"
-                    checked={formData.bouquet.includes(`"${b.id}"`) || formData.bouquet.includes(`[${b.id}]`)}
+                    checked={(() => {
+                      try {
+                        const current = JSON.parse(formData.bouquet || "[]");
+                        return current.includes(Number(b.id));
+                      } catch(e) { return false; }
+                    })()}
                     onChange={(e) => {
                       let current = [];
                       try { current = JSON.parse(formData.bouquet || "[]"); } catch(e) {}
@@ -194,7 +199,7 @@ export function UserModal({ user, bouquets, onClose, onSave }: UserModalProps) {
                     }}
                     className="w-4 h-4 rounded border-zinc-800 text-blue-600 focus:ring-blue-600 bg-zinc-900"
                   />
-                  <span className="text-sm font-medium text-zinc-300">{b.bouquet_name}</span>
+                  <span className="text-sm font-medium text-zinc-300">{b.name}</span>
                 </div>
               ))}
             </div>
