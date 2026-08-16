@@ -38,8 +38,8 @@ export function useOdinData() {
       console.log("[useOdinData] Sincronizando com Odin...");
       
       const response = await getOdinFullData().catch(e => {
-        console.error("[useOdinData] Request aborted or failed:", e);
-        return { success: false, error: "Conexão interrompida (Timeout/Aborted). Tente novamente." };
+        console.error("[useOdinData] Request failed:", e);
+        return { success: false, error: "Falha na conexão com o servidor. Verifique o SSH/MySQL." };
       }) as any;
       
       if (response?.success && response.data) {

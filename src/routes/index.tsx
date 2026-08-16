@@ -58,9 +58,10 @@ function DashboardPage() {
 
   useEffect(() => {
     if (!hydrated) return;
+    // Debounce initial fetch to ensure stability
     const timer = setTimeout(() => {
       fetchAll(true);
-    }, 1500);
+    }, 2000);
     return () => clearTimeout(timer);
   }, [hydrated]);
 
