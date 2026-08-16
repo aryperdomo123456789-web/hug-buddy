@@ -55,7 +55,10 @@ function DashboardPage() {
   } = useOdinData();
 
   useEffect(() => {
-    fetchAll(true);
+    const timer = setTimeout(() => {
+      fetchAll(true);
+    }, 1000);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleDeleteUser = async (user: User) => {

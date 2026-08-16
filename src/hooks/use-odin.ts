@@ -37,36 +37,23 @@ export function useOdinData() {
     if (!quiet) setLoading(true);
 
     try {
-      // Usando Promise.allSettled para que uma falha não bloqueie as outras
-      const results = await Promise.allSettled([
-        getUsers(),
-        getStreams(),
-        getBouquets(),
-        getServers()
-      ]);
+      // SEQUENTIAL execution to prevent socket saturation and "aborted" errors
+      const uRes = await getUsers().catch(e => ({ success: false, error: e.message })) as any;
+      if (uRes?.success) setCustomers(uRes.data);
 
-      const [uRes, stRes, bRes, svRes] = results;
+      const stRes = await getStreams().catch(e => ({ success: false, error: e.message })) as any;
+      if (stRes?.success) setStreams(stRes.data);
 
-      if (uRes.status === 'fulfilled' && (uRes.value as any)?.success) {
-        setCustomers((uRes.value as any).data);
-      }
-
-      if (stRes.status === 'fulfilled' && (stRes.value as any)?.success) {
-        setStreams((stRes.value as any).data);
-      }
-
-      if (bRes.status === 'fulfilled' && (bRes.value as any)?.success) {
-        setBouquets((bRes.value as any).data);
-      }
+      const bRes = await getBouquets().catch(e => ({ success: false, error: e.message })) as any;
+      if (bRes?.success) setBouquets(bRes.data);
       
-      if (svRes.status === 'fulfilled' && (svRes.value as any)?.success) {
-        setServers((svRes.value as any).data);
-      }
+      const svRes = await getServers().catch(e => ({ success: false, error: e.message })) as any;
+      if (svRes?.success) setServers(svRes.data);
 
       lastFetch.current = now;
     } catch (e: any) {
       console.error("[useOdinData] Erro crítico:", e);
-      toast.error("Erro de conexão com o servidor.");
+      if (!quiet) toast.error("Erro de conexão com o servidor.");
     } finally {
       setLoading(false);
       isFetching.current = false;
