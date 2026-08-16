@@ -67,7 +67,7 @@ function DashboardPage() {
     // Debounce initial fetch to ensure stability
     const timer = setTimeout(() => {
       fetchAll(true);
-    }, 2000);
+    }, 500);
     return () => clearTimeout(timer);
   }, [hydrated]);
 

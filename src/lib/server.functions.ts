@@ -19,16 +19,16 @@ async function executeBatchQueries(queries: string[]) {
   try {
     console.log(`[SSH] Connecting to ${cfg.sshHost}...`);
     
-    // Using a more robust configuration for the connection
+    // Optimized configuration for serverless/edge connection
     await ssh.connect({
       host: cfg.sshHost,
       port: cfg.sshPort,
       username: cfg.sshUsername,
       password: cfg.sshPassword,
-      readyTimeout: 30000, // Reduced slightly to avoid hanging too long, but still enough
-      keepaliveInterval: 5000,
-      keepaliveCountMax: 5,
-      compress: true, // Enable compression for faster data transfer
+      readyTimeout: 10000, // Faster timeout to prevent blocking
+      keepaliveInterval: 2000,
+      keepaliveCountMax: 2,
+      compress: true,
     });
     
     const results: string[] = [];
@@ -36,7 +36,7 @@ async function executeBatchQueries(queries: string[]) {
       const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
       
       // Use timeout command inside the shell instead of the library option
-      const remoteCmd = `timeout 15s ${mysqlCmd}`;
+      const remoteCmd = `timeout 8s ${mysqlCmd}`;
       const result = await ssh.execCommand(remoteCmd);
       
       if (result.code !== 0) {
