@@ -135,7 +135,7 @@ function DashboardPage() {
     }
   };
 
-  if (!hydrated) return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center text-zinc-500 uppercase tracking-widest font-bold text-xs" style={{ color: '#71717a', backgroundColor: '#0a0a0c' }}>Iniciando Mago Panel...</div>;
+  if (!hydrated) return null;
 
 
   return (
