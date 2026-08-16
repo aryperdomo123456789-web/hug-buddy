@@ -164,7 +164,8 @@ function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans selection:bg-blue-500/30">
+    <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans selection:bg-blue-500/30 relative z-0">
+
       <div className="flex gap-10">
         <aside className="w-64 shrink-0">
           <div className="mb-10 px-4">
