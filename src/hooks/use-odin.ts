@@ -64,6 +64,7 @@ export function useOdinData() {
       
     } catch (e: any) {
       console.error("Erro crítico ao carregar dados do Odin:", e);
+      toast.error("Falha na conexão com servidor Odin");
     } finally {
       setLoading(false);
       isFetching.current = false;
@@ -99,12 +100,7 @@ export function useOdinData() {
 export function useHydrated() {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
-    // Adicionamos um pequeno delay na hidratação para garantir que o DOM inicial 
-    // seja renderizado corretamente antes de trocar para o estado hidratado.
-    const t = setTimeout(() => {
-      setHydrated(true);
-    }, 100);
-    return () => clearTimeout(t);
+    setHydrated(true);
   }, []);
   return hydrated;
 }
