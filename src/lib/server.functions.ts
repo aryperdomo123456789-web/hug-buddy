@@ -207,7 +207,10 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
     };
     return await withSsh(sshParams, async (ssh, cfg) => {
       const sql = "SELECT id, username, password, exp_date, admin_enabled, enabled, member_id, 0 as active_cons, max_connections, created_at, created_by, admin_notes, reseller_notes, bouquet, is_restreamer, allowed_ips, allowed_ua, is_trial, is_isplock, forced_country, is_mag, is_e2, force_server_id, is_stalker, bypass_ua, as_number, isp_desc, 'Unknown' as isp_info FROM users ORDER BY id DESC LIMIT 50";
+      console.log(`[SQL DEBUG] Executing: ${sql}`);
       const result = await execMysql(ssh, cfg, sql);
+      console.log(`[SQL DEBUG] Result length: ${result.stdout.length}, stderr: ${result.stderr}`);
+
 
       const rows = parseTabRows(result.stdout, (columns) => {
           const [
