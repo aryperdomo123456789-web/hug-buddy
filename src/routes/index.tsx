@@ -40,6 +40,10 @@ export const Route = createFileRoute("/")({
 function DashboardPage() {
   const { odin } = Route.useLoaderData();
   const [view, setView] = React.useState<'dashboard' | 'customers' | 'servers' | 'streams'>('dashboard');
+  
+  // LOG PARA DEPURAÇÃO DE ESTADO
+  console.log("[DashboardPage] Render view:", view);
+
   const [showUserModal, setShowUserModal] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
   
