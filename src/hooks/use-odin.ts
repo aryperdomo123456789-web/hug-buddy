@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { 
@@ -20,6 +20,7 @@ export function useOdinData() {
   const [servers, setServers] = useState<any[]>([]);
   const [streams, setStreams] = useState<any[]>([]);
   const [bouquets, setBouquets] = useState<any[]>([]);
+  const isFetching = useRef(false);
 
   const fetchUsersFn = useServerFn(getUsers);
   const fetchServersFn = useServerFn(getServers);
@@ -32,29 +33,32 @@ export function useOdinData() {
   const toggleStatusFn = useServerFn(toggleUserStatus);
 
   const fetchAll = async (quiet = false) => {
+    if (isFetching.current) return;
+    isFetching.current = true;
+    
     if (!quiet) setLoading(true);
     try {
       // Chamadas sequenciais com delay para evitar sobrecarga do servidor Odin e socket 'aborted'
-      const uRes = await fetchUsersFn();
+      const uRes = await fetchUsersFn().catch(e => ({ success: false, error: e.message }));
       if (uRes.success) setCustomers(uRes.data as any);
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 400));
       
-      const sRes = await fetchServersFn();
+      const sRes = await fetchServersFn().catch(e => ({ success: false, error: e.message }));
       if (sRes.success) setServers(sRes.data || []);
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 400));
       
-      const stRes = await fetchStreamsFn();
+      const stRes = await fetchStreamsFn().catch(e => ({ success: false, error: e.message }));
       if (stRes.success) setStreams(stRes.data || []);
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 400));
       
-      const bRes = await fetchBouquetsFn();
+      const bRes = await fetchBouquetsFn().catch(e => ({ success: false, error: e.message }));
       if (bRes.success) setBouquets(bRes.data || []);
     } catch (e) {
       console.error("Erro ao carregar dados do Odin:", e);
-      // Evita spam de toast se o erro for abortado propositalmente pelo browser
       if (!quiet) toast.error("Erro na comunicação com o servidor");
     } finally {
       if (!quiet) setLoading(false);
+      isFetching.current = false;
     }
   };
 
