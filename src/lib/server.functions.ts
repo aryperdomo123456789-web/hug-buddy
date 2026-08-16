@@ -150,10 +150,10 @@ export const getOdinFullData = createServerFn({ method: "GET" })
   .handler(async () => {
     try {
       const queries = [
-        "SELECT u.id, u.username, u.password, u.exp_date, u.enabled, COUNT(a.id) as active_cons FROM users u LEFT JOIN user_activity_now a ON u.id = a.user_id GROUP BY u.id ORDER BY u.id DESC LIMIT 100",
-        "SELECT stream_id, stream_display_name, category_id, stream_icon, stream_source, stream_status FROM streams LIMIT 100",
+        "SELECT id, u_name, u_pass, exp_date, enabled, (SELECT COUNT(*) FROM user_activity_now WHERE user_id = users.id) as active_cons FROM users ORDER BY id DESC LIMIT 100",
+        "SELECT id, stream_display_name, category_id, stream_icon, stream_source, stream_status FROM streams LIMIT 100",
         "SELECT id, bouquet_name FROM bouquets",
-        "SELECT server_id, server_name, status, last_check FROM streaming_servers"
+        "SELECT id, server_name, status, last_check FROM streaming_servers"
       ];
 
       const [uRaw, stRaw, bRaw, svRaw] = await executeBatchQueries(queries);
@@ -162,8 +162,8 @@ export const getOdinFullData = createServerFn({ method: "GET" })
         const [id, username, password, exp_date, enabled, active_cons] = line.split("\t");
         return {
           id: Number(id),
-          username,
-          password,
+          username: username || "",
+          password: password || "",
           exp_date: Number(exp_date),
           enabled: Number(enabled),
           active_cons: Number(active_cons || 0)
