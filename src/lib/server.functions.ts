@@ -597,7 +597,7 @@ export const getStreams = createServerFn({ method: "GET" }).handler(async () => 
 });
 
 export const killUserConnections = createServerFn({ method: "POST" })
-  .inputValidator((data) => z.object({ id: z.number() }).parse(data))
+  .validator((data) => z.object({ id: z.number() }).parse(data))
   .handler(async ({ data }) => {
     try {
       const cfg = getOdinConfig();
