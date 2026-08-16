@@ -63,7 +63,7 @@ export const getUsers = createServerFn({ method: "GET" })
     try {
       // Updated SQL for Odin v6: user_activity_now uses server_id and activity_id
       const sql = "SELECT id, username, password, exp_date, enabled, (SELECT count(*) FROM user_activity_now WHERE user_id = users.id) as active_cons FROM users ORDER BY id DESC LIMIT 100";
-      const stdout = await executeQuery(sql);
+      const stdout = await executeQuery(sql) || "";
       
       const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
         const [id, username, password, exp_date, enabled, active_cons] = line.split("\t");
@@ -88,7 +88,7 @@ export const getServers = createServerFn({ method: "GET" })
     try {
       // In Odin v6, servers are often in 'streaming_servers'
       const sql = "SELECT server_id, server_name, status, last_check FROM streaming_servers";
-      const stdout = await executeQuery(sql);
+      const stdout = await executeQuery(sql) || "";
       
       const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
         const [id, name, status, last] = line.split("\t");
@@ -110,7 +110,7 @@ export const getStreams = createServerFn({ method: "GET" })
   .handler(async () => {
     try {
       const sql = "SELECT stream_id, stream_display_name, category_id, stream_icon, stream_source, stream_status FROM streams LIMIT 100";
-      const stdout = await executeQuery(sql);
+      const stdout = await executeQuery(sql) || "";
       
       const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
         const [id, name, cat, icon, source, status] = line.split("\t");
@@ -133,7 +133,7 @@ export const getBouquets = createServerFn({ method: "GET" })
   .handler(async () => {
     try {
       const sql = "SELECT id, bouquet_name FROM bouquets";
-      const stdout = await executeQuery(sql);
+      const stdout = await executeQuery(sql) || "";
       
       const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
         const [id, name] = line.split("\t");
