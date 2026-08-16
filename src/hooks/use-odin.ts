@@ -33,18 +33,26 @@ export function useOdinData() {
   const toggleStatusFn = useServerFn(toggleUserStatus);
 
   const fetchAll = async (quiet = false) => {
-    if (isFetching.current) return;
+    if (isFetching.current) {
+      console.log("[useOdinData] fetchAll skipped: already fetching");
+      return;
+    }
     isFetching.current = true;
     
     if (!quiet) setLoading(true);
+    console.log("[useOdinData] fetchAll started");
     try {
+      console.log("[useOdinData] fetching users...");
       const uRes = await fetchUsersFn();
+      console.log("[useOdinData] users result:", uRes);
+      
       if (uRes && uRes.success && 'data' in uRes) {
         setCustomers(uRes.data as any);
       } else if (uRes && !uRes.success) {
         const errorMsg = (uRes as any).error || "Erro desconhecido";
         toast.error(`Erro Usuários: ${errorMsg}`);
       }
+
       
       // Delay entre chamadas para não saturar o túnel SSH
       await new Promise(r => setTimeout(r, 800));
