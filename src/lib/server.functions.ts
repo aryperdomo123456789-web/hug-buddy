@@ -16,15 +16,15 @@ const ODIN_DB = {
   user: "user_iptvpro",
   pass: "Y92RYuXHLP58AbOciQW",
   name: "xtream_iptvpro",
+  port: 7999,
 };
 
 /**
- * UTILITY: Execute a MySQL query via SSH
+ * UTILITY: Execute multiple MySQL queries via a single SSH session
  */
-async function executeQuery(sql: string) {
+async function executeBatchQueries(queries: string[]) {
   const ssh = new NodeSSH();
   try {
-    console.log(`[SSH] Executing query: ${sql.substring(0, 100)}...`);
     await ssh.connect({
       host: ODIN_SSH.host,
       port: ODIN_SSH.port,
@@ -34,26 +34,29 @@ async function executeQuery(sql: string) {
       keepaliveInterval: 5000,
     });
     
-    // Use timeout to prevent hanging, and ensure we're using localhost for the db
-    const mysqlCmd = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -N -s -e "${sql}"`;
-    const command = `timeout 25s ${mysqlCmd}`;
-    
-    const result = await ssh.execCommand(command);
-    
-    ssh.dispose();
-    
-    if (result.code !== 0) {
-      if (result.code === 124) throw new Error("Query timeout (25s exceeded)");
-      console.error("[SSH] Command failed:", result.stderr);
-      throw new Error(result.stderr || "Database execution failed");
+    const results: string[] = [];
+    for (const sql of queries) {
+      const mysqlCmd = `mysql -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -N -s -e "${sql}"`;
+      const result = await ssh.execCommand(`timeout 20s ${mysqlCmd}`);
+      if (result.code !== 0) {
+        console.error(`[SSH] Query failed: ${sql.substring(0, 50)}... Error: ${result.stderr}`);
+        results.push(""); // Push empty result on failure to keep order
+      } else {
+        results.push(result.stdout);
+      }
     }
     
-    return result.stdout;
+    ssh.dispose();
+    return results;
   } catch (error: any) {
     if (ssh.isConnected()) ssh.dispose();
-    console.error("[SSH] Error:", error.message);
     throw error;
   }
+}
+
+async function executeQuery(sql: string): Promise<string> {
+  const results = await executeBatchQueries([sql]);
+  return results[0] || "";
 }
 
 export const getUsers = createServerFn({ method: "GET" })
@@ -61,7 +64,7 @@ export const getUsers = createServerFn({ method: "GET" })
     try {
       // Updated SQL for Odin v6: user_activity_now uses server_id and activity_id
       const sql = "SELECT id, username, password, exp_date, enabled, (SELECT count(*) FROM user_activity_now WHERE user_id = users.id) as active_cons FROM users ORDER BY id DESC LIMIT 100";
-      const stdout = await executeQuery(sql);
+      const stdout = await executeQuery(sql) || "";
       
       const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
         const [id, username, password, exp_date, enabled, active_cons] = line.split("\t");
@@ -86,7 +89,7 @@ export const getServers = createServerFn({ method: "GET" })
     try {
       // In Odin v6, servers are often in 'streaming_servers'
       const sql = "SELECT server_id, server_name, status, last_check FROM streaming_servers";
-      const stdout = await executeQuery(sql);
+      const stdout = await executeQuery(sql) || "";
       
       const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
         const [id, name, status, last] = line.split("\t");
@@ -108,7 +111,7 @@ export const getStreams = createServerFn({ method: "GET" })
   .handler(async () => {
     try {
       const sql = "SELECT stream_id, stream_display_name, category_id, stream_icon, stream_source, stream_status FROM streams LIMIT 100";
-      const stdout = await executeQuery(sql);
+      const stdout = await executeQuery(sql) || "";
       
       const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
         const [id, name, cat, icon, source, status] = line.split("\t");
@@ -131,7 +134,7 @@ export const getBouquets = createServerFn({ method: "GET" })
   .handler(async () => {
     try {
       const sql = "SELECT id, bouquet_name FROM bouquets";
-      const stdout = await executeQuery(sql);
+      const stdout = await executeQuery(sql) || "";
       
       const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
         const [id, name] = line.split("\t");
@@ -140,6 +143,66 @@ export const getBouquets = createServerFn({ method: "GET" })
       return { success: true, data: rows };
     } catch (e: any) {
       return { success: false, error: e.message };
+    }
+  });
+
+export const getOdinFullData = createServerFn({ method: "GET" })
+  .handler(async () => {
+    try {
+      const queries = [
+        "SELECT id, username, password, exp_date, enabled, (SELECT COUNT(*) FROM user_activity_now WHERE user_id = users.id) as active_cons FROM users ORDER BY id DESC LIMIT 100",
+        "SELECT id, stream_display_name, category_id, stream_icon, stream_source, stream_status FROM streams LIMIT 100",
+        "SELECT id, bouquet_name FROM bouquets",
+        "SELECT id, server_name, status, last_check FROM streaming_servers"
+      ];
+
+      const [uRaw, stRaw, bRaw, svRaw] = await executeBatchQueries(queries);
+
+      const customers = (uRaw || "").trim().split("\n").filter(Boolean).map(line => {
+        const [id, username, password, exp_date, enabled, active_cons] = line.split("\t");
+        return {
+          id: Number(id),
+          username: username || "",
+          password: password || "",
+          exp_date: Number(exp_date),
+          enabled: Number(enabled),
+          active_cons: Number(active_cons || 0)
+        };
+      });
+
+      const streams = (stRaw || "").trim().split("\n").filter(Boolean).map(line => {
+        const [id, name, cat, icon, source, status] = line.split("\t");
+        return { 
+          id: Number(id), 
+          name, 
+          category_id: Number(cat), 
+          icon, 
+          source, 
+          status: Number(status) 
+        };
+      });
+
+      const bouquets = (bRaw || "").trim().split("\n").filter(Boolean).map(line => {
+        const [id, name] = line.split("\t");
+        return { id: Number(id), name };
+      });
+
+      const servers = (svRaw || "").trim().split("\n").filter(Boolean).map(line => {
+        const [id, name, status, last] = line.split("\t");
+        return { 
+          id, 
+          name, 
+          status: Number(status), 
+          last_check: Number(last) 
+        };
+      });
+
+      return { 
+        success: true, 
+        data: { customers, streams, bouquets, servers } 
+      };
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
   });
 
