@@ -119,11 +119,7 @@ export const runSSHCommand = createServerFn({ method: "POST" })
     }
   });
 
-export const getInstallScript = createServerFn({ method: "GET" }).handler(async () => {
-  const cfg = getOdinConfig();
-  
-  // Script inspirado no Sigma, mas otimizado para o Mago Panel
-  return `#!/bin/bash
+export const generateBashScript = (token: string, ip: string) => `#!/bin/bash
 # Mago Panel - Odin v6 Installer
 # Estudei o Sigma e fiz melhor.
 
@@ -135,8 +131,8 @@ PATH_ODIN="/home/xtreamcodes/iptv_xtream_codes/"
 API_DIR="$PATH_ODIN/wwwdir/mago-api"
 
 echo "#######################################"
-echo "####### MAGO PANEL - INSTALADOR #######"
-echo "#######################################"
+####### MAGO PANEL - INSTALADOR #######
+#######################################
 
 if [ ! -d "$PATH_ODIN" ]; then
   echo "ERRO: Servidor Odin não encontrado em $PATH_ODIN"
@@ -149,25 +145,32 @@ cd "$API_DIR"
 
 if [ ! -f "token.php" ]; then
     echo "Gerando novo token de segurança..."
-    TOKEN=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
-    echo "<?php \\$token = '$TOKEN';" > token.php
+    echo "<?php \\$token = '${token}';" > token.php
 else
-    TOKEN=$(awk -F"'" '/\\$token/{print $2}' "token.php")
+    # Preservar o token existente se já houver um
+    EXISTING_TOKEN=$(awk -F"'" '/\\$token/{print $2}' "token.php")
+    if [ ! -z "$EXISTING_TOKEN" ]; then
+        token=$EXISTING_TOKEN
+    fi
 fi
 
 # Criação do arquivo de versão para compatibilidade
-echo "{\"result\":{\"version\":\"1.0.0-mago\",\"script\":\"odin-v6\"}}" > version.json
+echo "{\\"result\\":{\\"version\\":\\"1.0.0-mago\\",\\"script\\":\\"odin-v6\\"}}" > version.json
 
-IP_PUBLICO=$(curl -s -4 icanhazip.com || curl -s -4 ifconfig.me || hostname -I | awk '{print $1}')
+IP_PUBLICO=\${ip:-$(curl -s -4 icanhazip.com || curl -s -4 ifconfig.me || hostname -I | awk '{print $1}')}
 
 echo ""
 echo "------------------------------------"
-echo "TOKEN DO MAGO PANEL: $TOKEN"
-echo "URL DA API: http://$IP_PUBLICO/mago-api/"
+echo "TOKEN DO MAGO PANEL: \$token"
+echo "URL DA API: http://\$IP_PUBLICO/mago-api/"
 echo "------------------------------------"
 echo "Instalação concluída com sucesso!"
 echo "------------------------------------"
 `;
+
+export const getInstallScript = createServerFn({ method: "GET" }).handler(async () => {
+  const cfg = getOdinConfig();
+  return generateBashScript(cfg.apiToken, cfg.sshHost);
 });
 
 export const connectServer = createServerFn({ method: "POST" })

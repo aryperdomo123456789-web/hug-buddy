@@ -2,6 +2,8 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { getOdinConfig } from "./lib/odin";
+import { generateBashScript } from "./lib/server.functions";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -49,51 +51,9 @@ export default {
     // Interceptação manual ANTES do roteador TanStack
     if (url.pathname === '/api/public/install') {
       try {
-        const script = `#!/bin/bash
-# Mago Panel - Odin v6 Installer
-# Estudei o Sigma e fiz melhor.
-
-trim() {
-    echo "$1" | xargs
-}
-
-PATH_ODIN="/home/xtreamcodes/iptv_xtream_codes/"
-API_DIR="$PATH_ODIN/wwwdir/mago-api"
-
-echo "#######################################"
-####### MAGO PANEL - INSTALADOR #######
-#######################################
-
-if [ ! -d "$PATH_ODIN" ]; then
-  echo "ERRO: Servidor Odin não encontrado em $PATH_ODIN"
-  exit 1
-fi
-
-mkdir -p "$API_DIR/logs"
-chmod -R 777 "$API_DIR/logs"
-cd "$API_DIR"
-
-if [ ! -f "token.php" ]; then
-    echo "Gerando novo token de segurança..."
-    TOKEN=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
-    echo "<?php \\$token = '$TOKEN';" > token.php
-else
-    TOKEN=$(awk -F"'" '/\\$token/{print $2}' "token.php")
-fi
-
-# Criação do arquivo de versão para compatibilidade
-echo "{\\"result\\":{\\"version\\":\\"1.0.0-mago\\",\\"script\\":\\"odin-v6\\"}}" > version.json
-
-IP_PUBLICO=$(curl -s -4 icanhazip.com || curl -s -4 ifconfig.me || hostname -I | awk '{print $1}')
-
-echo ""
-echo "------------------------------------"
-echo "TOKEN DO MAGO PANEL: $TOKEN"
-echo "URL DA API: http://$IP_PUBLICO/mago-api/"
-echo "------------------------------------"
-echo "Instalação concluída com sucesso!"
-echo "------------------------------------"
-`;
+        const cfg = getOdinConfig();
+        const script = generateBashScript(cfg.apiToken, cfg.sshHost);
+        
         return new Response(script, {
           status: 200,
           headers: {

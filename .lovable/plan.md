@@ -1,38 +1,38 @@
-# Auditoria Técnica e Correção Geral - Mago Panel
+# Plano de Auditoria Técnica e Correção Geral - Mago Panel
 
-Realização de uma auditoria técnica profunda no Mago Panel para identificar e corrigir bugs, falhas de lógica, problemas de integração e renderização, visando estabilidade e performance.
+O objetivo é realizar uma auditoria profunda para identificar e corrigir falhas de estabilidade, performance e renderização, garantindo que o painel espelhe perfeitamente a funcionalidade do Odin v6.
 
-## 1. Frontend e Renderização (SSR/Hydration)
-- **Problema**: Possíveis erros de hidratação (hydration mismatch) em componentes que usam dados dinâmicos do navegador.
-- **Solução**: Garantir que componentes que acessam `window` ou `navigator` (como o comando de instalação) usem o hook `useHydrated` ou verificações robustas dentro de `useEffect`.
-- **Arquivos**: `src/routes/index.tsx`.
+## Problemas Identificados (Auditoria Preliminar)
 
-## 2. Estabilidade de Conexão (SSH/Database)
-- **Problema**: Erros de concorrência "aborted" no túnel SSH ao realizar múltiplas chamadas em paralelo no Dashboard.
-- **Solução**:
-    - Centralizar o gerenciamento de sessões SSH para evitar sobrecarga.
-    - Implementar um sistema de fila ou cache curto para estatísticas do dashboard.
-    - Garantir que `withSsh` em `src/lib/server.functions.ts` trate timeouts de forma mais resiliente.
-- **Arquivos**: `src/lib/server.functions.ts`, `src/routes/index.tsx`.
+1.  **Instabilidade SSH**: O erro "aborted" sugere que as conexões SSH estão sendo encerradas prematuramente ou que o pool de conexões não está sendo gerenciado corretamente sob carga.
+2.  **Mismatches de Hidratação (SSR)**: O uso de `window.location.host` diretamente no JSX causa erros de renderização no servidor (500).
+3.  **Performance de Queries**: As queries SQL em `getUsers` e `getStreams` não estão paginadas adequadamente e podem ser lentas em bancos grandes.
+4.  **Feedback Visual**: A falta de feedback claro durante operações assíncronas longas (como comandos SSH) pode levar o usuário a clicar múltiplas vezes.
 
-## 3. Lógica de Banco de Dados (Odin v6)
-- **Problema**: Inconsistências nas queries SQL devido a variações de esquema entre versões do Odin (ex: `user_activity_now`).
-- **Solução**:
-    - Refinar a query de `getUsers` para ser mais compatível com Odin v6.0.3.
-    - Adicionar tratamento de erros detalhado para falhas de query MySQL via SSH.
-- **Arquivos**: `src/lib/server.functions.ts`.
+## Etapas de Implementação
 
-## 4. Segurança e API
-- **Problema**: O instalador em `src/server.ts` está hardcoded, dificultando manutenção.
-- **Solução**: Mover a lógica do script de instalação para uma função dedicada e compartilhada, garantindo que o token e a URL sejam consistentes em todo o sistema.
-- **Arquivos**: `src/server.ts`, `src/lib/server.functions.ts`.
+### 1. Estabilização do Backend (SSH & API)
+- Refatorar `withSsh` em `src/lib/server.functions.ts` para garantir que a conexão seja mantida aberta apenas o tempo necessário, com tratamento de erros robusto.
+- Centralizar a lógica do instalador Bash para evitar inconsistências entre a API e a UI.
+- Adicionar logs detalhados no servidor para facilitar o diagnóstico de falhas de conexão MariaDB.
 
-## 5. UI/UX e Feedback
-- **Problema**: Falta de estados de "loading" granular e tratamento visual de erros de conexão SSH.
-- **Solução**: Adicionar indicadores de status de conexão SSH em tempo real e melhorar as notificações do `sonner`.
-- **Arquivos**: `src/routes/index.tsx`.
+### 2. Correção de Frontend & Hidratação
+- Implementar o hook `useHydrated` em todos os pontos que dependem de APIs do navegador.
+- Proteger o acesso ao `window.location` para garantir que o comando de instalação seja renderizado corretamente no cliente.
+
+### 3. Melhoria na Gestão de Clientes
+- Garantir que todas as colunas do Odin v6 sejam mapeadas corretamente (Bouquets, Expiração, Status).
+- Adicionar validações de entrada no `createUser` e `updateUser` para evitar injeções SQL (reforçar o uso de `escapeSql`).
+
+### 4. Auditoria Visual & UX
+- Adicionar botões de sincronização manual com feedback de loading em todas as abas.
+- Padronizar os ícones de carregamento e mensagens de erro (via `sonner`).
 
 ## Detalhes Técnicos
-- **SSH**: Otimização do `readyTimeout` e `keepalive`.
-- **React**: Uso de `useSuspenseQuery` onde apropriado para melhor integração com TanStack Router.
-- **MySQL**: Garantir escape correto de strings em todas as operações de escrita.
+
+- **Tecnologia**: TanStack Start v1 (React 19), Node-SSH, MariaDB (remoto via SSH).
+- **Segurança**: Uso de tokens de 32 caracteres para a API Mago e escape de strings SQL.
+- **Resiliência**: Aumento do `readyTimeout` SSH para 30s e delay de flush em `dispose`.
+
+---
+*Este plano foca em correções estruturais para eliminar erros de runtime e preparar a base para novas funcionalidades.*
