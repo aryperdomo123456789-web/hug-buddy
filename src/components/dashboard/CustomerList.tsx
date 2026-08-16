@@ -63,7 +63,7 @@ export function CustomerList({
       if (statusFilter === "official") result = result.filter(c => c.is_trial === 0);
       if (statusFilter === "expired") {
         const now = Date.now() / 1000;
-        result = result.filter(c => c.exp_date > 0 && c.exp_date < now);
+        result = result.filter(c => (c.exp_date || 0) > 0 && (c.exp_date || 0) < now);
       }
     }
 
