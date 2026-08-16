@@ -37,7 +37,11 @@ export const Route = createFileRoute("/")({
 
 function DashboardPage() {
   const { odin } = Route.useLoaderData();
-  const hydrated = useHydrated();
+  const [hydrated, setHydrated] = React.useState(false);
+  
+  React.useEffect(() => {
+    setHydrated(true);
+  }, []);
   const [view, setView] = React.useState<'dashboard' | 'customers' | 'servers' | 'streams'>('dashboard');
   const [showUserModal, setShowUserModal] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
