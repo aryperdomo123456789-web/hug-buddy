@@ -53,9 +53,9 @@ async function executeBatchQueries(queries: string[]) {
   }
 }
 
-async function executeQuery(sql: string) {
+async function executeQuery(sql: string): Promise<string> {
   const results = await executeBatchQueries([sql]);
-  return results[0];
+  return results[0] || "";
 }
 
 export const getUsers = createServerFn({ method: "GET" })
