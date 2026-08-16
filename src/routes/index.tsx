@@ -159,10 +159,18 @@ function DashboardPage() {
             <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em] mt-1">Odin v6 Engine</div>
           </div>
           
-          <NavItem icon={LayoutDashboard} label="Dashboard" active={view === 'dashboard'} onClick={() => { console.log("Nav to dashboard"); setView('dashboard'); }} />
-          <NavItem icon={Users} label="Clientes" active={view === 'customers'} onClick={() => { console.log("Nav to customers"); setView('customers'); }} />
-          <NavItem icon={Monitor} label="Streams" active={view === 'streams'} onClick={() => { console.log("Nav to streams"); setView('streams'); }} />
-          <NavItem icon={ServerIcon} label="Servidores" active={view === 'servers'} onClick={() => { console.log("Nav to servers"); setView('servers'); }} />
+          <button onClick={() => setView('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'dashboard' ? 'bg-blue-600/10 text-blue-500' : 'text-zinc-500'}`}>
+            <LayoutDashboard size={20} /> <span className="text-sm font-bold uppercase">Dashboard</span>
+          </button>
+          <button onClick={() => setView('customers')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'customers' ? 'bg-blue-600/10 text-blue-500' : 'text-zinc-500'}`}>
+            <Users size={20} /> <span className="text-sm font-bold uppercase">Clientes</span>
+          </button>
+          <button onClick={() => setView('streams')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'streams' ? 'bg-blue-600/10 text-blue-500' : 'text-zinc-500'}`}>
+            <Monitor size={20} /> <span className="text-sm font-bold uppercase">Streams</span>
+          </button>
+          <button onClick={() => setView('servers')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'servers' ? 'bg-blue-600/10 text-blue-500' : 'text-zinc-500'}`}>
+            <ServerIcon size={20} /> <span className="text-sm font-bold uppercase">Servidores</span>
+          </button>
           
           <div className="mt-20 pt-10 border-t border-zinc-900 px-4">
             <div className="flex items-center gap-3 text-zinc-500 mb-6">
