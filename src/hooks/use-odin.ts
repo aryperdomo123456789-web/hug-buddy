@@ -10,7 +10,8 @@ import {
   deleteUser,
   killUserConnections,
   toggleUserStatus
-} from "@/lib/odin.functions";
+} from "@/lib/server.functions";
+
 
 export function useOdinData() {
   const [loading, setLoading] = useState(false);
