@@ -10,7 +10,10 @@ import {
   Database,
   UserPlus,
   RefreshCw,
-  Download
+  Download,
+  Filter,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -36,15 +39,47 @@ export function CustomerList({
   onKill 
 }: CustomerListProps) {
   const [searchTerm, setSearchTerm] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState("all");
+  const [perPage, setPerPage] = React.useState(10);
+  const [currentPage, setCurrentPage] = React.useState(1);
 
   const filteredCustomers = React.useMemo(() => {
-    if (!searchTerm) return customers;
-    const term = searchTerm.toLowerCase();
-    return customers.filter(c => 
-      c.username?.toLowerCase().includes(term) || 
-      c.id?.toString().includes(term)
-    );
-  }, [customers, searchTerm]);
+    let result = customers;
+    
+    // Search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(c => 
+        c.username?.toLowerCase().includes(term) || 
+        c.id?.toString().includes(term)
+      );
+    }
+
+    // Status filter
+    if (statusFilter !== "all") {
+      if (statusFilter === "active") result = result.filter(c => c.enabled === 1);
+      if (statusFilter === "blocked") result = result.filter(c => c.enabled === 0);
+      if (statusFilter === "trial") result = result.filter(c => c.is_trial === 1);
+      if (statusFilter === "official") result = result.filter(c => c.is_trial === 0);
+      if (statusFilter === "expired") {
+        const now = Date.now() / 1000;
+        result = result.filter(c => c.exp_date > 0 && c.exp_date < now);
+      }
+    }
+
+    return result;
+  }, [customers, searchTerm, statusFilter]);
+
+  const totalPages = Math.ceil(filteredCustomers.length / perPage);
+  const paginatedCustomers = React.useMemo(() => {
+    const start = (currentPage - 1) * perPage;
+    return filteredCustomers.slice(start, start + perPage);
+  }, [filteredCustomers, currentPage, perPage]);
+
+  // Reset page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, perPage]);
 
   return (
     <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800 shadow-xl overflow-hidden">
@@ -65,7 +100,39 @@ export function CustomerList({
             <PlusCircle size={18} /> Adicionar um Utilizador
           </button>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Filter size={14} className="text-zinc-500" />
+            <select 
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-zinc-300 focus:outline-none focus:border-blue-500 transition-all cursor-pointer"
+            >
+              <option value="all">Sem filtro</option>
+              <option value="active">Activo</option>
+              <option value="blocked">Desativado</option>
+              <option value="trial">Teste</option>
+              <option value="official">Official</option>
+              <option value="expired">Expirado</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Mostrar</span>
+            <select 
+              value={perPage}
+              onChange={(e) => setPerPage(Number(e.target.value))}
+              className="bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-zinc-300 focus:outline-none focus:border-blue-500 transition-all cursor-pointer"
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+              <option value={250}>250</option>
+              <option value={500}>500</option>
+            </select>
+          </div>
+
           <div className="relative">
             <input 
               type="text" 
@@ -76,7 +143,7 @@ export function CustomerList({
             />
           </div>
           <div className="text-[10px] font-black uppercase tracking-widest text-zinc-600">
-            {filteredCustomers.length} Utilizadores
+            {filteredCustomers.length} Total
           </div>
         </div>
       </div>
@@ -97,7 +164,7 @@ export function CustomerList({
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-900/50">
-            {filteredCustomers.map(u => {
+            {paginatedCustomers.map(u => {
               const daysLeft = u.exp_date ? Math.max(0, Math.ceil((u.exp_date - Date.now() / 1000) / 86400)) : null;
               return (
                 <tr key={u.id} className="text-xs group hover:bg-blue-600/5 transition-colors border-b border-zinc-900/30">
@@ -176,6 +243,32 @@ export function CustomerList({
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination Footer */}
+      <div className="p-4 border-t border-zinc-900 bg-zinc-950/20 flex justify-between items-center">
+        <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+          Página {currentPage} de {totalPages || 1}
+        </div>
+        <div className="flex gap-2">
+          <button 
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            className="p-2 bg-zinc-900 disabled:opacity-30 hover:bg-zinc-800 text-zinc-400 rounded-lg border border-zinc-800 transition-all"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <div className="flex items-center px-4 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] font-black text-blue-500">
+            {currentPage}
+          </div>
+          <button 
+            disabled={currentPage === totalPages || totalPages === 0}
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            className="p-2 bg-zinc-900 disabled:opacity-30 hover:bg-zinc-800 text-zinc-400 rounded-lg border border-zinc-800 transition-all"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
       </div>
     </section>
   );
