@@ -183,9 +183,10 @@ function DashboardPage() {
                   key={item.id}
                   type="button"
                   onClick={() => {
-                    console.log("Tab change to:", item.id);
+                    console.log("CLIQUE DETECTADO NA ABA:", item.id);
                     setActiveTab(item.id);
                   }} 
+
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 border ${
                     isActive 
                       ? "bg-blue-600/10 text-blue-500 border-blue-600/20 shadow-[0_0_15px_rgba(37,99,235,0.05)]" 
