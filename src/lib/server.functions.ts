@@ -25,6 +25,7 @@ const ODIN_DB = {
 async function executeBatchQueries(queries: string[]) {
   const ssh = new NodeSSH();
   try {
+    console.log(`[SSH] Connecting to ${ODIN_SSH.host}...`);
     await ssh.connect({
       host: ODIN_SSH.host,
       port: ODIN_SSH.port,
@@ -34,13 +35,14 @@ async function executeBatchQueries(queries: string[]) {
       keepaliveInterval: 5000,
     });
     
+    console.log(`[SSH] Connected. Executing ${queries.length} queries...`);
     const results: string[] = [];
     for (const sql of queries) {
       const mysqlCmd = `mysql -h 127.0.0.1 -P ${ODIN_DB.port} -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -N -s -e "${sql}"`;
       const result = await ssh.execCommand(`timeout 20s ${mysqlCmd}`);
       if (result.code !== 0) {
         console.error(`[SSH] Query failed: ${sql.substring(0, 50)}... Error: ${result.stderr}`);
-        results.push(""); // Push empty result on failure to keep order
+        results.push(""); 
       } else {
         results.push(result.stdout);
       }
@@ -49,6 +51,7 @@ async function executeBatchQueries(queries: string[]) {
     ssh.dispose();
     return results;
   } catch (error: any) {
+    console.error(`[SSH] Connection/Execution Error:`, error.message);
     if (ssh.isConnected()) ssh.dispose();
     throw error;
   }
