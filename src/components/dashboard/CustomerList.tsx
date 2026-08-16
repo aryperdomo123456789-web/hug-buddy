@@ -163,6 +163,7 @@ export function CustomerList({
             <tr className="bg-zinc-950/50 text-zinc-500 text-[10px] uppercase tracking-widest text-left border-b border-zinc-900">
               <th className="py-4 px-6 font-black">ID</th>
               <th className="py-4 px-6 font-black">Utilizador</th>
+              <th className="py-4 px-6 font-black">Dono</th>
               <th className="py-4 px-6 font-black">Senha</th>
               <th className="py-4 px-6 font-black text-center">Estado</th>
               <th className="py-4 px-6 font-black text-center">Teste</th>
