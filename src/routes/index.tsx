@@ -149,6 +149,7 @@ function DashboardPage() {
       <div className="min-h-screen bg-[#0a0a0c] flex flex-col items-center justify-center text-zinc-500">
         <div className="w-12 h-12 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-4" />
         <div className="text-[10px] uppercase font-bold tracking-[0.3em] animate-pulse">Iniciando Sistema Odin...</div>
+        <button onClick={() => setHydrated(true)} className="mt-4 text-[8px] opacity-20">Forçar Hidratação</button>
       </div>
     );
   }
