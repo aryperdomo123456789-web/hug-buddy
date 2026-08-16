@@ -95,6 +95,7 @@ export function useOdinData() {
 export function useHydrated() {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
+    console.log("EFFECT RUNNING: Setting hydrated to true");
     setHydrated(true);
   }, []);
   return hydrated;
