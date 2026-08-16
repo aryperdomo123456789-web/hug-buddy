@@ -31,8 +31,8 @@ export function useOdinData() {
   const killConnectionsFn = useServerFn(killUserConnections);
   const toggleStatusFn = useServerFn(toggleUserStatus);
 
-  const fetchAll = async () => {
-    setLoading(true);
+  const fetchAll = async (quiet = false) => {
+    if (!quiet) setLoading(true);
     try {
       // Chamadas sequenciais para estabilidade do túnel SSH (limitando concorrência)
       const uRes = await fetchUsersFn();
@@ -50,7 +50,7 @@ export function useOdinData() {
       console.error("Erro ao carregar dados do Odin:", e);
       toast.error("Erro na comunicação com o servidor");
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   };
 

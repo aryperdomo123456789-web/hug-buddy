@@ -84,7 +84,7 @@ export type SSHResponse = {
 };
 
 export const runSSHCommand = createServerFn({ method: "POST" })
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         host: z.string(),
@@ -177,7 +177,7 @@ export const getInstallScript = createServerFn({ method: "GET" }).handler(async 
 });
 
 export const connectServer = createServerFn({ method: "POST" })
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         ip: z.string(),
@@ -204,27 +204,10 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
       password: cfg.sshPassword,
     };
     return await withSsh(sshParams, async (ssh, cfg) => {
-      const sql = `
-        SELECT 
-          u.id, u.username, u.password, u.exp_date, u.admin_enabled, u.enabled, u.member_id, 
-          COALESCE(uan.conns, 0) as active_cons,
-          u.max_connections, u.created_at, u.created_by,
-          u.admin_notes, u.reseller_notes, u.bouquet, u.is_restreamer,
-          u.allowed_ips, u.allowed_ua, u.is_trial, u.is_isplock, u.forced_country,
-          u.is_mag, u.is_e2, u.force_server_id, u.is_stalker, u.bypass_ua, u.as_number, u.isp_desc,
-          COALESCE(u.isp_desc, 'Unknown') as isp_info
-        FROM users u
-        LEFT JOIN (
-          SELECT user_id, COUNT(*) as conns 
-          FROM user_activity_now 
-          GROUP BY user_id
-        ) uan ON u.id = uan.user_id
-        ORDER BY u.id DESC
-        LIMIT 50
-      `;
+      const sql = "SELECT id, username, password, exp_date, admin_enabled, enabled, member_id, 0 as active_cons, max_connections, created_at, created_by, admin_notes, reseller_notes, bouquet, is_restreamer, allowed_ips, allowed_ua, is_trial, is_isplock, forced_country, is_mag, is_e2, force_server_id, is_stalker, bypass_ua, as_number, isp_desc, 'Unknown' as isp_info FROM users ORDER BY id DESC LIMIT 50";
       const result = await execMysql(ssh, cfg, sql);
 
-        const rows = parseTabRows(result.stdout, (columns) => {
+      const rows = parseTabRows(result.stdout, (columns) => {
           const [
             id,
             username,
@@ -296,7 +279,7 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
 });
 
 export const createUser = createServerFn({ method: "POST" })
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         username: z.string().min(1),
@@ -354,7 +337,7 @@ export const createUser = createServerFn({ method: "POST" })
   });
 
 export const updateUser = createServerFn({ method: "POST" })
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         id: z.number(),
@@ -433,7 +416,7 @@ export const updateUser = createServerFn({ method: "POST" })
   });
 
 export const toggleUserStatus = createServerFn({ method: "POST" })
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         id: z.number(),
@@ -466,7 +449,7 @@ export const toggleUserStatus = createServerFn({ method: "POST" })
   });
 
 export const deleteUser = createServerFn({ method: "POST" })
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         id: z.number(),
@@ -597,7 +580,7 @@ export const getStreams = createServerFn({ method: "GET" }).handler(async () => 
 });
 
 export const killUserConnections = createServerFn({ method: "POST" })
-  .inputValidator((data) => z.object({ id: z.number() }).parse(data))
+  .validator((data) => z.object({ id: z.number() }).parse(data))
   .handler(async ({ data }) => {
     try {
       const cfg = getOdinConfig();

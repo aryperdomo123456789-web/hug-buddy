@@ -55,9 +55,10 @@ function DashboardPage() {
 
   React.useEffect(() => {
     if (hydrated) {
-      fetchAll();
+      // Inicia o carregamento silencioso em background após hidratação
+      fetchAll(true);
     }
-  }, [hydrated, view]);
+  }, [hydrated]);
 
   const handleDeleteUser = async (user: User) => {
     if (!user.id || !confirm(`Deseja realmente excluir ${user.username}?`)) return;
@@ -65,7 +66,7 @@ function DashboardPage() {
       const res = await actions.deleteUser({ data: { id: user.id } });
       if (res.success) {
         toast.success("Usuário removido");
-        fetchAll();
+        fetchAll(false);
       }
     } catch (e) {
       toast.error("Erro ao remover usuário");
@@ -97,7 +98,7 @@ function DashboardPage() {
         toast.success(editingUser ? "Atualizado!" : "Criado!");
         setShowUserModal(false);
         setEditingUser(null);
-        fetchAll();
+        fetchAll(false);
       } else {
         toast.error("Erro Odin: " + (res as any).error);
       }
@@ -114,7 +115,7 @@ function DashboardPage() {
       });
       if (res.success) {
         toast.success("Estado alterado");
-        fetchAll();
+        fetchAll(false);
       }
     } catch (e) {
       toast.error("Erro ao alterar estado");
@@ -127,14 +128,14 @@ function DashboardPage() {
       const res = await actions.killConnections({ data: { id: user.id } });
       if (res.success) {
         toast.success("Conexões derrubadas");
-        fetchAll();
+        fetchAll(false);
       }
     } catch (e) {
       toast.error("Erro ao derrubar conexões");
     }
   };
 
-  if (!hydrated) return null;
+  if (!hydrated) return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center text-zinc-500 uppercase tracking-widest font-bold text-xs">Carregando Mago Panel...</div>;
 
 
   return (
@@ -170,7 +171,7 @@ function DashboardPage() {
             <h1 className="text-3xl font-bold uppercase tracking-tighter">{view}</h1>
             <div className="flex items-center gap-4">
               <button 
-                onClick={fetchAll}
+                onClick={() => fetchAll(false)}
                 disabled={loading}
                 className="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-blue-400 transition-all border border-zinc-800"
                 title="Sincronizar Agora"
