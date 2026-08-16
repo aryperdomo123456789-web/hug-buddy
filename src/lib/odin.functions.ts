@@ -1,37 +1,39 @@
 import { createServerFn } from "@tanstack/react-start";
 import { NodeSSH } from "node-ssh";
-import { escapeSql, getOdinConfig } from "./odin";
 
 export const getUsers = createServerFn({ method: "GET" })
   .handler(async () => {
-    console.log("[SERVER FN] getUsers called");
+    console.log("[SERVER FN] getUsers EXECUTION START");
     try {
-      const cfg = getOdinConfig();
       const ssh = new NodeSSH();
+      console.log("[SERVER FN] Connecting SSH to 23.158.72.30...");
       await ssh.connect({
-        host: cfg.sshHost,
-        port: cfg.sshPort,
-        username: cfg.sshUsername,
-        password: cfg.sshPassword,
+        host: "23.158.72.30",
+        port: 22,
+        username: "root",
+        password: "fontemain123333",
       });
 
-      const sql = "SELECT id, username, password, exp_date, enabled, active_cons FROM users ORDER BY id DESC LIMIT 50";
-      const command = [
-        "mysql", "-h", "127.0.0.1", "-u", cfg.dbUsername, `-p'${escapeSql(cfg.dbPassword)}'`, cfg.dbName, "-N", "-s", "-e", `"${sql}"`
-      ].join(" ");
-
-      const result = await ssh.execCommand(command);
+      console.log("[SERVER FN] SSH Connected. Running MySQL...");
+      const result = await ssh.execCommand("mysql -h 127.0.0.1 -u user_iptvpro -p'Y92RYuXHLP58AbOciQW' xtream_iptvpro -N -s -e \"SELECT id, username, password, exp_date, enabled, 0 FROM users ORDER BY id DESC LIMIT 50\"");
+      
+      console.log("[SERVER FN] MySQL Result Code:", result.code);
       ssh.dispose();
 
-      if (result.code !== 0) return { success: false, error: result.stderr };
+      if (result.code !== 0) {
+        console.error("[SERVER FN] MySQL Error:", result.stderr);
+        return { success: false, error: result.stderr };
+      }
       
       const rows = result.stdout.trim().split("\n").filter(Boolean).map(line => {
-        const [id, username, password, exp_date, enabled, active_cons] = line.split("\t");
-        return { id: Number(id), username, password, exp_date: Number(exp_date), enabled: Number(enabled), active_cons: Number(active_cons || 0) };
+        const [id, username, password, exp_date, enabled, active] = line.split("\t");
+        return { id: Number(id), username, password, exp_date: Number(exp_date), enabled: Number(enabled), active_cons: Number(active) };
       });
       
+      console.log(`[SERVER FN] SUCCESS: Found ${rows.length} users`);
       return { success: true, data: rows };
     } catch (e: any) {
+      console.error("[SERVER FN] FATAL ERROR:", e.message);
       return { success: false, error: e.message };
     }
   });
