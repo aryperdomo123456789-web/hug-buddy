@@ -139,6 +139,10 @@ function DashboardPage() {
     { id: 'servers', label: 'Servidores', icon: ServerIcon },
   ];
 
+  if (!hydrated) {
+    return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center text-zinc-500 font-bold uppercase tracking-widest">Iniciando Odin Engine...</div>;
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans">
       <div className="flex gap-10">
@@ -158,10 +162,8 @@ function DashboardPage() {
                 <button 
                   key={item.id}
                   type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log("Forcing tab to:", item.id);
+                  onClick={() => {
+                    console.log("Tab change to:", item.id);
                     setActiveTab(item.id);
                   }} 
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 border ${
