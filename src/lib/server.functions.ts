@@ -35,10 +35,9 @@ async function executeBatchQueries(queries: string[]) {
     for (const sql of queries) {
       const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
       
-      // We use a shorter timeout for the individual query but ensure we don't block the event loop
-      const result = await ssh.execCommand(mysqlCmd, { 
-        timeout: 15000 
-      });
+      // Use timeout command inside the shell instead of the library option
+      const remoteCmd = `timeout 15s ${mysqlCmd}`;
+      const result = await ssh.execCommand(remoteCmd);
       
       if (result.code !== 0) {
         console.error(`[SSH] Query Error: ${result.stderr}`);
