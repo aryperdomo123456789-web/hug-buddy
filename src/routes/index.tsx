@@ -47,7 +47,6 @@ function DashboardPage() {
   const [activeTab, setActiveTab] = useState('dashboard');
   
   const handleTabChange = (tabId: string) => {
-    console.log("MAGO LOG: Mudando para aba ->", tabId);
     setActiveTab(tabId);
   };
   const [showUserModal, setShowUserModal] = useState(false);
