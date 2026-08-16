@@ -33,26 +33,21 @@ export function useOdinData() {
   const toggleStatusFn = useServerFn(toggleUserStatus);
 
   const fetchAll = async (quiet = false) => {
-    if (isFetching.current) {
-      console.log("[useOdinData] fetchAll skipped: already fetching");
-      return;
-    }
+    if (isFetching.current) return;
     isFetching.current = true;
-    
     if (!quiet) setLoading(true);
-    console.log("[useOdinData] fetchAll started");
+
     try {
-      console.log("[useOdinData] fetching users via fetchUsersFn...");
-      // Forçar chamada direta para teste se fetchUsersFn (useServerFn) estiver falhando silenciosamente
-      const uRes = await getUsers(); 
-      console.log("[useOdinData] users result received:", uRes);
+      console.log("[useOdinData] Fetching users...");
+      const uRes = await getUsers();
+      console.log("[useOdinData] Response:", uRes);
       
-      if (uRes && uRes.success && 'data' in uRes) {
+      if (uRes?.success && Array.isArray(uRes.data)) {
         setCustomers(uRes.data as any);
       } else if (uRes && !uRes.success) {
-        const errorMsg = (uRes as any).error || "Erro desconhecido";
-        toast.error(`Erro Usuários: ${errorMsg}`);
+        toast.error(`Erro: ${uRes.error}`);
       }
+
 
 
       
