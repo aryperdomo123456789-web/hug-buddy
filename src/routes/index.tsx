@@ -156,7 +156,7 @@ function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans">
+    <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans selection:bg-blue-500/30">
       <div className="flex gap-10">
         <aside className="w-64 shrink-0">
           <div className="mb-10 px-4">
@@ -178,10 +178,10 @@ function DashboardPage() {
                     console.log("Tab change to:", item.id);
                     setActiveTab(item.id);
                   }} 
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 border ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 border ${
                     isActive 
-                      ? "bg-blue-600/10 text-blue-500 border-blue-600/20" 
-                      : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 border-transparent"
+                      ? "bg-blue-600/10 text-blue-500 border-blue-600/20 shadow-[0_0_15px_rgba(37,99,235,0.05)]" 
+                      : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50 border-transparent hover:translate-x-1"
                   }`}
                   id={`nav-${item.id}`}
                 >
@@ -222,7 +222,7 @@ function DashboardPage() {
             </button>
           </div>
 
-          <div key={activeTab}>
+          <div key={activeTab} className="animate-in fade-in zoom-in-95 duration-300 fill-mode-both">
             {activeTab === 'dashboard' && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard label="Clientes Totais" value={stats.totalUsers} icon={Users} color="blue" />
