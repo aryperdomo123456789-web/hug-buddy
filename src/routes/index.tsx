@@ -42,7 +42,8 @@ export const Route = createFileRoute("/")({
 });
 
 function DashboardPage() {
-  const { odin } = Route.useLoaderData();
+  const data = Route.useLoaderData();
+  const odin = data?.odin || {};
   const hydrated = useHydrated();
   const [activeTab, setActiveTab] = useState('dashboard');
   
