@@ -37,9 +37,12 @@ export function useOdinData() {
     isFetching.current = true;
     
     if (!quiet) setLoading(true);
+    console.log("fetchAll started, quiet:", quiet);
     try {
-      // Carregamento progressivo para evitar timeout global e mostrar dados assim que chegarem
-      const uRes = await fetchUsersFn().catch(e => ({ success: false, error: e.message }));
+      const uRes = await fetchUsersFn().catch(e => {
+        console.error("fetchUsersFn failed:", e);
+        return { success: false, error: e.message };
+      });
       if (uRes.success && 'data' in uRes) setCustomers(uRes.data as any);
       
       // Delay entre chamadas para não saturar o túnel SSH
