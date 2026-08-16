@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { 
   Users, 
   Server as ServerIcon, 
@@ -38,7 +38,6 @@ export const Route = createFileRoute("/")({
 function DashboardPage() {
   const { odin } = Route.useLoaderData();
   const hydrated = useHydrated();
-  console.log("Hydration state:", hydrated);
   const [view, setView] = React.useState<'dashboard' | 'customers' | 'servers' | 'streams'>('dashboard');
   const [showUserModal, setShowUserModal] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
@@ -149,8 +148,6 @@ function DashboardPage() {
       </div>
     );
   }
-
-  console.log("Rendering Dashboard, stats:", stats);
 
 
   return (

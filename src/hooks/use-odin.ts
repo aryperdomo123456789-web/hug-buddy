@@ -95,8 +95,12 @@ export function useOdinData() {
 export function useHydrated() {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
-    console.log("EFFECT RUNNING: Setting hydrated to true");
-    setHydrated(true);
+    // Adicionamos um pequeno delay na hidratação para garantir que o DOM inicial 
+    // seja renderizado corretamente antes de trocar para o estado hidratado.
+    const t = setTimeout(() => {
+      setHydrated(true);
+    }, 100);
+    return () => clearTimeout(t);
   }, []);
   return hydrated;
 }
