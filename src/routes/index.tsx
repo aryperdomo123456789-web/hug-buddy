@@ -45,6 +45,11 @@ function DashboardPage() {
   const { odin } = Route.useLoaderData();
   const hydrated = useHydrated();
   const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // Efeito para depurar a troca de abas no console do navegador
+  useEffect(() => {
+    console.log("Tab ativa mudou para:", activeTab);
+  }, [activeTab]);
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showResellerModal, setShowResellerModal] = useState(false);
