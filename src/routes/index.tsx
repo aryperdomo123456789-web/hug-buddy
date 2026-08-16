@@ -41,10 +41,9 @@ function DashboardPage() {
   const { odin } = Route.useLoaderData();
   const [view, setView] = React.useState<'dashboard' | 'customers' | 'servers' | 'streams'>('dashboard');
   
-  const handleViewChange = (newView: any) => {
-    console.log("[DashboardPage] Changing view to:", newView);
-    setView(newView);
-  };
+  React.useEffect(() => {
+    console.log("[DashboardPage] view changed:", view);
+  }, [view]);
 
   const [showUserModal, setShowUserModal] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
@@ -161,16 +160,16 @@ function DashboardPage() {
             <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em] mt-1">Odin v6 Engine</div>
           </div>
           
-          <button onClick={() => handleViewChange('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'dashboard' ? 'bg-blue-600/10 text-blue-500' : 'text-zinc-500'}`}>
+          <button onClick={() => setView('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'dashboard' ? 'bg-blue-600/10 text-blue-500' : 'text-zinc-500 hover:bg-zinc-900'}`}>
             <LayoutDashboard size={20} /> <span className="text-sm font-bold uppercase">Dashboard</span>
           </button>
-          <button onClick={() => handleViewChange('customers')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'customers' ? 'bg-blue-600/10 text-blue-500' : 'text-zinc-500'}`}>
+          <button onClick={() => setView('customers')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'customers' ? 'bg-blue-600/10 text-blue-500' : 'text-zinc-500 hover:bg-zinc-900'}`}>
             <Users size={20} /> <span className="text-sm font-bold uppercase">Clientes</span>
           </button>
-          <button onClick={() => handleViewChange('streams')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'streams' ? 'bg-blue-600/10 text-blue-500' : 'text-zinc-500'}`}>
+          <button onClick={() => setView('streams')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'streams' ? 'bg-blue-600/10 text-blue-500' : 'text-zinc-500 hover:bg-zinc-900'}`}>
             <Monitor size={20} /> <span className="text-sm font-bold uppercase">Streams</span>
           </button>
-          <button onClick={() => handleViewChange('servers')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'servers' ? 'bg-blue-600/10 text-blue-500' : 'text-zinc-500'}`}>
+          <button onClick={() => setView('servers')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'servers' ? 'bg-blue-600/10 text-blue-500' : 'text-zinc-500 hover:bg-zinc-900'}`}>
             <ServerIcon size={20} /> <span className="text-sm font-bold uppercase">Servidores</span>
           </button>
           
