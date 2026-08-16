@@ -55,7 +55,6 @@ function DashboardPage() {
   } = useOdinData();
 
   useEffect(() => {
-    // Iniciar fetch em background logo no primeiro render, sem bloquear o UI principal
     fetchAll(true);
   }, []);
 
@@ -156,19 +155,25 @@ function DashboardPage() {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
               return (
-                <div 
+                <button 
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)} 
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log("Forcing tab to:", item.id);
+                    setActiveTab(item.id);
+                  }} 
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 border ${
                     isActive 
-                      ? "bg-blue-600/10 text-blue-500 border border-blue-600/20" 
-                      : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 border border-transparent"
+                      ? "bg-blue-600/10 text-blue-500 border-blue-600/20" 
+                      : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 border-transparent"
                   }`}
                   id={`nav-${item.id}`}
                 >
                   <Icon size={20} />
                   <span className="text-sm font-bold uppercase tracking-widest">{item.label}</span>
-                </div>
+                </button>
               );
             })}
           </div>
