@@ -25,22 +25,24 @@ const ODIN_DB = {
 async function executeBatchQueries(queries: string[]) {
   const ssh = new NodeSSH();
   try {
+    console.log(`[SSH] Connecting to ${ODIN_SSH.host}...`);
     await ssh.connect({
       host: ODIN_SSH.host,
       port: ODIN_SSH.port,
       username: ODIN_SSH.username,
       password: ODIN_SSH.password,
-      readyTimeout: 30000,
-      keepaliveInterval: 5000,
+      readyTimeout: 60000,
+      keepaliveInterval: 1000,
     });
     
+    console.log(`[SSH] Connected. Executing ${queries.length} queries...`);
     const results: string[] = [];
     for (const sql of queries) {
-      const mysqlCmd = `mysql -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -N -s -e "${sql}"`;
-      const result = await ssh.execCommand(`timeout 20s ${mysqlCmd}`);
+      const mysqlCmd = `mysql -h 127.0.0.1 -P ${ODIN_DB.port} -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -N -s -e "${sql}"`;
+      const result = await ssh.execCommand(`timeout 5s ${mysqlCmd}`);
       if (result.code !== 0) {
         console.error(`[SSH] Query failed: ${sql.substring(0, 50)}... Error: ${result.stderr}`);
-        results.push(""); // Push empty result on failure to keep order
+        results.push(""); 
       } else {
         results.push(result.stdout);
       }
@@ -49,6 +51,7 @@ async function executeBatchQueries(queries: string[]) {
     ssh.dispose();
     return results;
   } catch (error: any) {
+    console.error(`[SSH] Connection/Execution Error:`, error.message);
     if (ssh.isConnected()) ssh.dispose();
     throw error;
   }
@@ -87,8 +90,8 @@ export const getUsers = createServerFn({ method: "GET" })
 export const getServers = createServerFn({ method: "GET" })
   .handler(async () => {
     try {
-      // In Odin v6, servers are often in 'streaming_servers'
-      const sql = "SELECT server_id, server_name, status, last_check FROM streaming_servers";
+      // Em Odin v6, streaming_servers é a tabela correta
+      const sql = "SELECT id, server_name, status, 0 FROM streaming_servers";
       const stdout = await executeQuery(sql) || "";
       
       const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
@@ -97,7 +100,7 @@ export const getServers = createServerFn({ method: "GET" })
           id, 
           name, 
           status: Number(status), 
-          last_check: Number(last) 
+          last_check: Number(last || 0) 
         };
       });
       
@@ -110,7 +113,7 @@ export const getServers = createServerFn({ method: "GET" })
 export const getStreams = createServerFn({ method: "GET" })
   .handler(async () => {
     try {
-      const sql = "SELECT stream_id, stream_display_name, category_id, stream_icon, stream_source, stream_status FROM streams LIMIT 100";
+      const sql = "SELECT id, stream_display_name, category_id, stream_icon, stream_source, 1 FROM streams LIMIT 100";
       const stdout = await executeQuery(sql) || "";
       
       const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
@@ -151,9 +154,9 @@ export const getOdinFullData = createServerFn({ method: "GET" })
     try {
       const queries = [
         "SELECT id, username, password, exp_date, enabled, (SELECT COUNT(*) FROM user_activity_now WHERE user_id = users.id) as active_cons FROM users ORDER BY id DESC LIMIT 100",
-        "SELECT id, stream_display_name, category_id, stream_icon, stream_source, stream_status FROM streams LIMIT 100",
+        "SELECT id, stream_display_name, category_id, stream_icon, stream_source, 1 as stream_status FROM streams LIMIT 100",
         "SELECT id, bouquet_name FROM bouquets",
-        "SELECT id, server_name, status, last_check FROM streaming_servers"
+        "SELECT id, server_name, status, 0 as last_check FROM streaming_servers"
       ];
 
       const [uRaw, stRaw, bRaw, svRaw] = await executeBatchQueries(queries);
