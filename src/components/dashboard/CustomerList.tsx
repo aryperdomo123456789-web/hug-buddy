@@ -49,6 +49,14 @@ export function CustomerList({
       <div className="p-6 border-b border-zinc-900 bg-zinc-950/30 flex justify-between items-center">
         <div className="flex gap-4">
           <button 
+            onClick={onRefresh} 
+            className="bg-zinc-900 hover:bg-zinc-800 text-zinc-400 p-2 rounded-lg border border-zinc-800 transition-all flex items-center gap-2"
+            title="Sincronizar Lista"
+            disabled={loading}
+          >
+            <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+          </button>
+          <button 
             onClick={onAdd} 
             className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2 rounded-lg font-bold transition-all flex items-center gap-2 text-sm"
           >

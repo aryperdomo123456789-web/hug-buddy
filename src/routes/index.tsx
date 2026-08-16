@@ -55,9 +55,10 @@ function DashboardPage() {
 
   React.useEffect(() => {
     if (hydrated) {
-      fetchAll();
+      // Inicia o carregamento silencioso em background após hidratação
+      fetchAll(true);
     }
-  }, [hydrated, view]);
+  }, [hydrated]);
 
   const handleDeleteUser = async (user: User) => {
     if (!user.id || !confirm(`Deseja realmente excluir ${user.username}?`)) return;
