@@ -34,21 +34,25 @@ export function useOdinData() {
   const fetchAll = async (quiet = false) => {
     if (!quiet) setLoading(true);
     try {
-      // Chamadas sequenciais para estabilidade do túnel SSH (limitando concorrência)
+      // Chamadas sequenciais com delay para evitar sobrecarga do servidor Odin e socket 'aborted'
       const uRes = await fetchUsersFn();
       if (uRes.success) setCustomers(uRes.data as any);
+      await new Promise(r => setTimeout(r, 300));
       
       const sRes = await fetchServersFn();
       if (sRes.success) setServers(sRes.data || []);
+      await new Promise(r => setTimeout(r, 300));
       
       const stRes = await fetchStreamsFn();
       if (stRes.success) setStreams(stRes.data || []);
+      await new Promise(r => setTimeout(r, 300));
       
       const bRes = await fetchBouquetsFn();
       if (bRes.success) setBouquets(bRes.data || []);
     } catch (e) {
       console.error("Erro ao carregar dados do Odin:", e);
-      toast.error("Erro na comunicação com o servidor");
+      // Evita spam de toast se o erro for abortado propositalmente pelo browser
+      if (!quiet) toast.error("Erro na comunicação com o servidor");
     } finally {
       if (!quiet) setLoading(false);
     }
