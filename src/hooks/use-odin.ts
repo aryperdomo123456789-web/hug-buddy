@@ -33,6 +33,7 @@ export function useOdinData() {
   const toggleStatusFn = useServerFn(toggleUserStatus);
 
   const fetchAll = async (quiet = false) => {
+    console.log("[Odin Hook] fetchAll triggered, isFetching:", isFetching.current);
     if (isFetching.current) return;
     isFetching.current = true;
     
