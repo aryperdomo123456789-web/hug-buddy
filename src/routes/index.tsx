@@ -55,10 +55,9 @@ function DashboardPage() {
   } = useOdinData();
 
   useEffect(() => {
-    if (hydrated) {
-      fetchAll(true);
-    }
-  }, [hydrated]);
+    // Iniciar fetch em background logo no primeiro render, sem bloquear o UI principal
+    fetchAll(true);
+  }, []);
 
   const handleDeleteUser = async (user: User) => {
     if (!user.id || !confirm(`Deseja realmente excluir ${user.username}?`)) return;
@@ -133,10 +132,6 @@ function DashboardPage() {
       toast.error("Erro ao derrubar conexões");
     }
   };
-
-  if (!hydrated) {
-    return <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center text-zinc-500 font-bold uppercase tracking-widest">Iniciando Odin Engine...</div>;
-  }
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
