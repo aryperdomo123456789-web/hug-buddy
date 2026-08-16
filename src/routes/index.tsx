@@ -245,6 +245,7 @@ function DashboardPage() {
             {activeTab === 'customers' && (
               <CustomerList 
                 customers={customers}
+                resellers={resellers}
                 loading={loading}
                 onRefresh={() => fetchAll(false)}
                 onAdd={() => { setEditingUser(null); setShowUserModal(true); }}

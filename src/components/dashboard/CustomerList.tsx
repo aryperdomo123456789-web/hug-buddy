@@ -20,6 +20,7 @@ import { getDefaultDns } from "@/lib/dns.functions";
 
 interface CustomerListProps {
   customers: User[];
+  resellers: any[];
   loading: boolean;
   onRefresh: () => void;
   onDelete: (user: User) => Promise<void>;
@@ -31,7 +32,9 @@ interface CustomerListProps {
 
 export function CustomerList({ 
   customers, 
+  resellers,
   loading, 
+
   onRefresh, 
   onDelete, 
   onEdit, 
@@ -176,6 +179,9 @@ export function CustomerList({
                 <tr key={u.id} className="text-xs group hover:bg-blue-600/5 transition-all duration-200 border-b border-zinc-900/30">
                   <td className="py-4 px-6 font-mono text-zinc-600">{u.id}</td>
                   <td className="py-4 px-6 font-bold text-zinc-200">{u.username}</td>
+                  <td className="py-4 px-6 text-zinc-500 italic">
+                    {resellers.find(r => r.id === u.owner_id)?.username || 'Admin'}
+                  </td>
                   <td className="py-4 px-6 text-zinc-500 font-mono">{u.password}</td>
                   <td className="py-4 px-6 text-center">
                     <button 
