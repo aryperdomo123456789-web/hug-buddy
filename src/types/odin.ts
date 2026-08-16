@@ -4,11 +4,10 @@ export const UserSchema = z.object({
   id: z.number().optional(),
   username: z.string().default(""),
   password: z.string().default(""),
-  owner: z.string().default("SuaFonte444"),
-  member_id: z.number().int().default(1),
+  owner_id: z.number().int().default(1),
   exp_date: z.number().optional(),
   exp_days: z.number().default(30),
-  max_connections: z.number().int().min(1).default(1),
+  max_connections: z.number().int().min(0).default(1),
   enabled: z.number().int().min(0).max(1).default(1),
   admin_enabled: z.number().int().min(0).max(1).default(1),
   is_trial: z.number().int().min(0).max(1).default(0),
@@ -18,10 +17,12 @@ export const UserSchema = z.object({
   allowed_ua: z.string().default(""),
   admin_notes: z.string().default(""),
   reseller_notes: z.string().default(""),
-  bouquet: z.string().default("[1]"),
+  bouquet: z.string().default("[]"),
   forced_country: z.string().default("Off"),
   active_cons: z.number().default(0),
   isp_info: z.string().default(""),
+  last_ip: z.string().default(""),
+  last_ua: z.string().default(""),
 });
 
 export type User = z.infer<typeof UserSchema>;
