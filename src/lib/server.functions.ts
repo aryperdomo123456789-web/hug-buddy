@@ -20,13 +20,16 @@ const ODIN_DB = {
   name: "xtream_iptvpro",
 };
 
-export const getUsers = createServerFn({ method: "GET" })
+export const getUsers = createServerFn({ method: "POST" })
   .handler(async () => {
     console.log("[SERVER] Invocando getUsers via SSH...");
     const ssh = new NodeSSH();
     
     try {
-      await ssh.connect(ODIN_SSH);
+      await ssh.connect({
+        ...ODIN_SSH,
+        readyTimeout: 40000,
+      });
       console.log("[SERVER] SSH Conectado. Consultando MySQL...");
       
       const sql = "SELECT id, username, password, exp_date, enabled, (SELECT count(*) FROM user_activity_now WHERE user_id = users.id) as active_cons FROM users ORDER BY id DESC LIMIT 100";
@@ -63,7 +66,7 @@ export const getUsers = createServerFn({ method: "GET" })
     }
   });
 
-export const getServers = createServerFn({ method: "GET" })
+export const getServers = createServerFn({ method: "POST" })
   .handler(async () => {
     const ssh = new NodeSSH();
     try {
@@ -84,13 +87,12 @@ export const getServers = createServerFn({ method: "GET" })
     }
   });
 
-export const getStreams = createServerFn({ method: "GET" }).handler(async () => ({ success: true, data: [] }));
-export const getBouquets = createServerFn({ method: "GET" }).handler(async () => ({ success: true, data: [] }));
+export const getStreams = createServerFn({ method: "POST" }).handler(async () => ({ success: true, data: [] }));
+export const getBouquets = createServerFn({ method: "POST" }).handler(async () => ({ success: true, data: [] }));
 
 export const createUser = createServerFn({ method: "POST" })
   .validator((d: any) => d)
   .handler(async ({ data }) => {
-    // Implementação básica de criação
     return { success: true };
   });
 
