@@ -26,6 +26,7 @@ async function withSsh<T>(
   const ssh = new NodeSSH();
   
   try {
+    console.log(`[SSH CONNECTING] Host: ${connection.host}:${connection.port} as ${connection.username}`);
     // Timeout e keepalive agressivos para evitar interrupções de socket
     await ssh.connect({
       host: connection.host,
@@ -33,9 +34,13 @@ async function withSsh<T>(
       username: connection.username,
       password: connection.password,
       readyTimeout: 120000, 
-      keepaliveInterval: 10000,
+      keepaliveInterval: 5000,
       keepaliveCountMax: 30,
-      debug: (msg: string) => console.log(`[SSH DEBUG] ${msg}`)
+      debug: (msg: string) => {
+        if (msg.includes('Successfully authenticated')) {
+           console.log(`[SSH AUTH SUCCESS] ${connection.host}`);
+        }
+      }
 
     });
     
@@ -61,7 +66,7 @@ function execMysql(ssh: NodeSSH, cfg: ReturnType<typeof getOdinConfig>, sql: str
   const command =
     [
       "mysql",
-      "-h", cfg.dbHost,
+      "-h", "127.0.0.1",
       "-P", String(cfg.dbPort),
       "-u", cfg.dbUsername,
       `-p'${escapeSql(cfg.dbPassword)}'`,
