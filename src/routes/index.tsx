@@ -7,14 +7,16 @@ import {
   RefreshCw,
   Activity,
   Monitor,
-  Database,
-  PlusCircle
+  Database
 } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { getOdinConfig } from "@/lib/odin";
 import { useOdinData, useHydrated } from "@/hooks/use-odin";
 import { NavItem } from "@/components/dashboard/NavItem";
 import { StatCard } from "@/components/dashboard/StatCard";
+import { CustomerList } from "@/components/dashboard/CustomerList";
+import { UserModal } from "@/components/dashboard/UserModal";
+import { User } from "@/types/odin";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -37,7 +39,19 @@ function DashboardPage() {
   const { odin } = Route.useLoaderData();
   const hydrated = useHydrated();
   const [view, setView] = React.useState<'dashboard' | 'customers' | 'servers' | 'streams'>('dashboard');
-  const { loading, customers, streams, servers, stats, fetchAll } = useOdinData();
+  const [showUserModal, setShowUserModal] = React.useState(false);
+  const [editingUser, setEditingUser] = React.useState<User | null>(null);
+  
+  const { 
+    loading, 
+    customers, 
+    streams, 
+    servers, 
+    bouquets,
+    stats, 
+    fetchAll,
+    actions 
+  } = useOdinData();
 
   React.useEffect(() => {
     if (hydrated) {
@@ -45,7 +59,83 @@ function DashboardPage() {
     }
   }, [hydrated, view]);
 
+  const handleDeleteUser = async (user: User) => {
+    if (!user.id || !confirm(`Deseja realmente excluir ${user.username}?`)) return;
+    try {
+      const res = await actions.deleteUser({ data: { id: user.id } });
+      if (res.success) {
+        toast.success("Usuário removido");
+        fetchAll();
+      }
+    } catch (e) {
+      toast.error("Erro ao remover usuário");
+    }
+  };
+
+  const handleSaveUser = async (userData: User) => {
+    try {
+      const exp_date = Math.floor(Date.now() / 1000) + (userData.exp_days * 86400);
+      const data = {
+        ...userData,
+        exp_date,
+        // Garantir tipos para o Odin
+        enabled: userData.enabled ? 1 : 0,
+        admin_enabled: userData.admin_enabled ? 1 : 0,
+        is_trial: userData.is_trial ? 1 : 0,
+        is_restreamer: userData.is_restreamer ? 1 : 0,
+        is_isplock: userData.is_isplock ? 1 : 0,
+      };
+
+      let res;
+      if (editingUser?.id) {
+        res = await actions.updateUser({ data: { ...data, id: editingUser.id } as any });
+      } else {
+        res = await actions.createUser({ data: data as any });
+      }
+
+      if (res.success) {
+        toast.success(editingUser ? "Atualizado!" : "Criado!");
+        setShowUserModal(false);
+        setEditingUser(null);
+        fetchAll();
+      } else {
+        toast.error("Erro Odin: " + (res as any).error);
+      }
+    } catch (e) {
+      toast.error("Falha na comunicação");
+    }
+  };
+
+  const handleToggleStatus = async (user: User) => {
+    if (!user.id) return;
+    try {
+      const res = await actions.toggleStatus({ 
+        data: { id: user.id, enabled: user.enabled === 1 ? 0 : 1 } 
+      });
+      if (res.success) {
+        toast.success("Estado alterado");
+        fetchAll();
+      }
+    } catch (e) {
+      toast.error("Erro ao alterar estado");
+    }
+  };
+
+  const handleKillConnections = async (user: User) => {
+    if (!user.id) return;
+    try {
+      const res = await actions.killConnections({ data: { id: user.id } });
+      if (res.success) {
+        toast.success("Conexões derrubadas");
+        fetchAll();
+      }
+    } catch (e) {
+      toast.error("Erro ao derrubar conexões");
+    }
+  };
+
   if (!hydrated) return null;
+
 
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans">
@@ -100,10 +190,28 @@ function DashboardPage() {
           )}
 
           {view === 'customers' && (
-             <div className="text-zinc-500 italic">Componente de clientes sendo refatorado...</div>
+             <CustomerList 
+               customers={customers}
+               loading={loading}
+               onRefresh={fetchAll}
+               onAdd={() => { setEditingUser(null); setShowUserModal(true); }}
+               onEdit={(user) => { setEditingUser(user); setShowUserModal(true); }}
+               onDelete={handleDeleteUser}
+               onToggleStatus={handleToggleStatus}
+               onKill={handleKillConnections}
+             />
           )}
         </main>
       </div>
+
+      {showUserModal && (
+        <UserModal 
+          user={editingUser}
+          bouquets={bouquets}
+          onClose={() => { setShowUserModal(false); setEditingUser(null); }}
+          onSave={handleSaveUser}
+        />
+      )}
     </div>
   );
 }
