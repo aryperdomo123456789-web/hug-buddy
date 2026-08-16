@@ -32,7 +32,7 @@ async function executeQuery(sql: string) {
       password: ODIN_SSH.password,
       readyTimeout: 60000,
       keepaliveInterval: 10000,
-      debug: (msg) => console.log(`[SSH DEBUG] ${msg}`)
+      debug: (msg: any) => console.log(`[SSH DEBUG] ${msg}`)
     });
     
     // -N: skip headers, -s: silent/raw output
