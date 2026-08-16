@@ -155,10 +155,10 @@ function DashboardPage() {
             <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em] mt-1">Odin v6 Engine</div>
           </div>
           
-          <NavItem icon={LayoutDashboard} label="Dashboard" active={view === 'dashboard'} onClick={() => setView('dashboard')} />
-          <NavItem icon={Users} label="Clientes" active={view === 'customers'} onClick={() => setView('customers')} />
-          <NavItem icon={Monitor} label="Streams" active={view === 'streams'} onClick={() => setView('streams')} />
-          <NavItem icon={ServerIcon} label="Servidores" active={view === 'servers'} onClick={() => setView('servers')} />
+          <NavItem icon={LayoutDashboard} label="Dashboard" active={view === 'dashboard'} onClick={() => { console.log("Nav to dashboard"); setView('dashboard'); }} />
+          <NavItem icon={Users} label="Clientes" active={view === 'customers'} onClick={() => { console.log("Nav to customers"); setView('customers'); }} />
+          <NavItem icon={Monitor} label="Streams" active={view === 'streams'} onClick={() => { console.log("Nav to streams"); setView('streams'); }} />
+          <NavItem icon={ServerIcon} label="Servidores" active={view === 'servers'} onClick={() => { console.log("Nav to servers"); setView('servers'); }} />
           
           <div className="mt-20 pt-10 border-t border-zinc-900 px-4">
             <div className="flex items-center gap-3 text-zinc-500 mb-6">
