@@ -55,11 +55,13 @@ function DashboardPage() {
   } = useOdinData();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchAll(true);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    if (hydrated) {
+      const timer = setTimeout(() => {
+        fetchAll(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [hydrated]);
 
   const handleDeleteUser = async (user: User) => {
     if (!user.id || !confirm(`Deseja realmente excluir ${user.username}?`)) return;
