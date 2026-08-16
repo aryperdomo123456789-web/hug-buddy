@@ -151,9 +151,9 @@ export const getOdinFullData = createServerFn({ method: "GET" })
     try {
       const queries = [
         "SELECT id, username, password, exp_date, enabled, (SELECT COUNT(*) FROM user_activity_now WHERE user_id = users.id) as active_cons FROM users ORDER BY id DESC LIMIT 100",
-        "SELECT id, stream_display_name, category_id, stream_icon, stream_source, stream_status FROM streams LIMIT 100",
+        "SELECT id, stream_display_name, category_id, stream_icon, stream_source, 1 as stream_status FROM streams LIMIT 100",
         "SELECT id, bouquet_name FROM bouquets",
-        "SELECT id, server_name, status, last_check FROM streaming_servers"
+        "SELECT id, server_name, status, 0 as last_check FROM streaming_servers"
       ];
 
       const [uRaw, stRaw, bRaw, svRaw] = await executeBatchQueries(queries);
