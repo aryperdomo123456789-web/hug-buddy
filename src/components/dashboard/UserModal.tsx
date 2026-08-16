@@ -12,7 +12,10 @@ interface UserModalProps {
 export function UserModal({ user, bouquets, onClose, onSave }: UserModalProps) {
   const [activeTab, setActiveTab] = React.useState<'details' | 'advanced' | 'restrictions' | 'bouquets'>('details');
   const [formData, setFormData] = React.useState<User>(() => {
-    if (user) return { ...user, exp_days: user.exp_date ? Math.max(0, Math.ceil((user.exp_date - Date.now() / 1000) / 86400)) : 30 };
+    if (user) {
+      const exp_days = user.exp_date ? Math.max(0, Math.ceil((user.exp_date - Date.now() / 1000) / 86400)) : 30;
+      return { ...user, exp_days };
+    }
     return UserSchema.parse({});
   });
 
