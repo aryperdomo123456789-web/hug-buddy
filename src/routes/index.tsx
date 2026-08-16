@@ -56,12 +56,18 @@ function DashboardPage() {
 
 
   React.useEffect(() => {
+    console.log("[Dashboard] Initial fetch timer starting...");
     const timer = setTimeout(() => {
-      fetchAll(true);
-    }, 1500);
+      console.log("[Dashboard] Triggering initial fetchAll...");
+      fetchAll(true).catch(e => {
+        console.error("[Dashboard] fetchAll error:", e);
+        toast.error("Erro ao carregar dados iniciais");
+      });
+    }, 2000);
     
     return () => clearTimeout(timer);
   }, []);
+
 
   const handleDeleteUser = async (user: User) => {
     if (!user.id || !confirm(`Deseja realmente excluir ${user.username}?`)) return;
