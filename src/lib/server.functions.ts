@@ -25,9 +25,9 @@ async function executeBatchQueries(queries: string[]) {
       port: cfg.sshPort,
       username: cfg.sshUsername,
       password: cfg.sshPassword,
-      readyTimeout: 10000, // Faster timeout to prevent blocking
-      keepaliveInterval: 2000,
-      keepaliveCountMax: 2,
+      readyTimeout: 30000, // Aumentado para lidar com latência maior
+      keepaliveInterval: 5000,
+      keepaliveCountMax: 3,
       compress: true,
     });
     
@@ -36,7 +36,7 @@ async function executeBatchQueries(queries: string[]) {
       const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
       
       // Use timeout command inside the shell instead of the library option
-      const remoteCmd = `timeout 8s ${mysqlCmd}`;
+      const remoteCmd = `timeout 15s ${mysqlCmd}`;
       const result = await ssh.execCommand(remoteCmd);
       
       if (result.code !== 0) {
