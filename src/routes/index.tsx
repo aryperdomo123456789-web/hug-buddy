@@ -171,7 +171,7 @@ function DashboardPage() {
             <h1 className="text-3xl font-bold uppercase tracking-tighter">{view}</h1>
             <div className="flex items-center gap-4">
               <button 
-                onClick={fetchAll}
+                onClick={() => fetchAll(false)}
                 disabled={loading}
                 className="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-blue-400 transition-all border border-zinc-800"
                 title="Sincronizar Agora"
