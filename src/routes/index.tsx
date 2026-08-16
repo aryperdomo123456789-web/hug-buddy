@@ -155,17 +155,22 @@ function Dashboard() {
   const toggleStatusFn = useServerFn(toggleUserStatus);
 
   const handleFetchUsers = async () => {
+    if (loading) return;
     setLoading(true);
     try {
-      // Sequencial para evitar 'aborted' por múltiplas conexões SSH
+      // Chamadas sequenciais para estabilidade SSH
       const uRes = await fetchUsersFn();
-      if (uRes.success) setCustomers(uRes.data || []);
+      if (uRes.success) {
+        setCustomers(uRes.data || []);
+      } else {
+        toast.error("Erro Odin: " + uRes.error);
+      }
       
       const bRes = await fetchBouquetsFn();
       if (bRes.success) setBouquets(bRes.data || []);
     } catch (e) { 
       console.error("Erro ao carregar clientes:", e);
-      toast.error("Erro ao carregar dados dos clientes"); 
+      toast.error("Falha na conexão com o servidor"); 
     } finally { 
       setLoading(false); 
     }

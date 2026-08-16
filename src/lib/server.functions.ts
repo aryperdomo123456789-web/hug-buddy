@@ -220,7 +220,7 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
             "LEFT JOIN user_activity_now uan ON u.id = uan.user_id",
             "GROUP BY u.id",
             "ORDER BY u.id DESC",
-            "LIMIT 100",
+            "LIMIT 50",
           ].join(" "),
         );
 
@@ -562,7 +562,7 @@ export const getStreams = createServerFn({ method: "GET" }).handler(async () => 
           "LEFT JOIN streams_sys sys ON s.id = sys.stream_id",
           "WHERE s.type = 1",
           "ORDER BY s.id DESC",
-          "LIMIT 100",
+          "LIMIT 50",
         ].join(" "),
       );
 
