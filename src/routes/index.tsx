@@ -210,7 +210,7 @@ function DashboardPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard label="Clientes Totais" value={stats.totalUsers} icon={Users} color="blue" />
                 <StatCard label="Usuários Online" value={stats.onlineUsers} icon={Activity} color="green" />
-                <StatCard label="Streams Ativas" value={`${stats.activeStreams}/${stats.totalStreams}`} icon={Monitor} color="purple" />
+                <StatCard label="Streams Ativas" value={stats.totalStreams > 0 ? `${stats.activeStreams}/${stats.totalStreams}` : "0/0"} icon={Monitor} color="purple" />
                 <StatCard label="Servidores" value={stats.totalServers} icon={ServerIcon} color="blue" />
               </div>
             )}
