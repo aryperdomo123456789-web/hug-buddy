@@ -149,6 +149,8 @@ function DashboardPage() {
     );
   }
 
+  console.log("Rendering Dashboard, stats:", stats);
+
 
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans">
