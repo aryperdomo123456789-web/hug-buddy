@@ -26,15 +26,15 @@ async function withSsh<T>(
   const ssh = new NodeSSH();
   
   try {
-    // Timeout e keepalive configurados para evitar 'aborted'
+    // Timeout e keepalive agressivos para evitar interrupções de socket
     await ssh.connect({
       host: connection.host,
       port: connection.port,
       username: connection.username,
       password: connection.password,
-      readyTimeout: 60000, 
-      keepaliveInterval: 10000,
-      keepaliveCountMax: 10
+      readyTimeout: 90000, 
+      keepaliveInterval: 5000,
+      keepaliveCountMax: 20
     });
     
     // Executa a tarefa com a conexão ativa

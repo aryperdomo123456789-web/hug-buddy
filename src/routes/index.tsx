@@ -56,9 +56,11 @@ function DashboardPage() {
   React.useEffect(() => {
     if (!hydrated) return;
 
+    // Aumentar o delay inicial para garantir que o React se estabilize 
+    // e o usuário veja o esqueleto do dashboard antes da carga pesada.
     const timer = setTimeout(() => {
       fetchAll(true);
-    }, 500);
+    }, 1500);
     
     return () => clearTimeout(timer);
   }, [hydrated]);
@@ -138,7 +140,14 @@ function DashboardPage() {
     }
   };
 
-  if (!hydrated) return null;
+  if (!hydrated) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0c] flex flex-col items-center justify-center text-zinc-500">
+        <div className="w-12 h-12 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-4" />
+        <div className="text-[10px] uppercase font-bold tracking-[0.3em] animate-pulse">Iniciando Sistema Odin...</div>
+      </div>
+    );
+  }
 
 
   return (

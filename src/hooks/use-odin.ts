@@ -38,26 +38,30 @@ export function useOdinData() {
     
     if (!quiet) setLoading(true);
     try {
-      // Chamadas sequenciais com delay para evitar sobrecarga do servidor Odin e socket 'aborted'
-      const uRes = await fetchUsersFn();
+      // Carregamento progressivo para evitar timeout global e mostrar dados assim que chegarem
+      const uRes = await fetchUsersFn().catch(e => ({ success: false, error: e.message }));
       if (uRes.success && 'data' in uRes) setCustomers(uRes.data as any);
-      await new Promise(r => setTimeout(r, 400));
       
-      const sRes = await fetchServersFn();
+      // Delay entre chamadas para não saturar o túnel SSH
+      await new Promise(r => setTimeout(r, 800));
+      
+      const sRes = await fetchServersFn().catch(e => ({ success: false, error: e.message }));
       if (sRes.success && 'data' in sRes) setServers(sRes.data || []);
-      await new Promise(r => setTimeout(r, 400));
       
-      const stRes = await fetchStreamsFn();
+      await new Promise(r => setTimeout(r, 800));
+      
+      const stRes = await fetchStreamsFn().catch(e => ({ success: false, error: e.message }));
       if (stRes.success && 'data' in stRes) setStreams(stRes.data || []);
-      await new Promise(r => setTimeout(r, 400));
       
-      const bRes = await fetchBouquetsFn();
+      await new Promise(r => setTimeout(r, 800));
+      
+      const bRes = await fetchBouquetsFn().catch(e => ({ success: false, error: e.message }));
       if (bRes.success && 'data' in bRes) setBouquets(bRes.data || []);
+      
     } catch (e: any) {
-      console.error("Erro ao carregar dados do Odin:", e);
-      if (!quiet) toast.error("Erro na comunicação com o servidor: " + (e.message || "Desconhecido"));
+      console.error("Erro crítico ao carregar dados do Odin:", e);
     } finally {
-      if (!quiet) setLoading(false);
+      setLoading(false);
       isFetching.current = false;
     }
   };
