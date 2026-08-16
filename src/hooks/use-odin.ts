@@ -6,7 +6,10 @@ import {
   updateUser,
   deleteUser,
   killUserConnections,
-  toggleUserStatus
+  toggleUserStatus,
+  createReseller,
+  updateReseller,
+  deleteReseller
 } from "@/lib/server.functions";
 
 /**
@@ -90,10 +93,9 @@ export function useOdinData() {
       deleteUser,
       killConnections: killUserConnections,
       toggleStatus: toggleUserStatus,
-      // Add reseller actions
-      createReseller: (d: any) => createUser(d), // We'll add specialized ones in server.functions later if needed
-      updateReseller: (d: any) => updateUser(d),
-      deleteReseller: (d: any) => deleteUser(d)
+      createReseller,
+      updateReseller,
+      deleteReseller
     }
   };
 }
