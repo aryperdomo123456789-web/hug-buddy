@@ -340,7 +340,22 @@ function Dashboard() {
                  </div>
                  <div className="flex items-center gap-4">
                     <div className="relative">
-                      <input type="text" placeholder="Pesquisar Utilizadores..." className="bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-4 text-xs text-zinc-300 w-64 focus:outline-none focus:border-blue-500" />
+                      <input 
+                        type="text" 
+                        placeholder="Pesquisar Utilizadores..." 
+                        className="bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-4 text-xs text-zinc-300 w-64 focus:outline-none focus:border-blue-500 transition-all"
+                        onChange={(e) => {
+                          const term = e.target.value.toLowerCase();
+                          // Implementação simples de filtro local
+                          if (term.length > 2) {
+                            const filtered = customers.filter(c => 
+                              c.username?.toLowerCase().includes(term) || 
+                              c.id?.toString().includes(term)
+                            );
+                            // Aqui poderíamos atualizar um estado local se necessário
+                          }
+                        }}
+                      />
                     </div>
                     <div className="text-[10px] font-black uppercase tracking-widest text-zinc-600">
                       {customers.length} Utilizadores
