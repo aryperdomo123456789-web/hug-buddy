@@ -33,12 +33,19 @@ export function useOdinData() {
     if (!quiet) setLoading(true);
 
     try {
-      const response = await getOdinFullData();
+      // Set a hard timeout for the client-side request
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Timeout")), 25000)
+      );
+      
+      const response = await Promise.race([
+        getOdinFullData(),
+        timeoutPromise
+      ]) as any;
       
       if (response?.success && response.data) {
         const { customers, streams, bouquets, servers, resellers } = response.data;
         
-        // Batched state updates for performance
         setCustomers(customers || []);
         setStreams(streams || []);
         setBouquets(bouquets || []);
@@ -47,10 +54,16 @@ export function useOdinData() {
         
         lastFetch.current = Date.now();
       } else if (!quiet) {
-        toast.error(response?.error || "Erro ao carregar dados do servidor");
+        toast.error(response?.error || "Erro ao conectar com o servidor. Verifique a conexão.");
       }
     } catch (e: any) {
-      if (!quiet) toast.error("Falha na comunicação com o servidor");
+      if (!quiet) {
+        if (e.message === "Timeout") {
+          toast.error("O servidor demorou muito para responder. Tente novamente.");
+        } else {
+          toast.error("Erro na comunicação com o backend.");
+        }
+      }
     } finally {
       setLoading(false);
       isFetching.current = false;
