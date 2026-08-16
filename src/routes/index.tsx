@@ -7,7 +7,8 @@ import {
   RefreshCw,
   Activity,
   Monitor,
-  Database
+  Database,
+  Globe
 } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { getOdinConfig } from "@/lib/odin";
@@ -17,6 +18,7 @@ import { CustomerList } from "@/components/dashboard/CustomerList";
 import { UserModal } from "@/components/dashboard/UserModal";
 import { ServerList } from "@/components/dashboard/ServerList";
 import { StreamList } from "@/components/dashboard/StreamList";
+import { DnsPanel } from "@/components/dashboard/DnsPanel";
 import { User } from "@/types/odin";
 import { toast } from "sonner";
 
@@ -150,6 +152,7 @@ function DashboardPage() {
     { id: 'customers', label: 'Clientes', icon: Users },
     { id: 'streams', label: 'Streams', icon: Monitor },
     { id: 'servers', label: 'Servidores', icon: ServerIcon },
+    { id: 'dns', label: 'DNS Profissional', icon: Globe },
   ];
 
   return (
@@ -207,7 +210,8 @@ function DashboardPage() {
               {activeTab === 'dashboard' ? 'Dashboard' : 
                activeTab === 'customers' ? 'Clientes' : 
                activeTab === 'streams' ? 'Streams' : 
-               activeTab === 'servers' ? 'Servidores' : ''}
+                active_tab === 'servers' ? 'Servidores' : 
+                active_tab === 'dns' ? 'DNS Profissional' : ''}
             </h1>
             <button 
               onClick={() => fetchAll(false)}
@@ -255,6 +259,8 @@ function DashboardPage() {
                 loading={loading}
                 onRefresh={() => fetchAll(false)}
               />
+            {activeTab === 'dns' && (
+              <DnsPanel />
             )}
           </div>
         </main>
