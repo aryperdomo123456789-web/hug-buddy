@@ -42,10 +42,16 @@ export function useOdinData() {
         toast.error(`Falha no banco de dados: ${uRes.error}`);
       }
 
-      // 2. Carregar Servidores
-      const sRes = await getServers();
-      if (sRes?.success && Array.isArray(sRes.data)) {
-        setServers(sRes.data);
+      // 3. Carregar Streams
+      const stRes = await getStreams();
+      if (stRes?.success && Array.isArray(stRes.data)) {
+        setStreams(stRes.data);
+      }
+
+      // 4. Carregar Bouquets
+      const bRes = await getBouquets();
+      if (bRes?.success && Array.isArray(bRes.data)) {
+        setBouquets(bRes.data);
       }
 
     } catch (e: any) {
