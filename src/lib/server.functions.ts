@@ -119,10 +119,88 @@ export const getBouquets = createServerFn({ method: "GET" })
     }
   });
 
-export const createUser = createServerFn({ method: "POST" }).validator((d: any) => d).handler(async () => ({ success: true }));
-export const updateUser = createServerFn({ method: "POST" }).validator((d: any) => d).handler(async () => ({ success: true }));
-export const deleteUser = createServerFn({ method: "POST" }).validator((d: any) => d).handler(async () => ({ success: true }));
-export const toggleUserStatus = createServerFn({ method: "POST" }).validator((d: any) => d).handler(async () => ({ success: true }));
-export const killUserConnections = createServerFn({ method: "POST" }).validator((d: any) => d).handler(async () => ({ success: true }));
+export const createUser = createServerFn({ method: "POST" })
+  .validator((d: any) => d)
+  .handler(async ({ data }) => {
+    const ssh = new NodeSSH();
+    try {
+      await ssh.connect({ ...ODIN_SSH, readyTimeout: 30000 });
+      const sql = `INSERT INTO users (username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet) VALUES ('${data.username}', '${data.password}', ${data.exp_date}, ${data.enabled}, ${data.admin_enabled}, ${data.is_trial}, ${data.is_restreamer}, ${data.is_isplock}, ${data.max_connections || 1}, '${JSON.stringify(data.bouquet || [])}')`;
+      const command = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -e "${sql}"`;
+      await ssh.execCommand(command);
+      ssh.dispose();
+      return { success: true };
+    } catch (e: any) {
+      if (ssh.isConnected()) ssh.dispose();
+      return { success: false, error: e.message };
+    }
+  });
+
+export const updateUser = createServerFn({ method: "POST" })
+  .validator((d: any) => d)
+  .handler(async ({ data }) => {
+    const ssh = new NodeSSH();
+    try {
+      await ssh.connect({ ...ODIN_SSH, readyTimeout: 30000 });
+      const sql = `UPDATE users SET username='${data.username}', password='${data.password}', exp_date=${data.exp_date}, enabled=${data.enabled}, admin_enabled=${data.admin_enabled}, max_connections=${data.max_connections || 1}, bouquet='${JSON.stringify(data.bouquet || [])}' WHERE id=${data.id}`;
+      const command = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -e "${sql}"`;
+      await ssh.execCommand(command);
+      ssh.dispose();
+      return { success: true };
+    } catch (e: any) {
+      if (ssh.isConnected()) ssh.dispose();
+      return { success: false, error: e.message };
+    }
+  });
+
+export const deleteUser = createServerFn({ method: "POST" })
+  .validator((d: any) => d)
+  .handler(async ({ data }) => {
+    const ssh = new NodeSSH();
+    try {
+      await ssh.connect({ ...ODIN_SSH, readyTimeout: 30000 });
+      const command = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -e "DELETE FROM users WHERE id=${data.id}"`;
+      await ssh.execCommand(command);
+      ssh.dispose();
+      return { success: true };
+    } catch (e: any) {
+      if (ssh.isConnected()) ssh.dispose();
+      return { success: false, error: e.message };
+    }
+  });
+
+export const toggleUserStatus = createServerFn({ method: "POST" })
+  .validator((d: any) => d)
+  .handler(async ({ data }) => {
+    const ssh = new NodeSSH();
+    try {
+      await ssh.connect({ ...ODIN_SSH, readyTimeout: 30000 });
+      const command = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -e "UPDATE users SET enabled=${data.enabled} WHERE id=${data.id}"`;
+      await ssh.execCommand(command);
+      ssh.dispose();
+      return { success: true };
+    } catch (e: any) {
+      if (ssh.isConnected()) ssh.dispose();
+      return { success: false, error: e.message };
+    }
+  });
+
+export const killUserConnections = createServerFn({ method: "POST" })
+  .validator((d: any) => d)
+  .handler(async ({ data }) => {
+    const ssh = new NodeSSH();
+    try {
+      await ssh.connect({ ...ODIN_SSH, readyTimeout: 30000 });
+      // No Odin v6, o kill é feito removendo da user_activity_now
+      const command = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -e "DELETE FROM user_activity_now WHERE user_id=${data.id}"`;
+      await ssh.execCommand(command);
+      ssh.dispose();
+      return { success: true };
+    } catch (e: any) {
+      if (ssh.isConnected()) ssh.dispose();
+      return { success: false, error: e.message };
+    }
+  });
+
 export const getInstallScript = createServerFn({ method: "GET" }).handler(async () => "bash <(curl -sSL https://mago.panel/api/install)");
 export const generateBashScript = (t: string, h: string) => `#!/bin/bash\necho "Mago API token: ${t}"`;
