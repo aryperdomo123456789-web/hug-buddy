@@ -25,27 +25,30 @@ async function withSsh<T>(
   const cfg = getOdinConfig();
   const ssh = new NodeSSH();
   
-  // Timeout mais longo para o handshake inicial
-  const connectPromise = ssh.connect({
-    host: connection.host,
-    port: connection.port,
-    username: connection.username,
-    password: connection.password,
-    readyTimeout: 30000, 
-    keepaliveInterval: 5000,
-  });
-
   try {
-    await connectPromise;
-    return await task(ssh, cfg);
+    // Timeout e keepalive configurados para evitar 'aborted'
+    await ssh.connect({
+      host: connection.host,
+      port: connection.port,
+      username: connection.username,
+      password: connection.password,
+      readyTimeout: 30000, 
+      keepaliveInterval: 5000,
+      keepaliveCountMax: 3
+    });
+    
+    // Executa a tarefa com a conexão ativa
+    const result = await task(ssh, cfg);
+    return result;
   } catch (error) {
     console.error(`[SSH ERROR] Host: ${connection.host}:`, error);
     throw error;
   } finally {
     try {
-      // Pequeno delay antes de fechar para garantir flush de streams
-      await new Promise(resolve => setTimeout(resolve, 100));
-      ssh.dispose();
+      if (ssh.isConnected()) {
+        await new Promise(resolve => setTimeout(resolve, 150));
+        ssh.dispose();
+      }
     } catch (e) {
       console.warn("[SSH DISPOSE ERROR]:", e);
     }
@@ -217,7 +220,7 @@ export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
             "LEFT JOIN user_activity_now uan ON u.id = uan.user_id",
             "GROUP BY u.id",
             "ORDER BY u.id DESC",
-            "LIMIT 100",
+            "LIMIT 50",
           ].join(" "),
         );
 
@@ -559,7 +562,7 @@ export const getStreams = createServerFn({ method: "GET" }).handler(async () => 
           "LEFT JOIN streams_sys sys ON s.id = sys.stream_id",
           "WHERE s.type = 1",
           "ORDER BY s.id DESC",
-          "LIMIT 100",
+          "LIMIT 50",
         ].join(" "),
       );
 

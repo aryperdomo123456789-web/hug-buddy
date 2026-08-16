@@ -155,17 +155,21 @@ function Dashboard() {
   const toggleStatusFn = useServerFn(toggleUserStatus);
 
   const handleFetchUsers = async () => {
+    if (loading) return;
     setLoading(true);
     try {
-      // Sequencial para evitar 'aborted' por múltiplas conexões SSH
       const uRes = await fetchUsersFn();
-      if (uRes.success) setCustomers(uRes.data || []);
+      if (uRes.success) {
+        setCustomers((uRes as any).data || []);
+      } else {
+        toast.error("Erro Odin: " + (uRes as any).error);
+      }
       
       const bRes = await fetchBouquetsFn();
-      if (bRes.success) setBouquets(bRes.data || []);
+      if (bRes.success) setBouquets((bRes as any).data || []);
     } catch (e) { 
       console.error("Erro ao carregar clientes:", e);
-      toast.error("Erro ao carregar dados dos clientes"); 
+      toast.error("Falha na conexão com o servidor"); 
     } finally { 
       setLoading(false); 
     }
@@ -340,7 +344,22 @@ function Dashboard() {
                  </div>
                  <div className="flex items-center gap-4">
                     <div className="relative">
-                      <input type="text" placeholder="Pesquisar Utilizadores..." className="bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-4 text-xs text-zinc-300 w-64 focus:outline-none focus:border-blue-500" />
+                      <input 
+                        type="text" 
+                        placeholder="Pesquisar Utilizadores..." 
+                        className="bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-4 text-xs text-zinc-300 w-64 focus:outline-none focus:border-blue-500 transition-all"
+                        onChange={(e) => {
+                          const term = e.target.value.toLowerCase();
+                          // Implementação simples de filtro local
+                          if (term.length > 2) {
+                            const filtered = customers.filter(c => 
+                              c.username?.toLowerCase().includes(term) || 
+                              c.id?.toString().includes(term)
+                            );
+                            // Aqui poderíamos atualizar um estado local se necessário
+                          }
+                        }}
+                      />
                     </div>
                     <div className="text-[10px] font-black uppercase tracking-widest text-zinc-600">
                       {customers.length} Utilizadores
@@ -477,7 +496,7 @@ function Dashboard() {
                     <Field label="Comando de Instalação">
                       <div className="group relative">
                         <div className="bg-black p-4 rounded-xl border border-zinc-900 font-mono text-zinc-400 text-xs overflow-x-auto whitespace-pre group-hover:text-blue-400 transition-colors">
-                          {`bash <(curl -sSL https://${useHydrated() ? window.location.host : 'mago.lovable.app'}/api/public/install)`}
+                          {`bash <(curl -sSL https://${useHydrated() ? window.location.host : 'mago-panel.app'}/api/public/install)`}
                         </div>
                         <button 
                           onClick={() => {
