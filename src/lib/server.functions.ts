@@ -32,9 +32,11 @@ async function withSsh<T>(
       port: connection.port,
       username: connection.username,
       password: connection.password,
-      readyTimeout: 90000, 
-      keepaliveInterval: 5000,
-      keepaliveCountMax: 20
+      readyTimeout: 120000, 
+      keepaliveInterval: 10000,
+      keepaliveCountMax: 30,
+      debug: (msg: string) => console.log(`[SSH DEBUG] ${msg}`)
+
     });
     
     // Executa a tarefa com a conexão ativa
