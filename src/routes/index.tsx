@@ -55,8 +55,14 @@ function DashboardPage() {
   } = useOdinData();
 
   useEffect(() => {
+    console.log("[DashboardPage] view initialized. Active tab:", activeTab);
     fetchAll(true);
   }, []);
+
+  const changeTab = (tab: any) => {
+    console.log("[DashboardPage] User requested tab change to:", tab);
+    setActiveTab(tab);
+  };
 
   const handleDeleteUser = async (user: User) => {
     if (!user.id || !confirm(`Deseja realmente excluir ${user.username}?`)) return;
@@ -135,7 +141,7 @@ function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans">
       <div className="flex gap-10">
-        <aside className="w-64 space-y-4">
+        <aside className="w-64 space-y-4 shrink-0">
           <div className="mb-10 px-4">
             <div className="text-2xl font-black text-blue-500 tracking-tighter flex items-center gap-2">
               <ShieldAlert size={32} /> MAGO PANEL
@@ -145,11 +151,12 @@ function DashboardPage() {
           
           <nav className="space-y-2">
             <button 
-              onClick={() => setActiveTab('dashboard')} 
+              type="button"
+              onClick={() => changeTab('dashboard')} 
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                 activeTab === 'dashboard' 
                   ? "bg-blue-600/10 text-blue-500 border border-blue-600/20" 
-                  : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
+                  : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 border border-transparent"
               }`}
             >
               <LayoutDashboard size={20} className={activeTab === 'dashboard' ? "text-blue-500" : "group-hover:text-zinc-300"} />
@@ -157,11 +164,12 @@ function DashboardPage() {
             </button>
             
             <button 
-              onClick={() => setActiveTab('customers')} 
+              type="button"
+              onClick={() => changeTab('customers')} 
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                 activeTab === 'customers' 
                   ? "bg-blue-600/10 text-blue-500 border border-blue-600/20" 
-                  : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
+                  : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 border border-transparent"
               }`}
             >
               <Users size={20} className={activeTab === 'customers' ? "text-blue-500" : "group-hover:text-zinc-300"} />
@@ -169,11 +177,12 @@ function DashboardPage() {
             </button>
             
             <button 
-              onClick={() => setActiveTab('streams')} 
+              type="button"
+              onClick={() => changeTab('streams')} 
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                 activeTab === 'streams' 
                   ? "bg-blue-600/10 text-blue-500 border border-blue-600/20" 
-                  : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
+                  : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 border border-transparent"
               }`}
             >
               <Monitor size={20} className={activeTab === 'streams' ? "text-blue-500" : "group-hover:text-zinc-300"} />
@@ -181,11 +190,12 @@ function DashboardPage() {
             </button>
             
             <button 
-              onClick={() => setActiveTab('servers')} 
+              type="button"
+              onClick={() => changeTab('servers')} 
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                 activeTab === 'servers' 
                   ? "bg-blue-600/10 text-blue-500 border border-blue-600/20" 
-                  : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
+                  : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 border border-transparent"
               }`}
             >
               <ServerIcon size={20} className={activeTab === 'servers' ? "text-blue-500" : "group-hover:text-zinc-300"} />
@@ -225,43 +235,51 @@ function DashboardPage() {
             </div>
           </div>
 
-          {activeTab === 'dashboard' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatCard label="Clientes Totais" value={stats.totalUsers} icon={Users} color="blue" />
-              <StatCard label="Usuários Online" value={stats.onlineUsers} icon={Activity} color="green" />
-              <StatCard label="Streams Ativas" value={`${stats.activeStreams}/${stats.totalStreams}`} icon={Monitor} color="purple" />
-              <StatCard label="Servidores" value={stats.totalServers} icon={ServerIcon} color="blue" />
-            </div>
-          )}
+          <div className="relative">
+            {activeTab === 'dashboard' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in duration-500">
+                <StatCard label="Clientes Totais" value={stats.totalUsers} icon={Users} color="blue" />
+                <StatCard label="Usuários Online" value={stats.onlineUsers} icon={Activity} color="green" />
+                <StatCard label="Streams Ativas" value={`${stats.activeStreams}/${stats.totalStreams}`} icon={Monitor} color="purple" />
+                <StatCard label="Servidores" value={stats.totalServers} icon={ServerIcon} color="blue" />
+              </div>
+            )}
 
-          {activeTab === 'customers' && (
-             <CustomerList 
-               customers={customers}
-               loading={loading}
-               onRefresh={() => fetchAll(false)}
-               onAdd={() => { setEditingUser(null); setShowUserModal(true); }}
-               onEdit={(user) => { setEditingUser(user); setShowUserModal(true); }}
-               onDelete={handleDeleteUser}
-               onToggleStatus={handleToggleStatus}
-               onKill={handleKillConnections}
-             />
-          )}
+            {activeTab === 'customers' && (
+              <div className="animate-in slide-in-from-bottom-2 duration-300">
+                <CustomerList 
+                  customers={customers}
+                  loading={loading}
+                  onRefresh={() => fetchAll(false)}
+                  onAdd={() => { setEditingUser(null); setShowUserModal(true); }}
+                  onEdit={(user) => { setEditingUser(user); setShowUserModal(true); }}
+                  onDelete={handleDeleteUser}
+                  onToggleStatus={handleToggleStatus}
+                  onKill={handleKillConnections}
+                />
+              </div>
+            )}
 
-          {activeTab === 'servers' && (
-            <ServerList 
-              servers={servers}
-              loading={loading}
-              onRefresh={() => fetchAll(false)}
-            />
-          )}
+            {activeTab === 'servers' && (
+              <div className="animate-in slide-in-from-bottom-2 duration-300">
+                <ServerList 
+                  servers={servers}
+                  loading={loading}
+                  onRefresh={() => fetchAll(false)}
+                />
+              </div>
+            )}
 
-          {activeTab === 'streams' && (
-            <StreamList 
-              streams={streams}
-              loading={loading}
-              onRefresh={() => fetchAll(false)}
-            />
-          )}
+            {activeTab === 'streams' && (
+              <div className="animate-in slide-in-from-bottom-2 duration-300">
+                <StreamList 
+                  streams={streams}
+                  loading={loading}
+                  onRefresh={() => fetchAll(false)}
+                />
+              </div>
+            )}
+          </div>
         </main>
       </div>
 
