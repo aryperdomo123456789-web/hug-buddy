@@ -1,12 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { NodeSSH } from "node-ssh";
 
-/**
- * Módulo de Funções de Servidor para o Mago Panel.
- * Centraliza toda a lógica que exige privilégios de servidor ou conexão SSH.
- */
-
-// Configuração estática do servidor Odin Lab
 const ODIN_SSH = {
   host: "23.158.72.30",
   port: 22,
@@ -20,7 +14,7 @@ const ODIN_DB = {
   name: "xtream_iptvpro",
 };
 
-export const getUsers = createServerFn({ method: "POST" })
+export const getUsers = createServerFn({ method: "GET" })
   .handler(async () => {
     console.log("[SERVER] Invocando getUsers via SSH...");
     const ssh = new NodeSSH();
@@ -28,21 +22,16 @@ export const getUsers = createServerFn({ method: "POST" })
     try {
       await ssh.connect({
         ...ODIN_SSH,
-        readyTimeout: 40000,
+        readyTimeout: 60000,
       });
-      console.log("[SERVER] SSH Conectado. Consultando MySQL...");
       
       const sql = "SELECT id, username, password, exp_date, enabled, (SELECT count(*) FROM user_activity_now WHERE user_id = users.id) as active_cons FROM users ORDER BY id DESC LIMIT 100";
-      
       const command = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -N -s -e "${sql}"`;
       const result = await ssh.execCommand(command);
       
       ssh.dispose();
       
-      if (result.code !== 0) {
-        console.error("[SERVER] Erro MySQL:", result.stderr);
-        throw new Error(result.stderr);
-      }
+      if (result.code !== 0) throw new Error(result.stderr);
       
       const rows = result.stdout.trim().split("\n").filter(Boolean).map(line => {
         const [id, username, password, exp_date, enabled, active_cons] = line.split("\t");
@@ -56,17 +45,15 @@ export const getUsers = createServerFn({ method: "POST" })
         };
       });
       
-      console.log(`[SERVER] Sucesso: ${rows.length} usuários encontrados.`);
       return { success: true, data: rows };
-      
     } catch (error: any) {
-      console.error("[SERVER] Erro crítico em getUsers:", error.message);
+      console.error("[SERVER] Erro:", error.message);
       if (ssh.isConnected()) ssh.dispose();
       return { success: false, error: error.message };
     }
   });
 
-export const getServers = createServerFn({ method: "POST" })
+export const getServers = createServerFn({ method: "GET" })
   .handler(async () => {
     const ssh = new NodeSSH();
     try {
@@ -75,7 +62,6 @@ export const getServers = createServerFn({ method: "POST" })
       const command = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -N -s -e "${sql}"`;
       const result = await ssh.execCommand(command);
       ssh.dispose();
-      
       const rows = result.stdout.trim().split("\n").filter(Boolean).map(line => {
         const [id, name, status, last] = line.split("\t");
         return { id, name, status: Number(status), last_check: Number(last) };
@@ -87,29 +73,12 @@ export const getServers = createServerFn({ method: "POST" })
     }
   });
 
-export const getStreams = createServerFn({ method: "POST" }).handler(async () => ({ success: true, data: [] }));
-export const getBouquets = createServerFn({ method: "POST" }).handler(async () => ({ success: true, data: [] }));
-
-export const createUser = createServerFn({ method: "POST" })
-  .validator((d: any) => d)
-  .handler(async ({ data }) => {
-    return { success: true };
-  });
-
+export const getStreams = createServerFn({ method: "GET" }).handler(async () => ({ success: true, data: [] }));
+export const getBouquets = createServerFn({ method: "GET" }).handler(async () => ({ success: true, data: [] }));
+export const createUser = createServerFn({ method: "POST" }).validator((d: any) => d).handler(async () => ({ success: true }));
 export const updateUser = createServerFn({ method: "POST" }).validator((d: any) => d).handler(async () => ({ success: true }));
 export const deleteUser = createServerFn({ method: "POST" }).validator((d: any) => d).handler(async () => ({ success: true }));
 export const toggleUserStatus = createServerFn({ method: "POST" }).validator((d: any) => d).handler(async () => ({ success: true }));
 export const killUserConnections = createServerFn({ method: "POST" }).validator((d: any) => d).handler(async () => ({ success: true }));
-
-export const getInstallScript = createServerFn({ method: "GET" }).handler(async () => {
-  return "bash <(curl -sSL https://mago.panel/api/install)";
-});
-
-export const generateBashScript = (token: string, host: string) => {
-  return `#!/bin/bash
-echo "Instalando Mago API no servidor Odin..."
-mkdir -p /home/xtreamcodes/iptv_xtream_codes/mago-api
-echo "${token}" > /home/xtreamcodes/iptv_xtream_codes/mago-api/token.txt
-echo "API instalada com sucesso!"
-`;
-};
+export const getInstallScript = createServerFn({ method: "GET" }).handler(async () => "bash <(curl -sSL https://mago.panel/api/install)");
+export const generateBashScript = (t: string, h: string) => `#!/bin/bash\necho "Mago API token: ${t}"`;
