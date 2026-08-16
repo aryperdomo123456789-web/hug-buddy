@@ -1,10 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { 
-  getUsers, 
-  getServers, 
-  getStreams, 
-  getBouquets,
+  getOdinFullData,
   createUser,
   updateUser,
   deleteUser,
@@ -37,18 +34,19 @@ export function useOdinData() {
     if (!quiet) setLoading(true);
 
     try {
-      // SEQUENTIAL execution to prevent socket saturation and "aborted" errors
-      const uRes = await getUsers().catch(e => ({ success: false, error: e.message })) as any;
-      if (uRes?.success) setCustomers(uRes.data);
-
-      const stRes = await getStreams().catch(e => ({ success: false, error: e.message })) as any;
-      if (stRes?.success) setStreams(stRes.data);
-
-      const bRes = await getBouquets().catch(e => ({ success: false, error: e.message })) as any;
-      if (bRes?.success) setBouquets(bRes.data);
+      // SINGLE fetch for all data to reduce SSH overhead and prevent "aborted" errors
+      const response = await getOdinFullData().catch(e => ({ success: false, error: e.message })) as any;
       
-      const svRes = await getServers().catch(e => ({ success: false, error: e.message })) as any;
-      if (svRes?.success) setServers(svRes.data);
+      if (response?.success && response.data) {
+        const { customers, streams, bouquets, servers } = response.data;
+        if (customers) setCustomers(customers);
+        if (streams) setStreams(streams);
+        if (bouquets) setBouquets(bouquets);
+        if (servers) setServers(servers);
+      } else if (!quiet) {
+        console.error("[useOdinData] Response failure:", response?.error);
+        toast.error("Erro ao sincronizar dados: " + (response?.error || "Desconhecido"));
+      }
 
       lastFetch.current = now;
     } catch (e: any) {
