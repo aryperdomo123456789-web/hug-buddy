@@ -210,8 +210,8 @@ function DashboardPage() {
               {activeTab === 'dashboard' ? 'Dashboard' : 
                activeTab === 'customers' ? 'Clientes' : 
                activeTab === 'streams' ? 'Streams' : 
-                active_tab === 'servers' ? 'Servidores' : 
-                active_tab === 'dns' ? 'DNS Profissional' : ''}
+               activeTab === 'servers' ? 'Servidores' : 
+               activeTab === 'dns' ? 'DNS Profissional' : ''}
             </h1>
             <button 
               onClick={() => fetchAll(false)}
@@ -259,6 +259,7 @@ function DashboardPage() {
                 loading={loading}
                 onRefresh={() => fetchAll(false)}
               />
+            )}
             {activeTab === 'dns' && (
               <DnsPanel />
             )}
