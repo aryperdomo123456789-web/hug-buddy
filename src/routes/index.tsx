@@ -22,7 +22,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   component: DashboardPage,
-  loader: () => {
+  loader: async () => {
     const cfg = getOdinConfig();
     return {
       odin: {
@@ -38,7 +38,7 @@ export const Route = createFileRoute("/")({
 
 function DashboardPage() {
   const { odin } = Route.useLoaderData();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'customers' | 'servers' | 'streams'>('dashboard');
+  const [activeTab, setActiveTab] = useState('dashboard');
   
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -55,12 +55,12 @@ function DashboardPage() {
   } = useOdinData();
 
   useEffect(() => {
-    console.log("[DashboardPage] view initialized. Active tab:", activeTab);
+    console.log("[DashboardPage] Mounting... Current Tab:", activeTab);
     fetchAll(true);
   }, []);
 
-  const changeTab = (tab: any) => {
-    console.log("[DashboardPage] User requested tab change to:", tab);
+  const changeTab = (tab: string) => {
+    console.log("[DashboardPage] User action: setActiveTab ->", tab);
     setActiveTab(tab);
   };
 
@@ -160,7 +160,7 @@ function DashboardPage() {
               }`}
             >
               <LayoutDashboard size={20} className={activeTab === 'dashboard' ? "text-blue-500" : "group-hover:text-zinc-300"} />
-              <span className="text-sm font-bold uppercase tracking-widest">Dashboard</span>
+              <span className="text-sm font-bold uppercase tracking-widest pointer-events-none">Dashboard</span>
             </button>
             
             <button 
@@ -173,7 +173,7 @@ function DashboardPage() {
               }`}
             >
               <Users size={20} className={activeTab === 'customers' ? "text-blue-500" : "group-hover:text-zinc-300"} />
-              <span className="text-sm font-bold uppercase tracking-widest">Clientes</span>
+              <span className="text-sm font-bold uppercase tracking-widest pointer-events-none">Clientes</span>
             </button>
             
             <button 
@@ -186,7 +186,7 @@ function DashboardPage() {
               }`}
             >
               <Monitor size={20} className={activeTab === 'streams' ? "text-blue-500" : "group-hover:text-zinc-300"} />
-              <span className="text-sm font-bold uppercase tracking-widest">Streams</span>
+              <span className="text-sm font-bold uppercase tracking-widest pointer-events-none">Streams</span>
             </button>
             
             <button 
@@ -199,7 +199,7 @@ function DashboardPage() {
               }`}
             >
               <ServerIcon size={20} className={activeTab === 'servers' ? "text-blue-500" : "group-hover:text-zinc-300"} />
-              <span className="text-sm font-bold uppercase tracking-widest">Servidores</span>
+              <span className="text-sm font-bold uppercase tracking-widest pointer-events-none">Servidores</span>
             </button>
           </nav>
           
@@ -217,7 +217,7 @@ function DashboardPage() {
 
         <main className="flex-1">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold uppercase tracking-tighter">
+            <h1 className="text-3xl font-bold uppercase tracking-tighter" id="page-title">
               {activeTab === 'dashboard' && 'Dashboard'}
               {activeTab === 'customers' && 'Clientes'}
               {activeTab === 'streams' && 'Streams'}
@@ -237,7 +237,7 @@ function DashboardPage() {
 
           <div className="relative">
             {activeTab === 'dashboard' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in duration-500">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard label="Clientes Totais" value={stats.totalUsers} icon={Users} color="blue" />
                 <StatCard label="Usuários Online" value={stats.onlineUsers} icon={Activity} color="green" />
                 <StatCard label="Streams Ativas" value={`${stats.activeStreams}/${stats.totalStreams}`} icon={Monitor} color="purple" />
@@ -246,38 +246,32 @@ function DashboardPage() {
             )}
 
             {activeTab === 'customers' && (
-              <div className="animate-in slide-in-from-bottom-2 duration-300">
-                <CustomerList 
-                  customers={customers}
-                  loading={loading}
-                  onRefresh={() => fetchAll(false)}
-                  onAdd={() => { setEditingUser(null); setShowUserModal(true); }}
-                  onEdit={(user) => { setEditingUser(user); setShowUserModal(true); }}
-                  onDelete={handleDeleteUser}
-                  onToggleStatus={handleToggleStatus}
-                  onKill={handleKillConnections}
-                />
-              </div>
+              <CustomerList 
+                customers={customers}
+                loading={loading}
+                onRefresh={() => fetchAll(false)}
+                onAdd={() => { setEditingUser(null); setShowUserModal(true); }}
+                onEdit={(user) => { setEditingUser(user); setShowUserModal(true); }}
+                onDelete={handleDeleteUser}
+                onToggleStatus={handleToggleStatus}
+                onKill={handleKillConnections}
+              />
             )}
 
             {activeTab === 'servers' && (
-              <div className="animate-in slide-in-from-bottom-2 duration-300">
-                <ServerList 
-                  servers={servers}
-                  loading={loading}
-                  onRefresh={() => fetchAll(false)}
-                />
-              </div>
+              <ServerList 
+                servers={servers}
+                loading={loading}
+                onRefresh={() => fetchAll(false)}
+              />
             )}
 
             {activeTab === 'streams' && (
-              <div className="animate-in slide-in-from-bottom-2 duration-300">
-                <StreamList 
-                  streams={streams}
-                  loading={loading}
-                  onRefresh={() => fetchAll(false)}
-                />
-              </div>
+              <StreamList 
+                streams={streams}
+                loading={loading}
+                onRefresh={() => fetchAll(false)}
+              />
             )}
           </div>
         </main>
