@@ -168,9 +168,9 @@ function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans selection:bg-blue-500/30">
-      <div className="flex gap-10">
-        <aside className="w-64 shrink-0 relative z-[50]">
+    <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans selection:bg-blue-500/30 overflow-x-hidden">
+      <div className="flex gap-10 relative">
+        <aside className="w-64 shrink-0 relative z-[100] bg-[#0a0a0c]">
           <div className="mb-10 px-4">
             <div className="text-2xl font-black text-blue-500 tracking-tighter flex items-center gap-2">
               <ShieldAlert size={32} /> MAGO PANEL
@@ -183,22 +183,26 @@ function DashboardPage() {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
               return (
-                <div 
+                <button 
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 border relative ${
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log("NAV CLICK:", item.id);
+                    setActiveTab(item.id);
+                  }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 border relative ${
                     isActive 
                       ? "bg-blue-600/10 text-blue-500 border-blue-600/20 shadow-[0_0_15px_rgba(37,99,235,0.05)]" 
                       : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50 border-transparent hover:translate-x-1"
                   }`}
                   id={`nav-${item.id}`}
-                  style={{ pointerEvents: 'all' }}
+                  style={{ cursor: 'pointer', pointerEvents: 'auto', display: 'flex' }}
+                  type="button"
                 >
                   <Icon size={20} className="pointer-events-none" />
                   <span className="text-sm font-bold uppercase tracking-widest pointer-events-none">{item.label}</span>
-                </div>
-
-
+                </button>
               );
             })}
           </div>
@@ -215,7 +219,7 @@ function DashboardPage() {
           </div>
         </aside>
 
-        <main className="flex-1">
+        <main className="flex-1 relative z-10">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold uppercase tracking-tighter" id="page-title">
               {activeTab === 'dashboard' ? 'Dashboard' : 
