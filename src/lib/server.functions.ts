@@ -30,18 +30,20 @@ async function executeQuery(sql: string) {
       port: ODIN_SSH.port,
       username: ODIN_SSH.username,
       password: ODIN_SSH.password,
-      readyTimeout: 60000,
-      keepaliveInterval: 10000,
-      debug: (msg: any) => console.log(`[SSH DEBUG] ${msg}`)
+      readyTimeout: 30000,
+      keepaliveInterval: 5000,
     });
     
-    // -N: skip headers, -s: silent/raw output
-    const command = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -N -s -e "${sql}"`;
+    // Use timeout to prevent hanging, and ensure we're using localhost for the db
+    const mysqlCmd = `mysql -h 127.0.0.1 -u ${ODIN_DB.user} -p'${ODIN_DB.pass}' ${ODIN_DB.name} -N -s -e "${sql}"`;
+    const command = `timeout 25s ${mysqlCmd}`;
+    
     const result = await ssh.execCommand(command);
     
     ssh.dispose();
     
     if (result.code !== 0) {
+      if (result.code === 124) throw new Error("Query timeout (25s exceeded)");
       console.error("[SSH] Command failed:", result.stderr);
       throw new Error(result.stderr || "Database execution failed");
     }
