@@ -7,9 +7,10 @@ interface UserModalProps {
   bouquets: any[];
   onClose: () => void;
   onSave: (data: User) => Promise<void>;
+  loading?: boolean;
 }
 
-export function UserModal({ user, bouquets, onClose, onSave }: UserModalProps) {
+export function UserModal({ user, bouquets, onClose, onSave, loading }: UserModalProps) {
   const [activeTab, setActiveTab] = React.useState<'details' | 'advanced' | 'restrictions' | 'bouquets'>('details');
   const [formData, setFormData] = React.useState<User>(() => {
     if (user) {
@@ -21,6 +22,7 @@ export function UserModal({ user, bouquets, onClose, onSave }: UserModalProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     onSave(formData);
   };
 
@@ -219,9 +221,11 @@ export function UserModal({ user, bouquets, onClose, onSave }: UserModalProps) {
           </button>
           <button
             onClick={handleSubmit}
-            className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 text-xs uppercase tracking-widest"
+            disabled={loading}
+            className={`${loading ? 'bg-zinc-800 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500'} text-white px-8 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 text-xs uppercase tracking-widest`}
           >
-            <Save size={16} /> Salvar Alterações
+            {loading ? <div className="w-4 h-4 border-2 border-zinc-500 border-t-zinc-200 animate-spin rounded-full" /> : <Save size={16} />} 
+            {loading ? "Processando..." : (user ? "Salvar Alterações" : "Criar Utilizador")}
           </button>
         </div>
       </div>
