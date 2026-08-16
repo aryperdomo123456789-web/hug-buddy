@@ -45,6 +45,10 @@ function DashboardPage() {
   const { odin } = Route.useLoaderData();
   const hydrated = useHydrated();
   const [activeTab, setActiveTab] = useState('dashboard');
+  
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+  };
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showResellerModal, setShowResellerModal] = useState(false);
@@ -164,10 +168,9 @@ function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans selection:bg-blue-500/30 relative z-0">
-
+    <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans selection:bg-blue-500/30">
       <div className="flex gap-10">
-        <aside className="w-64 shrink-0">
+        <aside className="w-64 shrink-0 relative z-[50]">
           <div className="mb-10 px-4">
             <div className="text-2xl font-black text-blue-500 tracking-tighter flex items-center gap-2">
               <ShieldAlert size={32} /> MAGO PANEL
@@ -175,28 +178,25 @@ function DashboardPage() {
             <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em] mt-1">Odin v6 Engine</div>
           </div>
           
-          <div className="space-y-2">
+          <div className="space-y-2 relative z-[9999]">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
               return (
-                <button 
+                <div 
                   key={item.id}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    console.log("ABA CLICADA:", item.id);
-                    setActiveTab(item.id);
-                  }} 
+                  onClick={() => setActiveTab(item.id)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 border relative ${
                     isActive 
                       ? "bg-blue-600/10 text-blue-500 border-blue-600/20 shadow-[0_0_15px_rgba(37,99,235,0.05)]" 
                       : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50 border-transparent hover:translate-x-1"
                   }`}
                   id={`nav-${item.id}`}
+                  style={{ pointerEvents: 'all' }}
                 >
-                  <Icon size={20} />
+                  <Icon size={20} className="pointer-events-none" />
                   <span className="text-sm font-bold uppercase tracking-widest pointer-events-none">{item.label}</span>
-                </button>
+                </div>
 
 
               );

@@ -27,7 +27,10 @@ export function useOdinData() {
   const lastFetch = useRef(0);
 
   const fetchAll = async (quiet = false) => {
-    if (isFetching.current) return;
+    if (isFetching.current) {
+      console.log("[useOdinData] Já existe uma busca em curso, ignorando...");
+      return;
+    }
     
     isFetching.current = true;
     if (!quiet) setLoading(true);
