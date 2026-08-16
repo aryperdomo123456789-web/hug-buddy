@@ -52,6 +52,9 @@ function DashboardPage() {
     actions 
   } = useOdinData();
 
+  console.log("Dashboard rendering stats:", stats);
+
+
   React.useEffect(() => {
     // Aumentar o delay inicial para garantir que o React se estabilize 
     // e o usuário veja o esqueleto do dashboard antes da carga pesada.
