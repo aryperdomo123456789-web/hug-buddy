@@ -44,7 +44,7 @@ export const Route = createFileRoute("/")({
 function DashboardPage() {
   const { odin } = Route.useLoaderData();
   const hydrated = useHydrated();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('customers');
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showResellerModal, setShowResellerModal] = useState(false);
