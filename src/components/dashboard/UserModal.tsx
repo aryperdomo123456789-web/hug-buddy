@@ -5,12 +5,13 @@ import { X, Save, Info, Shield, Lock, Layout } from "lucide-react";
 interface UserModalProps {
   user: User | null;
   bouquets: any[];
+  resellers: any[];
   onClose: () => void;
   onSave: (data: User) => Promise<void>;
   loading?: boolean;
 }
 
-export function UserModal({ user, bouquets, onClose, onSave, loading }: UserModalProps) {
+export function UserModal({ user, bouquets, resellers, onClose, onSave, loading }: UserModalProps) {
   const [activeTab, setActiveTab] = React.useState<'details' | 'advanced' | 'restrictions' | 'bouquets'>('details');
   const [formData, setFormData] = React.useState<User>(() => {
     if (user) {
@@ -95,6 +96,17 @@ export function UserModal({ user, bouquets, onClose, onSave, loading }: UserModa
                     onChange={e => updateField('exp_days', Number(e.target.value))}
                     className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm outline-none"
                   />
+                </Field>
+                <Field label="Dono / Revendedor">
+                  <select
+                    value={formData.owner_id}
+                    onChange={e => updateField('owner_id', Number(e.target.value))}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none transition-all"
+                  >
+                    {resellers.map(r => (
+                      <option key={r.id} value={r.id}>{r.username}</option>
+                    ))}
+                  </select>
                 </Field>
               </div>
               <div className="space-y-6">

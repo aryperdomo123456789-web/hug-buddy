@@ -6,7 +6,10 @@ import {
   updateUser,
   deleteUser,
   killUserConnections,
-  toggleUserStatus
+  toggleUserStatus,
+  createReseller,
+  updateReseller,
+  deleteReseller
 } from "@/lib/server.functions";
 
 /**
@@ -19,6 +22,7 @@ export function useOdinData() {
   const [servers, setServers] = useState<any[]>([]);
   const [streams, setStreams] = useState<any[]>([]);
   const [bouquets, setBouquets] = useState<any[]>([]);
+  const [resellers, setResellers] = useState<any[]>([]);
   const isFetching = useRef(false);
   const lastFetch = useRef(0);
 
@@ -43,11 +47,12 @@ export function useOdinData() {
       }) as any;
       
       if (response?.success && response.data) {
-        const { customers, streams, bouquets, servers } = response.data;
+        const { customers, streams, bouquets, servers, resellers } = response.data;
         if (customers) setCustomers(customers);
         if (streams) setStreams(streams);
         if (bouquets) setBouquets(bouquets);
         if (servers) setServers(servers);
+        if (resellers) setResellers(resellers);
         
         lastFetch.current = Date.now();
       } else {
@@ -70,6 +75,7 @@ export function useOdinData() {
     activeStreams: streams.filter(s => s.status === 1).length,
     totalStreams: streams.length,
     totalServers: servers.length,
+    totalResellers: resellers.length,
   };
 
   return {
@@ -78,6 +84,7 @@ export function useOdinData() {
     servers,
     streams,
     bouquets,
+    resellers,
     stats,
     fetchAll,
     actions: {
@@ -86,6 +93,9 @@ export function useOdinData() {
       deleteUser,
       killConnections: killUserConnections,
       toggleStatus: toggleUserStatus,
+      createReseller,
+      updateReseller,
+      deleteReseller
     }
   };
 }

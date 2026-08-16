@@ -8,7 +8,8 @@ import {
   Activity,
   Monitor,
   Database,
-  Globe
+  Globe,
+  UserCheck
 } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { getOdinConfig } from "@/lib/odin";
@@ -19,7 +20,9 @@ import { UserModal } from "@/components/dashboard/UserModal";
 import { ServerList } from "@/components/dashboard/ServerList";
 import { StreamList } from "@/components/dashboard/StreamList";
 import { DnsPanel } from "@/components/dashboard/DnsPanel";
-import { User } from "@/types/odin";
+import { ResellerList } from "@/components/dashboard/ResellerList";
+import { ResellerModal } from "@/components/dashboard/ResellerModal";
+import { User, Reseller } from "@/types/odin";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -44,6 +47,8 @@ function DashboardPage() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [showResellerModal, setShowResellerModal] = useState(false);
+  const [editingReseller, setEditingReseller] = useState<Reseller | null>(null);
   
   const { 
     loading, 
@@ -51,6 +56,7 @@ function DashboardPage() {
     streams, 
     servers, 
     bouquets,
+    resellers,
     stats, 
     fetchAll,
     actions 
@@ -153,6 +159,7 @@ function DashboardPage() {
     { id: 'customers', label: 'Clientes', icon: Users },
     { id: 'streams', label: 'Streams', icon: Monitor },
     { id: 'servers', label: 'Servidores', icon: ServerIcon },
+    { id: 'resellers', label: 'Revendedores', icon: UserCheck },
     { id: 'dns', label: 'DNS Profissional', icon: Globe },
   ];
 
@@ -212,6 +219,7 @@ function DashboardPage() {
                activeTab === 'customers' ? 'Clientes' : 
                activeTab === 'streams' ? 'Streams' : 
                activeTab === 'servers' ? 'Servidores' : 
+               activeTab === 'resellers' ? 'Revendedores' : 
                activeTab === 'dns' ? 'DNS Profissional' : ''}
             </h1>
             <button 
@@ -230,12 +238,14 @@ function DashboardPage() {
                 <StatCard label="Usuários Online" value={stats.onlineUsers} icon={Activity} color="green" />
                 <StatCard label="Streams Ativas" value={stats.totalStreams > 0 ? `${stats.activeStreams}/${stats.totalStreams}` : "0/0"} icon={Monitor} color="purple" />
                 <StatCard label="Servidores" value={stats.totalServers} icon={ServerIcon} color="blue" />
+                <StatCard label="Revendedores" value={stats.totalResellers} icon={UserCheck} color="blue" />
               </div>
             )}
 
             {activeTab === 'customers' && (
               <CustomerList 
                 customers={customers}
+                resellers={resellers}
                 loading={loading}
                 onRefresh={() => fetchAll(false)}
                 onAdd={() => { setEditingUser(null); setShowUserModal(true); }}
@@ -261,6 +271,21 @@ function DashboardPage() {
                 onRefresh={() => fetchAll(false)}
               />
             )}
+            {activeTab === 'resellers' && (
+              <ResellerList 
+                resellers={resellers}
+                loading={loading}
+                onRefresh={() => fetchAll(false)}
+                onAdd={() => { setEditingReseller(null); setShowResellerModal(true); }}
+                onEdit={(r) => { setEditingReseller(r); setShowResellerModal(true); }}
+                onDelete={async (r) => {
+                  if (window.confirm("Apagar revenda?")) {
+                    await actions.deleteReseller({ data: { id: r.id } });
+                    fetchAll(false);
+                  }
+                }}
+              />
+            )}
             {activeTab === 'dns' && (
               <DnsPanel />
             )}
@@ -268,10 +293,29 @@ function DashboardPage() {
         </main>
       </div>
 
+      {showResellerModal && (
+        <ResellerModal 
+          reseller={editingReseller}
+          loading={loading}
+          onClose={() => { setShowResellerModal(false); setEditingReseller(null); }}
+          onSave={async (data) => {
+            const res = editingReseller 
+              ? await actions.updateReseller({ data: { ...data, id: editingReseller.id } as any })
+              : await actions.createReseller({ data: data as any });
+            if (res.success) {
+              setShowResellerModal(false);
+              fetchAll(false);
+              toast.success("Sucesso!");
+            }
+          }}
+        />
+      )}
+
       {showUserModal && (
         <UserModal 
           user={editingUser}
           bouquets={bouquets}
+          resellers={resellers}
           onClose={() => { setShowUserModal(false); setEditingUser(null); }}
           onSave={handleSaveUser}
           loading={loading}

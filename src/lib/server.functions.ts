@@ -149,20 +149,21 @@ export const getOdinFullData = createServerFn({ method: "GET" })
   .handler(async () => {
     try {
       const queries = [
-        "SELECT id, username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, reseller_notes, allowed_ips, allowed_ua, forced_country, (SELECT COUNT(*) FROM user_activity_now WHERE user_id = users.id) as active_cons FROM users ORDER BY id DESC LIMIT 100",
+        "SELECT id, username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, reseller_notes, allowed_ips, allowed_ua, forced_country, (SELECT COUNT(*) FROM user_activity_now WHERE user_id = users.id) as active_cons, owner_id FROM users ORDER BY id DESC LIMIT 100",
         "SELECT id, stream_display_name, category_id, stream_icon, stream_source, 1 as stream_status FROM streams LIMIT 100",
         "SELECT id, bouquet_name FROM bouquets",
-        "SELECT id, server_name, status, 0 as last_check FROM streaming_servers"
+        "SELECT id, server_name, status, 0 as last_check FROM streaming_servers",
+        "SELECT id, username, password, email, owner_id, credits, active, member_group_id, last_login, (SELECT count(*) FROM users WHERE owner_id = reg_users.id) as user_count FROM reg_users"
       ];
 
-      const [uRaw, stRaw, bRaw, svRaw] = await executeBatchQueries(queries);
+      const [uRaw, stRaw, bRaw, svRaw, rRaw] = await executeBatchQueries(queries);
 
       const customers = (uRaw || "").trim().split("\n").filter(Boolean).map(line => {
         const [
           id, username, password, exp_date, enabled, admin_enabled, 
           is_trial, is_restreamer, is_isplock, max_connections, 
           bouquet, admin_notes, reseller_notes, allowed_ips, 
-          allowed_ua, forced_country, active_cons
+          allowed_ua, forced_country, active_cons, owner_id
         ] = line.split("\t");
         
         return {
@@ -182,7 +183,8 @@ export const getOdinFullData = createServerFn({ method: "GET" })
           allowed_ips: allowed_ips || "",
           allowed_ua: allowed_ua || "",
           forced_country: forced_country || "Off",
-          active_cons: Number(active_cons || 0)
+          active_cons: Number(active_cons || 0),
+          owner_id: Number(owner_id || 1)
         };
       });
 
@@ -213,12 +215,64 @@ export const getOdinFullData = createServerFn({ method: "GET" })
         };
       });
 
+      const resellers = (rRaw || "").trim().split("\n").filter(Boolean).map(line => {
+        const [id, username, password, email, owner_id, credits, active, mg_id, last_login, user_count] = line.split("\t");
+        return {
+          id: Number(id),
+          username: username || "",
+          password: password || "",
+          email: email || "",
+          owner_id: Number(owner_id || 1),
+          credits: Number(credits || 0),
+          active: Number(active || 1),
+          member_group_id: Number(mg_id || 2),
+          last_login: Number(last_login || 0),
+          user_count: Number(user_count || 0)
+        };
+      });
+
       return { 
         success: true, 
-        data: { customers, streams, bouquets, servers } 
+        data: { customers, streams, bouquets, servers, resellers } 
       };
     } catch (error: any) {
       return { success: false, error: error.message };
+    }
+  });
+
+export const createReseller = createServerFn({ method: "POST" })
+  .validator((d: any) => d)
+  .handler(async ({ data }) => {
+    try {
+      const sql = `INSERT INTO reg_users (username, password, email, owner_id, credits, active, member_group_id) VALUES ('${escapeSql(data.username)}', '${escapeSql(data.password)}', '${escapeSql(data.email)}', ${Number(data.owner_id || 1)}, ${Number(data.credits || 0)}, ${Number(data.active || 1)}, ${Number(data.member_group_id || 2)})`;
+      await executeQuery(sql);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message };
+    }
+  });
+
+export const updateReseller = createServerFn({ method: "POST" })
+  .validator((d: any) => d)
+  .handler(async ({ data }) => {
+    try {
+      const sql = `UPDATE reg_users SET username='${escapeSql(data.username)}', password='${escapeSql(data.password)}', email='${escapeSql(data.email)}', owner_id=${Number(data.owner_id || 1)}, credits=${Number(data.credits || 0)}, active=${Number(data.active || 1)}, member_group_id=${Number(data.member_group_id || 2)} WHERE id=${Number(data.id)}`;
+      await executeQuery(sql);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message };
+    }
+  });
+
+export const deleteReseller = createServerFn({ method: "POST" })
+  .validator((d: any) => d)
+  .handler(async ({ data }) => {
+    try {
+      const sql = `DELETE FROM reg_users WHERE id=${data.id}`;
+      await executeQuery(sql);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message };
     }
   });
 
