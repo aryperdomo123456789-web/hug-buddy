@@ -52,16 +52,22 @@ function DashboardPage() {
     actions 
   } = useOdinData();
 
-  console.log("Dashboard rendering stats:", stats);
+  console.log("[Dashboard] RENDER", { customers: customers.length, loading });
 
 
   React.useEffect(() => {
+    console.log("[Dashboard] Mounted, waiting for initial fetch...");
     const timer = setTimeout(() => {
-      fetchAll(true);
-    }, 1500);
+      console.log("[Dashboard] Triggering initial fetchAll NOW");
+      fetchAll(true).catch(err => {
+        console.error("[Dashboard] Initial fetch failed:", err);
+      });
+    }, 3000);
     
     return () => clearTimeout(timer);
   }, []);
+
+
 
   const handleDeleteUser = async (user: User) => {
     if (!user.id || !confirm(`Deseja realmente excluir ${user.username}?`)) return;
@@ -175,11 +181,15 @@ function DashboardPage() {
             <h1 className="text-3xl font-bold uppercase tracking-tighter">{view}</h1>
             <div className="flex items-center gap-4">
               <button 
-                onClick={() => fetchAll(false)}
+                onClick={() => {
+                  console.log("[Dashboard] Manual Refresh Clicked");
+                  fetchAll(false);
+                }}
                 disabled={loading}
                 className="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-blue-400 transition-all border border-zinc-800"
                 title="Sincronizar Agora"
               >
+
                 <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
               </button>
             </div>
