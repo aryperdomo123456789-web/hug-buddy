@@ -8,7 +8,8 @@ import {
   Activity, 
   Globe, 
   Database,
-  UserPlus
+  UserPlus,
+  RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
 
