@@ -66,7 +66,7 @@ function DashboardPage() {
       const res = await actions.deleteUser({ data: { id: user.id } });
       if (res.success) {
         toast.success("Usuário removido");
-        fetchAll();
+        fetchAll(false);
       }
     } catch (e) {
       toast.error("Erro ao remover usuário");
@@ -98,7 +98,7 @@ function DashboardPage() {
         toast.success(editingUser ? "Atualizado!" : "Criado!");
         setShowUserModal(false);
         setEditingUser(null);
-        fetchAll();
+        fetchAll(false);
       } else {
         toast.error("Erro Odin: " + (res as any).error);
       }
@@ -115,7 +115,7 @@ function DashboardPage() {
       });
       if (res.success) {
         toast.success("Estado alterado");
-        fetchAll();
+        fetchAll(false);
       }
     } catch (e) {
       toast.error("Erro ao alterar estado");
@@ -128,7 +128,7 @@ function DashboardPage() {
       const res = await actions.killConnections({ data: { id: user.id } });
       if (res.success) {
         toast.success("Conexões derrubadas");
-        fetchAll();
+        fetchAll(false);
       }
     } catch (e) {
       toast.error("Erro ao derrubar conexões");
