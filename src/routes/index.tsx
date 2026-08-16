@@ -314,6 +314,7 @@ function DashboardPage() {
         <UserModal 
           user={editingUser}
           bouquets={bouquets}
+          resellers={resellers}
           onClose={() => { setShowUserModal(false); setEditingUser(null); }}
           onSave={handleSaveUser}
           loading={loading}
