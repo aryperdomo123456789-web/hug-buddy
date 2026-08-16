@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { 
   Users, 
   Server as ServerIcon, 
@@ -37,7 +37,6 @@ export const Route = createFileRoute("/")({
 
 function DashboardPage() {
   const { odin } = Route.useLoaderData();
-  const hydrated = useHydrated();
   const [view, setView] = React.useState<'dashboard' | 'customers' | 'servers' | 'streams'>('dashboard');
   const [showUserModal, setShowUserModal] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<User | null>(null);
@@ -53,15 +52,18 @@ function DashboardPage() {
     actions 
   } = useOdinData();
 
-  React.useEffect(() => {
-    if (!hydrated) return;
+  console.log("Dashboard rendering stats:", stats);
 
+
+  React.useEffect(() => {
+    // Aumentar o delay inicial para garantir que o React se estabilize 
+    // e o usuário veja o esqueleto do dashboard antes da carga pesada.
     const timer = setTimeout(() => {
       fetchAll(true);
-    }, 500);
+    }, 1500);
     
     return () => clearTimeout(timer);
-  }, [hydrated]);
+  }, []);
 
   const handleDeleteUser = async (user: User) => {
     if (!user.id || !confirm(`Deseja realmente excluir ${user.username}?`)) return;
@@ -138,7 +140,8 @@ function DashboardPage() {
     }
   };
 
-  if (!hydrated) return null;
+  // Renderização direta sem depender de estado de hidratação manual
+  // para evitar loops de tela branca se o useEffect falhar.
 
 
   return (
