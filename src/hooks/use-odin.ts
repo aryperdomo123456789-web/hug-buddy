@@ -39,12 +39,13 @@ export function useOdinData() {
     if (!quiet) setLoading(true);
     try {
       console.log("[Odin Hook] Calling fetchUsersFn...");
-      const uRes = await fetchUsersFn().catch(e => {
-
-        console.error("fetchUsersFn failed:", e);
-        return { success: false, error: e.message };
-      });
-      if (uRes.success && 'data' in uRes) setCustomers(uRes.data as any);
+      const uRes = await fetchUsersFn();
+      console.log("[Odin Hook] fetchUsersFn response:", uRes);
+      if (uRes && uRes.success && 'data' in uRes) {
+        setCustomers(uRes.data as any);
+      } else if (uRes && !uRes.success) {
+        toast.error(`Erro Usuários: ${uRes.error}`);
+      }
       
       // Delay entre chamadas para não saturar o túnel SSH
       await new Promise(r => setTimeout(r, 800));
