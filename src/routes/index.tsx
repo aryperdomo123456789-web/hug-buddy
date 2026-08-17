@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from "react";
+// Mago Panel - Dashboard IPTV (Odin v6)
+// Documentação completa no README.md e pasta /docs
+// Deploy aaPanel: Porta 6328 e Nginx Exclusivo.
 // Espelhamento Real Odin v6 Ativado 🚀
 
 import { 
