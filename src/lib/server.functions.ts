@@ -1,83 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
-import { NodeSSH } from "node-ssh";
-import { getOdinConfig, escapeSql } from "./odin";
+import { escapeSql } from "./odin";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-
-/**
- * ODIN INFRASTRUCTURE CONFIGURATION
- * Fetches config from central odin.ts utility
- */
-const getConfig = () => getOdinConfig();
-
-/**
- * UTILITY: Execute multiple MySQL queries via a single SSH session
- * Optimized for serverless environments with aggressive timeouts
- */
-let cachedSsh: NodeSSH | null = null;
-let lastSshUsage = 0;
-
-async function executeBatchQueries(queries: string[]) {
-  const cfg = getConfig();
-  
-  try {
-    if (!cachedSsh || !cachedSsh.isConnected() || (Date.now() - lastSshUsage > 60000)) {
-      if (cachedSsh) try { cachedSsh.dispose(); } catch(e) {}
-      cachedSsh = new NodeSSH();
-      console.log(`[SSH] Connecting to ${cfg.sshHost}...`);
-      await cachedSsh.connect({
-        host: cfg.sshHost,
-        port: cfg.sshPort,
-        username: cfg.sshUsername,
-        password: cfg.sshPassword,
-        readyTimeout: 30000,
-        keepaliveInterval: 10000,
-        compress: true,
-      });
-    }
-    
-    lastSshUsage = Date.now();
-    const ssh = cachedSsh;
-    
-    const results: string[] = [];
-    for (let i = 0; i < queries.length; i++) {
-      const sql = queries[i] || "";
-      if (!sql) {
-        results.push("");
-        continue;
-      }
-      const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
-      
-      const result = await ssh.execCommand(mysqlCmd);
-      console.log(`[SSH] Executed query ${i} (length: ${result.stdout.length})`);
-      
-      if (result.code !== 0) {
-        console.error(`[SSH] Query ${i} Failed: ${result.stderr}`);
-        results.push(""); 
-      } else {
-        results.push(result.stdout.replace(/\r/g, "") || "");
-      }
-    }
-    
-    // Removido dispose para manter conexão persistente
-    return results;
-    return results;
-  } catch (error: any) {
-    console.error(`[SSH] Batch Critical Failure:`, error.message);
-    try { if (cachedSsh && cachedSsh.isConnected()) cachedSsh.dispose(); cachedSsh = null; } catch (e) {}
-    return queries.map(() => "");
-  }
-}
-
-async function executeQuery(sql: string): Promise<string> {
-  const results = await executeBatchQueries([sql]);
-  return results[0] || "";
-}
+import { executeBatchQueries, executeQuery, parseOdinData } from "./odin.server";
+import { z } from "zod";
 
 export const getOdinFullData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     try {
-      // Obter o perfil do usuário para verificar role e reseller_id
       const { data: profile } = await context.supabase
         .from('profiles')
         .select('role, odin_reseller_id')
@@ -87,7 +17,6 @@ export const getOdinFullData = createServerFn({ method: "GET" })
       const isAdmin = profile?.role === 'admin';
       const resellerId = profile?.odin_reseller_id;
 
-      // Se for revendedor, aplicamos filtros de dono
       const userFilter = !isAdmin && resellerId ? ` WHERE created_by = ${resellerId}` : "";
       const resellerFilter = !isAdmin && resellerId ? ` WHERE id = ${resellerId} OR owner_id = ${resellerId}` : "";
 
@@ -100,122 +29,40 @@ export const getOdinFullData = createServerFn({ method: "GET" })
         "SELECT user_id, COUNT(*) as cons FROM user_activity_now GROUP BY user_id"
       ];
 
-      const [uRaw, stRaw, bRaw, svRaw, rRaw, actRaw] = await executeBatchQueries(queries);
+      const rawResults = await executeBatchQueries(queries);
+      const data = parseOdinData(
+        rawResults[0], 
+        rawResults[1], 
+        rawResults[2], 
+        rawResults[3], 
+        rawResults[4], 
+        rawResults[5]
+      );
 
-      const activityMap: Record<number, number> = {};
-      (actRaw || "").trim().split("\n").filter(Boolean).forEach(line => {
-        const [uid, count] = line.split("\t");
-        if (uid) activityMap[Number(uid)] = Number(count || 0);
-      });
-
-      const customers = (uRaw || "").trim().split("\n").filter(Boolean).map(line => {
-        const parts = line.split("\t");
-        if (parts.length < 17) return null;
-        
-        const [
-          id, username, password, exp_date, enabled, admin_enabled, 
-          is_trial, is_restreamer, is_isplock, max_connections, 
-          bouquet, admin_notes, reseller_notes, allowed_ips, 
-          allowed_ua, forced_country, owner_id
-        ] = parts;
-        
-        return {
-          id: Number(id),
-          username: username || "",
-          password: password || "",
-          exp_date: exp_date === "NULL" ? 0 : Number(exp_date || 0),
-          enabled: Number(enabled || 0),
-          admin_enabled: Number(admin_enabled || 0),
-          is_trial: Number(is_trial || 0),
-          is_restreamer: Number(is_restreamer || 0),
-          is_isplock: Number(is_isplock || 0),
-          max_connections: Number(max_connections || 0),
-          bouquet: bouquet || "[]",
-          admin_notes: admin_notes || "",
-          reseller_notes: reseller_notes || "",
-          allowed_ips: allowed_ips || "",
-          allowed_ua: allowed_ua || "",
-          forced_country: forced_country || "Off",
-          active_cons: activityMap[Number(id)] || 0,
-          owner_id: Number(owner_id || 1)
-        };
-      }).filter(Boolean);
-
-      const streams = (stRaw || "").trim().split("\n").filter(Boolean).map(line => {
-        const [id, name, cat, icon, source, status] = line.split("\t");
-        return { 
-          id: Number(id), 
-          name: name || "Stream", 
-          category_id: Number(cat || 0), 
-          icon: icon || "", 
-          source: source || "", 
-          status: Number(status || 0) 
-        };
-      });
-
-      const bouquets = (bRaw || "").trim().split("\n").filter(Boolean).map(line => {
-        const [id, name] = line.split("\t");
-        return { id: Number(id), name: name || "Bouquet" };
-      });
-
-      const servers = (svRaw || "").trim().split("\n").filter(Boolean).map(line => {
-        const [id, name, status, last, hardware, clients, port] = line.split("\t");
-        let hwData = {};
-        try { 
-          const sanitizedHw = hardware ? hardware.replace(/\\n/g, "").replace(/\\/g, "") : "{}";
-          hwData = JSON.parse(sanitizedHw); 
-        } catch(err) {
-          console.error("Hardware Parse Error", name);
-        }
-        
-        return { 
-          id: id || "0", 
-          name: name || "Server", 
-          status: Number(status || 0), 
-          last_check: Number(last || 0),
-          hardware: hwData,
-          total_clients: Number(clients || 0),
-          port: port || "80"
-        };
-      });
-
-      const resellers = (rRaw || "").trim().split("\n").filter(Boolean).map(line => {
-        const parts = line.split("\t");
-        if (parts.length < 10) return null;
-        const [id, username, password, email, owner_id, credits, status, mg_id, last_login, user_count] = parts;
-
-        return {
-          id: Number(id),
-          username: username || "",
-          password: password || "",
-          email: email || "",
-          owner_id: Number(owner_id || 0),
-          credits: Number(credits || 0),
-          active: Number(status || 1),
-          member_group_id: Number(mg_id || 2),
-          last_login: last_login === "NULL" ? 0 : Number(last_login || 0),
-          user_count: Number(user_count || 0)
-        };
-      }).filter(Boolean);
-
-      console.log(`[SSH] Processed ${customers.length} customers and ${resellers.length} resellers`);
-
-      return { 
-        success: true, 
-        data: { customers, streams, bouquets, servers, resellers } 
-      };
-
+      return { success: true, data };
     } catch (error: any) {
+      console.error("[ServerFn] getOdinFullData Error:", error);
       return { success: false, error: error.message };
     }
   });
 
+const ResellerValidator = z.object({
+  id: z.number().optional(),
+  username: z.string(),
+  password: z.string(),
+  email: z.string().email(),
+  owner_id: z.number().default(1),
+  credits: z.number().default(0),
+  active: z.number().default(1),
+  member_group_id: z.number().default(2),
+});
+
 export const createReseller = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: any) => d)
+  .validator((d) => ResellerValidator.parse(d))
   .handler(async ({ data }) => {
     try {
-      const sql = `INSERT INTO reg_users (username, password, email, owner_id, credits, status, member_group_id) VALUES ('${escapeSql(data.username)}', '${escapeSql(data.password)}', '${escapeSql(data.email)}', ${Number(data.owner_id || 0)}, ${Number(data.credits || 0)}, ${Number(data.active || 1)}, ${Number(data.member_group_id || 2)})`;
+      const sql = `INSERT INTO reg_users (username, password, email, owner_id, credits, status, member_group_id) VALUES ('${escapeSql(data.username)}', '${escapeSql(data.password)}', '${escapeSql(data.email)}', ${data.owner_id}, ${data.credits}, ${data.active}, ${data.member_group_id})`;
       await executeQuery(sql);
       return { success: true };
     } catch (e: any) {
@@ -225,10 +72,10 @@ export const createReseller = createServerFn({ method: "POST" })
 
 export const updateReseller = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: any) => d)
+  .validator((d) => ResellerValidator.extend({ id: z.number() }).parse(d))
   .handler(async ({ data }) => {
     try {
-      const sql = `UPDATE reg_users SET username='${escapeSql(data.username)}', password='${escapeSql(data.password)}', email='${escapeSql(data.email)}', owner_id=${Number(data.owner_id || 0)}, credits=${Number(data.credits || 0)}, status=${Number(data.active || 1)}, member_group_id=${Number(data.member_group_id || 2)} WHERE id=${Number(data.id)}`;
+      const sql = `UPDATE reg_users SET username='${escapeSql(data.username)}', password='${escapeSql(data.password)}', email='${escapeSql(data.email)}', owner_id=${data.owner_id}, credits=${data.credits}, status=${data.active}, member_group_id=${data.member_group_id} WHERE id=${data.id}`;
       await executeQuery(sql);
       return { success: true };
     } catch (e: any) {
@@ -238,7 +85,7 @@ export const updateReseller = createServerFn({ method: "POST" })
 
 export const deleteReseller = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: any) => d)
+  .validator((d: any) => z.object({ id: z.number() }).parse(d))
   .handler(async ({ data }) => {
     try {
       const sql = `DELETE FROM reg_users WHERE id=${data.id}`;
@@ -249,9 +96,28 @@ export const deleteReseller = createServerFn({ method: "POST" })
     }
   });
 
+const UserValidator = z.object({
+  id: z.number().optional(),
+  username: z.string(),
+  password: z.string(),
+  exp_date: z.number().optional(),
+  enabled: z.number().default(1),
+  admin_enabled: z.number().default(1),
+  is_trial: z.number().default(0),
+  is_restreamer: z.number().default(0),
+  is_isplock: z.number().default(0),
+  max_connections: z.number().default(1),
+  bouquet: z.string().default("[]"),
+  admin_notes: z.string().default(""),
+  allowed_ips: z.string().default(""),
+  allowed_ua: z.string().default(""),
+  forced_country: z.string().default("Off"),
+  owner_id: z.number().optional()
+});
+
 export const createUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: any) => d)
+  .validator((d) => UserValidator.parse(d))
   .handler(async ({ data, context }) => {
     try {
       const { data: profile } = await context.supabase
@@ -261,10 +127,9 @@ export const createUser = createServerFn({ method: "POST" })
         .single();
 
       const isAdmin = profile?.role === 'admin';
-      const resellerId = profile?.odin_reseller_id;
-      const ownerId = isAdmin ? (data.owner_id || 1) : resellerId;
+      const ownerId = isAdmin ? (data.owner_id || 1) : profile?.odin_reseller_id;
 
-      const sql = `INSERT INTO users (username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, allowed_ips, allowed_ua, forced_country, created_by) VALUES ('${escapeSql(data.username)}', '${escapeSql(data.password)}', ${Number(data.exp_date)}, ${Number(data.enabled)}, ${Number(data.admin_enabled)}, ${Number(data.is_trial)}, ${Number(data.is_restreamer)}, ${Number(data.is_isplock)}, ${Number(data.max_connections || 1)}, '${escapeSql(data.bouquet || "[]")}', '${escapeSql(data.admin_notes || "")}', '${escapeSql(data.allowed_ips || "")}', '${escapeSql(data.allowed_ua || "")}', '${escapeSql(data.forced_country || "Off")}', ${Number(ownerId)})`;
+      const sql = `INSERT INTO users (username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, allowed_ips, allowed_ua, forced_country, created_by) VALUES ('${escapeSql(data.username)}', '${escapeSql(data.password)}', ${data.exp_date || 0}, ${data.enabled}, ${data.admin_enabled}, ${data.is_trial}, ${data.is_restreamer}, ${data.is_isplock}, ${data.max_connections}, '${escapeSql(data.bouquet)}', '${escapeSql(data.admin_notes)}', '${escapeSql(data.allowed_ips)}', '${escapeSql(data.allowed_ua)}', '${escapeSql(data.forced_country)}', ${ownerId})`;
       await executeQuery(sql);
       return { success: true };
     } catch (e: any) {
@@ -274,7 +139,7 @@ export const createUser = createServerFn({ method: "POST" })
 
 export const updateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: any) => d)
+  .validator((d) => UserValidator.extend({ id: z.number() }).parse(d))
   .handler(async ({ data, context }) => {
     try {
       const { data: profile } = await context.supabase
@@ -287,7 +152,7 @@ export const updateUser = createServerFn({ method: "POST" })
       const resellerId = profile?.odin_reseller_id;
 
       if (!isAdmin) {
-        const checkSql = `SELECT created_by FROM users WHERE id = ${Number(data.id)}`;
+        const checkSql = `SELECT created_by FROM users WHERE id = ${data.id}`;
         const checkResult = await executeQuery(checkSql);
         if (Number(checkResult.trim()) !== resellerId) {
           throw new Error("Acesso negado.");
@@ -295,7 +160,7 @@ export const updateUser = createServerFn({ method: "POST" })
       }
 
       const ownerId = isAdmin ? (data.owner_id || 1) : resellerId;
-      const sql = `UPDATE users SET username='${escapeSql(data.username)}', password='${escapeSql(data.password)}', exp_date=${Number(data.exp_date)}, enabled=${Number(data.enabled)}, admin_enabled=${Number(data.admin_enabled)}, is_trial=${Number(data.is_trial)}, is_restreamer=${Number(data.is_restreamer)}, is_isplock=${Number(data.is_isplock)}, max_connections=${Number(data.max_connections || 1)}, bouquet='${escapeSql(data.bouquet || "[]")}', admin_notes='${escapeSql(data.admin_notes || "")}', allowed_ips='${escapeSql(data.allowed_ips || "")}', allowed_ua='${escapeSql(data.allowed_ua || "")}', forced_country='${escapeSql(data.forced_country || "Off")}', created_by=${Number(ownerId)} WHERE id=${Number(data.id)}`;
+      const sql = `UPDATE users SET username='${escapeSql(data.username)}', password='${escapeSql(data.password)}', exp_date=${data.exp_date || 0}, enabled=${data.enabled}, admin_enabled=${data.admin_enabled}, is_trial=${data.is_trial}, is_restreamer=${data.is_restreamer}, is_isplock=${data.is_isplock}, max_connections=${data.max_connections}, bouquet='${escapeSql(data.bouquet)}', admin_notes='${escapeSql(data.admin_notes)}', allowed_ips='${escapeSql(data.allowed_ips)}', allowed_ua='${escapeSql(data.allowed_ua)}', forced_country='${escapeSql(data.forced_country)}', created_by=${ownerId} WHERE id=${data.id}`;
       await executeQuery(sql);
       return { success: true };
     } catch (e: any) {
@@ -305,7 +170,7 @@ export const updateUser = createServerFn({ method: "POST" })
 
 export const deleteUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: any) => d)
+  .validator((d) => z.object({ id: z.number() }).parse(d))
   .handler(async ({ data, context }) => {
     try {
       const { data: profile } = await context.supabase
@@ -315,7 +180,7 @@ export const deleteUser = createServerFn({ method: "POST" })
         .single();
 
       if (profile?.role !== 'admin') {
-        const checkSql = `SELECT created_by FROM users WHERE id = ${Number(data.id)}`;
+        const checkSql = `SELECT created_by FROM users WHERE id = ${data.id}`;
         const checkResult = await executeQuery(checkSql);
         if (Number(checkResult.trim()) !== profile?.odin_reseller_id) {
           throw new Error("Acesso negado.");
@@ -332,7 +197,7 @@ export const deleteUser = createServerFn({ method: "POST" })
 
 export const toggleUserStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: any) => d)
+  .validator((d) => z.object({ id: z.number(), enabled: z.number() }).parse(d))
   .handler(async ({ data }) => {
     try {
       const sql = `UPDATE users SET enabled=${data.enabled} WHERE id=${data.id}`;
@@ -345,7 +210,7 @@ export const toggleUserStatus = createServerFn({ method: "POST" })
 
 export const killUserConnections = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: any) => d)
+  .validator((d) => z.object({ id: z.number() }).parse(d))
   .handler(async ({ data }) => {
     try {
       const sql = `DELETE FROM user_activity_now WHERE user_id=${data.id}`;
@@ -365,7 +230,7 @@ export const getDeployCommand = createServerFn({ method: "GET" })
 
 export const generateM3ULink = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { username: string; password: string }) => d)
+  .validator((d) => z.object({ username: z.string(), password: z.string() }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: dnsConfig } = await context.supabase
       .from('dns_configs')
@@ -378,13 +243,3 @@ export const generateM3ULink = createServerFn({ method: "POST" })
     
     return `http://${domain}:${port}/get.php?username=${data.username}&password=${data.password}&type=m3u_plus&output=ts`;
   });
-
-
-export const generateBashScript = (t: string, h: string) => `#!/bin/bash
-
-# ODIN API INSTALLER
-echo "Instalando Mago API no Odin Engine..."
-mkdir -p /home/xtreamcodes/iptv_xtream_codes/mago-api
-echo "${t}" > /home/xtreamcodes/iptv_xtream_codes/mago-api/token.txt
-echo "Instalação concluída com sucesso!"
-`;

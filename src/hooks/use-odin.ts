@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import { 
   getOdinFullData,
@@ -11,6 +11,7 @@ import {
   updateReseller,
   deleteReseller
 } from "@/lib/server.functions";
+import { User, Server, Stream, Bouquet, Reseller, DashboardStats } from "@/types/odin";
 
 /**
  * Hook central para gerenciamento de dados do Odin.
@@ -18,35 +19,25 @@ import {
  */
 export function useOdinData() {
   const [loading, setLoading] = useState(false);
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [servers, setServers] = useState<any[]>([]);
-  const [streams, setStreams] = useState<any[]>([]);
-  const [bouquets, setBouquets] = useState<any[]>([]);
-  const [resellers, setResellers] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<User[]>([]);
+  const [servers, setServers] = useState<Server[]>([]);
+  const [streams, setStreams] = useState<Stream[]>([]);
+  const [bouquets, setBouquets] = useState<Bouquet[]>([]);
+  const [resellers, setResellers] = useState<Reseller[]>([]);
+  
   const isFetching = useRef(false);
-  const lastFetch = useRef(0);
-  const pollInterval = useRef<any>(null);
+  const pollInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const fetchAll = async (quiet = false) => {
+  const fetchAll = useCallback(async (quiet = false) => {
     if (isFetching.current) return;
     
     isFetching.current = true;
     if (!quiet) setLoading(true);
 
     try {
-      const response = await getOdinFullData().catch(err => {
-        if (err.message?.includes('Unauthorized')) {
-          return { success: false, error: 'Unauthorized' };
-        }
-        throw err;
-      }) as any;
+      const response = await getOdinFullData();
       
       if (response?.success && response.data) {
-        console.log("[useOdinData] Data received:", {
-          customers: response.data.customers?.length,
-          servers: response.data.servers?.length,
-          streams: response.data.streams?.length
-        });
         const { customers, streams, bouquets, servers, resellers } = response.data;
         
         setCustomers(customers || []);
@@ -54,13 +45,10 @@ export function useOdinData() {
         setBouquets(bouquets || []);
         setServers(servers || []);
         setResellers(resellers || []);
-        
-        lastFetch.current = Date.now();
       } else if (!quiet) {
-        if (response?.error === 'Unauthorized') {
-          console.warn("[useOdinData] User not authenticated for server functions");
-        } else {
+        if (response?.error !== 'Unauthorized') {
           console.error("[useOdinData] Response failure:", response?.error);
+          toast.error("Falha ao carregar dados do servidor.");
         }
       }
     } catch (e: any) {
@@ -72,13 +60,11 @@ export function useOdinData() {
       setLoading(false);
       isFetching.current = false;
     }
-  };
+  }, []);
 
   useEffect(() => {
-    // Carga inicial
     fetchAll();
 
-    // Polling real para "espelhamento" - a cada 30 segundos
     pollInterval.current = setInterval(() => {
       fetchAll(true);
     }, 30000);
@@ -86,10 +72,9 @@ export function useOdinData() {
     return () => {
       if (pollInterval.current) clearInterval(pollInterval.current);
     };
-  }, []);
+  }, [fetchAll]);
 
-
-  const stats = {
+  const stats: DashboardStats = {
     totalUsers: customers.length,
     onlineUsers: customers.reduce((acc, curr) => acc + (curr.active_cons > 0 ? 1 : 0), 0),
     activeStreams: streams.filter(s => s.status === 1).length,
