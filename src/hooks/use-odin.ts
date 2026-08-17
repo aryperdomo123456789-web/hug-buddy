@@ -39,13 +39,14 @@ export function useOdinData() {
       const response = await getOdinFullData();
       
       if (response?.success && response.data) {
-        const { customers, streams, bouquets, servers, resellers } = response.data;
+        const { customers, streams, bouquets, servers, resellers, totalConns } = response.data as any;
         
         setCustomers(customers || []);
         setStreams(streams || []);
         setBouquets(bouquets || []);
         setServers(servers || []);
         setResellers(resellers || []);
+        setTotalConns(totalConns || 0);
       } else if (!quiet) {
         if (response?.error !== 'Unauthorized') {
           console.error("[useOdinData] Response failure:", response?.error);
