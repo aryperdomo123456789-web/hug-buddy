@@ -261,12 +261,12 @@ function DashboardPage() {
 
           <div key={activeTab} className="animate-in fade-in zoom-in-95 duration-300">
             {activeTab === 'dashboard' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard label="Clientes Totais" value={stats.totalUsers} icon={Users} color="blue" />
-                <StatCard label="Usuários Online" value={stats.onlineUsers} icon={Activity} color="green" />
-                <StatCard label="Streams Ativas" value={stats.totalStreams > 0 ? `${stats.activeStreams}/${stats.totalStreams}` : "0/0"} icon={Monitor} color="purple" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                <StatCard label="Clientes" value={stats.totalUsers} icon={Users} color="blue" />
+                <StatCard label="Online" value={stats.onlineUsers} icon={Activity} color="green" />
+                <StatCard label="Streams" value={stats.totalStreams > 0 ? `${stats.activeStreams}/${stats.totalStreams}` : "0/0"} icon={Monitor} color="purple" />
                 <StatCard label="Servidores" value={stats.totalServers} icon={ServerIcon} color="blue" />
-                <StatCard label="Revendedores" value={stats.totalResellers} icon={UserCheck} color="blue" />
+                <StatCard label="Revendas" value={stats.totalResellers} icon={UserCheck} color="blue" />
               </div>
             )}
 
