@@ -165,14 +165,21 @@ export const getOdinFullData = createServerFn({ method: "GET" })
         "SELECT id, stream_display_name, category_id, stream_icon, stream_source, 1 as stream_status FROM streams LIMIT 100",
         "SELECT id, bouquet_name FROM bouquets",
         "SELECT id, server_name, status, last_check_ago as last_check, server_hardware, total_clients, http_broadcast_port FROM streaming_servers",
-        "SELECT id, username, password, email, owner_id, credits, active, member_group_id, last_login, (SELECT count(*) FROM users WHERE owner_id = reg_users.id) as user_count FROM reg_users"
+        "SELECT id, username, password, email, owner_id, credits, active, member_group_id, last_login, (SELECT count(*) FROM users WHERE owner_id = reg_users.id) as user_count FROM reg_users",
+        "SELECT user_id, COUNT(*) as cons FROM user_activity_now GROUP BY user_id"
       ];
 
-      const [uRaw, stRaw, bRaw, svRaw, rRaw] = await executeBatchQueries(queries);
+      const [uRaw, stRaw, bRaw, svRaw, rRaw, actRaw] = await executeBatchQueries(queries);
+
+      const activityMap: Record<number, number> = {};
+      (actRaw || "").trim().split("\n").filter(Boolean).forEach(line => {
+        const [uid, count] = line.split("\t");
+        activityMap[Number(uid)] = Number(count || 0);
+      });
 
       const customers = (uRaw || "").trim().split("\n").filter(Boolean).map(line => {
         const parts = line.split("\t");
-        if (parts.length < 18) {
+        if (parts.length < 17) {
            console.error("[SSH] Customer line format invalid:", line);
            return null;
         }
@@ -180,7 +187,7 @@ export const getOdinFullData = createServerFn({ method: "GET" })
           id, username, password, exp_date, enabled, admin_enabled, 
           is_trial, is_restreamer, is_isplock, max_connections, 
           bouquet, admin_notes, reseller_notes, allowed_ips, 
-          allowed_ua, forced_country, active_cons, owner_id
+          allowed_ua, forced_country, owner_id
         ] = parts;
         
         return {
@@ -200,7 +207,7 @@ export const getOdinFullData = createServerFn({ method: "GET" })
           allowed_ips: allowed_ips || "",
           allowed_ua: allowed_ua || "",
           forced_country: forced_country || "Off",
-          active_cons: Number(active_cons || 0),
+          active_cons: activityMap[Number(id)] || 0,
           owner_id: Number(owner_id || 1)
         };
       }).filter(Boolean);
