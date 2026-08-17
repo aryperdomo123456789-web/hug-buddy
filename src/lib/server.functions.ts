@@ -13,22 +13,30 @@ const getConfig = () => getOdinConfig();
  * UTILITY: Execute multiple MySQL queries via a single SSH session
  * Optimized for serverless environments with aggressive timeouts
  */
+let cachedSsh: NodeSSH | null = null;
+let lastSshUsage = 0;
+
 async function executeBatchQueries(queries: string[]) {
   const cfg = getConfig();
-  const ssh = new NodeSSH();
   
   try {
-    console.log(`[SSH] Connecting to ${cfg.sshHost}...`);
+    if (!cachedSsh || !cachedSsh.isConnected() || (Date.now() - lastSshUsage > 60000)) {
+      if (cachedSsh) try { cachedSsh.dispose(); } catch(e) {}
+      cachedSsh = new NodeSSH();
+      console.log(`[SSH] Connecting to ${cfg.sshHost}...`);
+      await cachedSsh.connect({
+        host: cfg.sshHost,
+        port: cfg.sshPort,
+        username: cfg.sshUsername,
+        password: cfg.sshPassword,
+        readyTimeout: 30000,
+        keepaliveInterval: 10000,
+        compress: true,
+      });
+    }
     
-    await ssh.connect({
-      host: cfg.sshHost,
-      port: cfg.sshPort,
-      username: cfg.sshUsername,
-      password: cfg.sshPassword,
-      readyTimeout: 30000,
-      keepaliveInterval: 5000,
-      compress: true,
-    });
+    lastSshUsage = Date.now();
+    const ssh = cachedSsh;
     
     const results: string[] = [];
     for (let i = 0; i < queries.length; i++) {
@@ -50,11 +58,12 @@ async function executeBatchQueries(queries: string[]) {
       }
     }
     
-    ssh.dispose();
+    // Removido dispose para manter conexão persistente
+    return results;
     return results;
   } catch (error: any) {
     console.error(`[SSH] Batch Critical Failure:`, error.message);
-    try { if (ssh.isConnected()) ssh.dispose(); } catch (e) {}
+    try { if (cachedSsh && cachedSsh.isConnected()) cachedSsh.dispose(); cachedSsh = null; } catch (e) {}
     return queries.map(() => "");
   }
 }
