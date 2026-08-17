@@ -20,7 +20,7 @@ function AuthPage() {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        router.navigate({ to: search.redirect || '/' });
+        router.navigate({ to: (search.redirect || '/') as any });
       }
     };
     checkSession();
@@ -38,7 +38,7 @@ function AuthPage() {
         });
         if (error) throw error;
         toast.success('Bem-vindo ao Mago Panel!');
-        router.navigate({ to: search.redirect || '/' });
+        router.navigate({ to: (search.redirect || '/') as any });
       } else {
         const { error } = await supabase.auth.signUp({
           email,

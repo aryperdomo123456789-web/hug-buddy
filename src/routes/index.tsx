@@ -37,7 +37,7 @@ export const Route = createFileRoute("/")({
   beforeLoad: async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      throw redirect({ to: "/auth" });
+      throw redirect({ to: "/auth" as any });
     }
   },
   component: DashboardPage,
@@ -188,7 +188,7 @@ function DashboardPage() {
   const handleLogout = async () => {
     if (!window.confirm("Deseja realmente sair do Mago Panel?")) return;
     await supabase.auth.signOut();
-    router.navigate({ to: "/auth" });
+    router.navigate({ to: "/auth" as any });
   };
 
 
