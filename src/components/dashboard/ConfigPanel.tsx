@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Database, Shield, Terminal, Key, Server } from "lucide-react";
+import { Database, Shield, Terminal, Key, Server, Layout, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { getOdinConfig } from "@/lib/odin";
 
