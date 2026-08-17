@@ -1,5 +1,5 @@
 import React from "react";
-import { Server as ServerIcon, RefreshCw, Activity, Cpu, HardDrive, Network, Users } from "lucide-react";
+import { Server as ServerIcon, RefreshCw, Activity, Cpu, HardDrive, Network, Users, Tv, Settings } from "lucide-react";
 
 interface ServerListProps {
   servers: any[];
