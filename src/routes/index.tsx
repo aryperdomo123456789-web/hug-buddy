@@ -61,6 +61,22 @@ function DashboardPage() {
   const odin = data?.odin || {};
   const isHydrated = useHydrated();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [profile, setProfile] = useState<{ role: string; odin_reseller_id: number | null } | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('role, odin_reseller_id')
+          .eq('id', session.user.id)
+          .single();
+        setProfile(data as any);
+      }
+    };
+    fetchProfile();
+  }, []);
   
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
@@ -206,7 +222,7 @@ function DashboardPage() {
           </div>
           
           <div className="space-y-2 relative z-[9999]">
-            {navItems.map((item) => {
+            {navItems.filter(item => !item.adminOnly || profile?.role === 'admin').map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
               return (

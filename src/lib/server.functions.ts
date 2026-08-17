@@ -269,8 +269,22 @@ export const updateUser = createServerFn({ method: "POST" })
 export const deleteUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: any) => d)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     try {
+      const { data: profile } = await context.supabase
+        .from('profiles')
+        .select('role, odin_reseller_id')
+        .eq('id', context.userId)
+        .single();
+
+      if (profile?.role !== 'admin') {
+        const checkSql = `SELECT created_by FROM users WHERE id = ${Number(data.id)}`;
+        const checkResult = await executeQuery(checkSql);
+        if (Number(checkResult.trim()) !== profile?.odin_reseller_id) {
+          throw new Error("Acesso negado.");
+        }
+      }
+
       const sql = `DELETE FROM users WHERE id=${data.id}`;
       await executeQuery(sql);
       return { success: true };
