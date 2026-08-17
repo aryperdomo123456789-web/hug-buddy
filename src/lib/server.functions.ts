@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { NodeSSH } from "node-ssh";
 import { getOdinConfig, escapeSql } from "./odin";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /**
  * ODIN INFRASTRUCTURE CONFIGURATION
@@ -64,14 +65,29 @@ async function executeQuery(sql: string): Promise<string> {
 }
 
 export const getOdinFullData = createServerFn({ method: "GET" })
-  .handler(async () => {
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
     try {
+      // Obter o perfil do usuário para verificar role e reseller_id
+      const { data: profile } = await context.supabase
+        .from('profiles')
+        .select('role, odin_reseller_id')
+        .eq('id', context.userId)
+        .single();
+
+      const isAdmin = profile?.role === 'admin';
+      const resellerId = profile?.odin_reseller_id;
+
+      // Se for revendedor, aplicamos filtros de dono
+      const userFilter = !isAdmin && resellerId ? ` WHERE created_by = ${resellerId}` : "";
+      const resellerFilter = !isAdmin && resellerId ? ` WHERE id = ${resellerId} OR owner_id = ${resellerId}` : "";
+
       const queries = [
-        "SELECT id, username, password, IFNULL(exp_date, 0), enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, reseller_notes, allowed_ips, allowed_ua, forced_country, created_by FROM users ORDER BY id DESC LIMIT 100",
+        `SELECT id, username, password, IFNULL(exp_date, 0), enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, reseller_notes, allowed_ips, allowed_ua, forced_country, created_by FROM users${userFilter} ORDER BY id DESC LIMIT 100`,
         "SELECT id, stream_display_name, category_id, stream_icon, stream_source, 1 as stream_status FROM streams LIMIT 100",
         "SELECT id, bouquet_name FROM bouquets",
         "SELECT id, server_name, status, last_check_ago as last_check, server_hardware, total_clients, http_broadcast_port FROM streaming_servers",
-        "SELECT id, username, password, email, owner_id, credits, status, member_group_id, IFNULL(last_login, 0), (SELECT count(*) FROM users WHERE created_by = reg_users.id) as user_count FROM reg_users",
+        `SELECT id, username, password, email, owner_id, credits, status, member_group_id, IFNULL(last_login, 0), (SELECT count(*) FROM users WHERE created_by = reg_users.id) as user_count FROM reg_users${resellerFilter}`,
         "SELECT user_id, COUNT(*) as cons FROM user_activity_now GROUP BY user_id"
       ];
 
