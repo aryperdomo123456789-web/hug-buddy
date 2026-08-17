@@ -227,7 +227,7 @@ export function CustomerList({
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button 
                         onClick={() => {
-                          const domain = defaultDns || window.location.hostname;
+                          const domain = defaultDns || (typeof window !== 'undefined' ? window.location.hostname : 'localhost');
                           const port = "80"; // Odin default streaming port
                           const url = `http://${domain}:${port}/get.php?username=${u.username}&password=${u.password}&type=m3u_plus&output=ts`;
                           
