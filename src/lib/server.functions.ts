@@ -19,46 +19,54 @@ async function executeBatchQueries(queries: string[]) {
   try {
     console.log(`[SSH] Connecting to ${cfg.sshHost}...`);
     
-    // Optimized configuration for serverless/edge connection
     await ssh.connect({
       host: cfg.sshHost,
       port: cfg.sshPort,
       username: cfg.sshUsername,
       password: cfg.sshPassword,
-      readyTimeout: 30000, // Aumentado para lidar com latência maior
+      readyTimeout: 30000,
       keepaliveInterval: 5000,
-      keepaliveCountMax: 3,
       compress: true,
     });
     
+    // Combine queries with markers to execute in a single SSH call
+    const combinedSql = queries.map((q, i) => `SELECT '---QUERY_${i}---'; ${q}`).join("; ");
+    const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${combinedSql}"`;
+    
+    console.log(`[SSH] Executing combined batch of ${queries.length} queries...`);
+    const result = await ssh.execCommand(mysqlCmd);
+    
+    if (result.code !== 0) {
+      console.error(`[SSH] Batch Query Error: ${result.stderr}`);
+      ssh.dispose();
+      return queries.map(() => "");
+    }
+
+    const fullOutput = result.stdout;
     const results: string[] = [];
-    for (const sql of queries) {
-      const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
+    
+    for (let i = 0; i < queries.length; i++) {
+      const startMarker = `---QUERY_${i}---`;
+      const nextMarker = `---QUERY_${i + 1}---`;
       
-      // Use timeout command inside the shell instead of the library option
-      const remoteCmd = `timeout 15s ${mysqlCmd}`;
-      const result = await ssh.execCommand(remoteCmd);
-      
-      console.log(`[SSH] Query Executed: ${sql.substring(0, 50)}...`);
-      console.log(`[SSH] Result Code: ${result.code}, Stdout length: ${result.stdout.length}`);
-      
-      if (result.code !== 0) {
-        console.error(`[SSH] Query Error: ${result.stderr}`);
-        results.push(""); 
-      } else {
-        results.push(result.stdout);
+      let startIdx = fullOutput.indexOf(startMarker);
+      if (startIdx === -1) {
+        results.push("");
+        continue;
       }
+      
+      startIdx += startMarker.length;
+      let endIdx = nextMarker ? fullOutput.indexOf(nextMarker) : fullOutput.length;
+      if (endIdx === -1) endIdx = fullOutput.length;
+      
+      results.push(fullOutput.substring(startIdx, endIdx).trim());
     }
     
     ssh.dispose();
     return results;
   } catch (error: any) {
     console.error(`[SSH] Critical Failure:`, error.message);
-    try {
-      if (ssh.isConnected()) ssh.dispose();
-    } catch (e) {}
-    
-    // Instead of throwing, we return empty results to prevent 500/aborted
+    try { if (ssh.isConnected()) ssh.dispose(); } catch (e) {}
     return queries.map(() => "");
   }
 }
