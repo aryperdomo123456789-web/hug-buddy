@@ -38,15 +38,39 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          full_name: string | null
+          id: string
+          odin_reseller_id: number | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          full_name?: string | null
+          id: string
+          odin_reseller_id?: number | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          full_name?: string | null
+          id?: string
+          odin_reseller_id?: number | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "reseller"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -173,6 +197,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "reseller"],
+    },
   },
 } as const
