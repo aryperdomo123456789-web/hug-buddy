@@ -10,14 +10,14 @@ interface ServerListProps {
 export function ServerList({ servers, loading, onRefresh }: ServerListProps) {
   return (
     <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800 shadow-xl overflow-hidden">
-      <div className="p-6 border-b border-zinc-900 bg-zinc-950/30 flex justify-between items-center">
+      <div className="p-4 md:p-6 border-b border-zinc-900 bg-zinc-950/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
           <ServerIcon className="text-blue-500" size={24} />
-          <h2 className="text-xl font-bold text-zinc-100 uppercase tracking-tighter">Servidores de Streaming</h2>
+          <h2 className="text-lg md:text-xl font-bold text-zinc-100 uppercase tracking-tighter">Servidores</h2>
         </div>
         <button 
           onClick={onRefresh} 
-          className="bg-zinc-900 hover:bg-zinc-800 text-zinc-400 p-2 rounded-lg border border-zinc-800 transition-all flex items-center gap-2 text-xs font-bold"
+          className="w-full sm:w-auto bg-zinc-900 hover:bg-zinc-800 text-zinc-400 px-4 py-3 sm:py-2 rounded-lg border border-zinc-800 transition-all flex items-center justify-center gap-2 text-xs font-bold min-h-[44px]"
           disabled={loading}
         >
           <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
@@ -25,9 +25,9 @@ export function ServerList({ servers, loading, onRefresh }: ServerListProps) {
         </button>
       </div>
 
-      <div className="p-6 grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className="p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {servers.map((server) => (
-          <div key={server.id} className="bg-zinc-900/30 border border-zinc-800/50 rounded-2xl p-6 hover:border-blue-500/30 transition-all group relative overflow-hidden">
+          <div key={server.id} className="bg-zinc-900/30 border border-zinc-800/50 rounded-2xl p-4 md:p-6 hover:border-blue-500/30 transition-all group relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4">
               <div className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-tighter shadow-lg ${server.status === 1 ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}`}>
                 {server.status === 1 ? 'ONLINE' : 'OFFLINE'}

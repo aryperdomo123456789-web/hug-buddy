@@ -99,7 +99,7 @@ export function SaasUserList() {
     <div className="space-y-6">
       {/* Seção de Perfil Próprio / Senha */}
       <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-6">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-blue-500/10 rounded-xl text-blue-500">
               <Key size={24} />
@@ -112,7 +112,7 @@ export function SaasUserList() {
           {!isChangingPassword ? (
             <button 
               onClick={() => setIsChangingPassword(true)}
-              className="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-4 py-2 rounded-lg font-bold transition-all border border-zinc-700"
+              className="w-full sm:w-auto text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-4 py-3 rounded-lg font-bold transition-all border border-zinc-700 min-h-[44px]"
             >
               ALTERAR MINHA SENHA
             </button>
@@ -129,19 +129,19 @@ export function SaasUserList() {
         </div>
 
         {isChangingPassword && (
-          <form onSubmit={handlePasswordChange} className="flex gap-4 animate-in slide-in-from-top-2 duration-300">
+          <form onSubmit={handlePasswordChange} className="flex flex-col sm:flex-row gap-4 animate-in slide-in-from-top-2 duration-300">
             <input 
               type="password"
               placeholder="Nova senha (min 6 caracteres)"
               value={newPassword}
               onChange={e => setNewPassword(e.target.value)}
-              className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-4 text-xs text-zinc-300 focus:outline-none focus:border-blue-500"
+              className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg py-3 px-4 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 min-h-[44px]"
               autoFocus
             />
             <button 
               type="submit"
               disabled={passMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-bold text-xs transition-all flex items-center gap-2"
+              className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-2 min-h-[44px]"
             >
               {passMutation.isPending ? "SALVANDO..." : <><Save size={16} /> SALVAR SENHA</>}
             </button>
@@ -150,22 +150,22 @@ export function SaasUserList() {
       </div>
 
       <div className="bg-[#0f0f12] rounded-2xl border border-zinc-800 shadow-xl overflow-hidden">
-        <div className="p-6 border-b border-zinc-900 flex justify-between items-center bg-zinc-950/30">
-          <div className="flex gap-4">
+        <div className="p-4 md:p-6 border-b border-zinc-900 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-zinc-950/30">
+          <div className="flex gap-4 w-full sm:w-auto">
             <button 
               onClick={() => setIsAddingUser(true)}
-              className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg font-bold transition-all flex items-center gap-2 text-sm"
+              className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-500 text-white px-5 py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 text-sm min-h-[44px]"
             >
-              <UserPlus size={18} /> Novo Usuário Painel
+              <UserPlus size={18} /> Novo Usuário
             </button>
           </div>
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
             <input 
-              placeholder="Pesquisar usuários SaaS..." 
+              placeholder="Pesquisar..." 
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="bg-zinc-900 border border-zinc-800 rounded-lg py-2 pl-10 pr-4 text-xs text-zinc-300 w-64 focus:outline-none focus:border-blue-500"
+              className="w-full sm:w-64 bg-zinc-900 border border-zinc-800 rounded-lg py-2.5 pl-10 pr-4 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 min-h-[44px]"
             />
           </div>
         </div>

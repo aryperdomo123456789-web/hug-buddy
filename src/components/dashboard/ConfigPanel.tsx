@@ -16,7 +16,7 @@ export function ConfigPanel() {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in duration-500">
-      <div className="flex gap-2 p-1 bg-black/40 border border-zinc-800 rounded-xl w-fit">
+      <div className="flex flex-wrap gap-2 p-1 bg-black/40 border border-zinc-800 rounded-xl w-full sm:w-fit">
         {[
           { id: "db", label: "Banco & SSH", icon: Database },
           { id: "api", label: "Instalador API", icon: Key },
@@ -24,7 +24,7 @@ export function ConfigPanel() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all min-h-[44px] ${
               activeTab === tab.id 
                 ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" 
                 : "text-zinc-500 hover:text-zinc-300"

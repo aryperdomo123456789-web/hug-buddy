@@ -11,7 +11,7 @@ export function NavItem({ icon: Icon, label, active, onClick }: NavItemProps) {
   return (
     <button 
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+      className={`w-full flex items-center gap-3 px-4 py-4 md:py-3 rounded-xl transition-all duration-200 group min-h-[44px] ${
         active 
           ? "bg-blue-600/10 text-blue-500 border border-blue-600/20" 
           : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
