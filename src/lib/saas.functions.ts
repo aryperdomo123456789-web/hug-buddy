@@ -1,6 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
-import { supabase } from "@/integrations/supabase/client";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { z } from "zod";
+
+const ProfileValidator = z.object({
+  id: z.string(),
+  full_name: z.string().nullable().optional(),
+  role: z.enum(['admin', 'reseller']).optional(),
+  odin_reseller_id: z.number().nullable().optional()
+});
 
 export const getSaasProfiles = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -10,16 +17,22 @@ export const getSaasProfiles = createServerFn({ method: "GET" })
       .select('*');
     
     if (error) throw error;
-    return data as any[];
+    return data;
   });
 
 export const updateSaasProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: any) => d)
+  .validator((d) => ProfileValidator.parse(d))
   .handler(async ({ data, context }) => {
+    // Filter out undefined values to satisfy exactOptionalPropertyTypes
+    const updateData: any = {};
+    if (data.full_name !== undefined) updateData.full_name = data.full_name;
+    if (data.role !== undefined) updateData.role = data.role;
+    if (data.odin_reseller_id !== undefined) updateData.odin_reseller_id = data.odin_reseller_id;
+
     const { error } = await context.supabase
       .from('profiles')
-      .update(data)
+      .update(updateData)
       .eq('id', data.id);
     
     if (error) throw error;
@@ -28,7 +41,7 @@ export const updateSaasProfile = createServerFn({ method: "POST" })
 
 export const changePassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { password: string }) => d)
+  .validator((d) => z.object({ password: z.string().min(6) }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.auth.updateUser({
       password: data.password
@@ -38,9 +51,16 @@ export const changePassword = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+const CreateUserValidator = z.object({
+  email: z.string().email(),
+  role: z.enum(['admin', 'reseller']),
+  odin_reseller_id: z.number().nullable().optional(),
+  full_name: z.string().nullable().optional()
+});
+
 export const createSaasUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { email: string; role: 'admin' | 'reseller'; odin_reseller_id?: number; full_name?: string }) => d)
+  .validator((d) => CreateUserValidator.parse(d))
   .handler(async ({ data, context }) => {
     const { data: hasRole } = await (context.supabase.rpc as any)('has_role', {
       _user_id: context.userId,
@@ -85,9 +105,8 @@ export const createSaasUser = createServerFn({ method: "POST" })
 
 export const deleteSaasUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { id: string }) => d)
+  .validator((d) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data, context }) => {
-    // 1. Verificar se o executor é admin
     const { data: hasRole } = await (context.supabase.rpc as any)('has_role', {
       _user_id: context.userId,
       _role: 'admin'
@@ -97,14 +116,12 @@ export const deleteSaasUser = createServerFn({ method: "POST" })
       throw new Error("Apenas administradores podem excluir usuários.");
     }
 
-    // 2. Evitar auto-exclusão
     if (data.id === context.userId) {
       throw new Error("Você não pode excluir seu próprio perfil.");
     }
 
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
 
-    // 3. Deletar do Auth (o cascade deve limpar o profile via trigger ou RLS se configurado)
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.id);
     
     if (error) throw error;

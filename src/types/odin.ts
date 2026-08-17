@@ -35,12 +35,44 @@ export const ResellerSchema = z.object({
   owner_id: z.number().int().default(1),
   credits: z.number().default(0),
   active: z.number().int().default(1),
-  member_group_id: z.number().int().default(2), // 2 = Reseller, 5 = Subreseller?
+  member_group_id: z.number().int().default(2),
   last_login: z.number().optional(),
   user_count: z.number().default(0),
 });
 
 export type Reseller = z.infer<typeof ResellerSchema>;
+
+export interface Stream {
+  id: number;
+  name: string;
+  category_id: number;
+  icon: string;
+  source: string;
+  status: number;
+}
+
+export interface Server {
+  id: string;
+  name: string;
+  status: number;
+  last_check: number;
+  hardware: any;
+  total_clients: number;
+  port: string;
+}
+
+export interface Bouquet {
+  id: number;
+  name: string;
+}
+
+export interface Profile {
+  id: string;
+  role: 'admin' | 'reseller';
+  odin_reseller_id: number | null;
+  full_name: string | null;
+  created_at?: string;
+}
 
 export interface DashboardStats {
   totalUsers: number;
@@ -48,6 +80,7 @@ export interface DashboardStats {
   activeStreams: number;
   totalStreams: number;
   totalServers: number;
+  totalClients: number;
   totalResellers: number;
 }
 

@@ -1,16 +1,21 @@
 import React, { useState } from "react";
-import { Users, UserPlus, Shield, UserCheck, Search, Mail, Trash2, Key, Edit, X, Save } from "lucide-react";
-import { getSaasProfiles, updateSaasProfile, changePassword } from "@/lib/saas.functions";
+import { Users, UserPlus, Shield, UserCheck, Search, Trash2, Key, X, Save } from "lucide-react";
+import { getSaasProfiles, updateSaasProfile, changePassword, createSaasUser, deleteSaasUser } from "@/lib/saas.functions";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { Profile } from "@/types/odin";
 
 export function SaasUserList() {
-  const [searchTerm, setSearchTerm] = React.useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [newPassword, setNewPassword] = useState("");
-  const [newUser, setNewUser] = useState({ email: '', full_name: '', role: 'reseller' as 'admin' | 'reseller', odin_reseller_id: '' });
+  const [newUser, setNewUser] = useState({ 
+    email: '', 
+    full_name: '', 
+    role: 'reseller' as 'admin' | 'reseller', 
+    odin_reseller_id: '' 
+  });
   const queryClient = useQueryClient();
 
   const { data: profiles, isLoading } = useQuery({
@@ -19,12 +24,12 @@ export function SaasUserList() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => updateSaasProfile({ data }),
+    mutationFn: (data: Partial<Profile> & { id: string }) => updateSaasProfile({ data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['saas-profiles'] });
       toast.success("Perfil atualizado com sucesso");
     },
-    onError: () => toast.error("Erro ao atualizar perfil")
+    onError: (err: any) => toast.error("Erro ao atualizar perfil: " + err.message)
   });
 
   const passMutation = useMutation({
@@ -38,10 +43,7 @@ export function SaasUserList() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => {
-      const { createSaasUser } = require("@/lib/saas.functions");
-      return createSaasUser({ data });
-    },
+    mutationFn: (data: any) => createSaasUser({ data }),
     onSuccess: (res: any) => {
       queryClient.invalidateQueries({ queryKey: ['saas-profiles'] });
       setIsAddingUser(false);
@@ -52,10 +54,7 @@ export function SaasUserList() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => {
-      const { deleteSaasUser } = require("@/lib/saas.functions");
-      return deleteSaasUser({ data: { id } });
-    },
+    mutationFn: (id: string) => deleteSaasUser({ data: { id } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['saas-profiles'] });
       toast.success("Usuário removido");
@@ -65,10 +64,13 @@ export function SaasUserList() {
 
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newUser.email) return;
+    if (!newUser.email) {
+      toast.error("O e-mail é obrigatório");
+      return;
+    }
     createMutation.mutate({
       ...newUser,
-      odin_reseller_id: newUser.odin_reseller_id ? Number(newUser.odin_reseller_id) : undefined
+      odin_reseller_id: newUser.odin_reseller_id ? Number(newUser.odin_reseller_id) : null
     });
   };
 
@@ -87,9 +89,10 @@ export function SaasUserList() {
     passMutation.mutate(newPassword);
   };
 
-  const filteredProfiles = profiles?.filter(p => 
+  const filteredProfiles = (profiles as Profile[])?.filter(p => 
     p.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.role?.toLowerCase().includes(searchTerm.toLowerCase())
+    p.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.id?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -211,7 +214,7 @@ export function SaasUserList() {
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       {profile.role !== 'admin' && (
                         <button 
-                          onClick={() => handleDeleteUser(profile.id, profile.full_name || profile.role)}
+                          onClick={() => handleDeleteUser(profile.id, profile.full_name || profile.role || 'Usuário')}
                           className="p-2 bg-zinc-800 hover:bg-red-500/20 text-zinc-400 hover:text-red-500 rounded-lg border border-zinc-700 transition-all"
                         >
                           <Trash2 size={16} />
