@@ -11,18 +11,18 @@ async function diag() {
       readyTimeout: 30000,
     });
     
-    console.log("CONNECTED");
+    console.log("CONNECTED TO SSH");
     
-    // Tentando ler as credenciais do arquivo de configuração do Odin
-    const catCmd = "cat /home/xtreamcodes/iptv_xtream_codes/functions.php | grep -E 'db_user|db_pass|db_name|db_port'";
-    const result = await ssh.execCommand(catCmd);
+    const dbUser = "user_iptvpro";
+    const dbPass = "Y92RYuXHLP58AbOciQW";
+    const dbName = "xtream_iptvpro";
+    const dbPort = 7999;
+
+    const mysqlCmd = `mysql -h 127.0.0.1 -P ${dbPort} -u ${dbUser} -p'${dbPass}' ${dbName} -N -s -e "SHOW TABLES LIKE '%server%'; SELECT * FROM streaming_servers LIMIT 5;"`;
+    const result = await ssh.execCommand(mysqlCmd);
     
-    console.log("CONFIG FILE CONTENT:", result.stdout);
-    
-    // Listar tabelas com o usuário root do MySQL (geralmente sem senha ou mesma que o sistema)
-    const listTables = "mysql -e 'SHOW TABLES FROM xtream_iptvpro;'";
-    const tablesResult = await ssh.execCommand(listTables);
-    console.log("TABLES:", tablesResult.stdout);
+    console.log("STDOUT:", result.stdout);
+    console.log("STDERR:", result.stderr);
     
     ssh.dispose();
   } catch (err) {
