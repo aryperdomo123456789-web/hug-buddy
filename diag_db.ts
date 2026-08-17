@@ -13,11 +13,16 @@ async function diag() {
     
     console.log("CONNECTED");
     
-    const mysqlCmd = `mysql -u xtream_iptvpro -p'fontemain123333' xtream_iptvpro -N -s -e "SHOW TABLES; DESCRIBE streaming_servers;"`;
-    const result = await ssh.execCommand(mysqlCmd);
+    // Tentando ler as credenciais do arquivo de configuração do Odin
+    const catCmd = "cat /home/xtreamcodes/iptv_xtream_codes/functions.php | grep -E 'db_user|db_pass|db_name|db_port'";
+    const result = await ssh.execCommand(catCmd);
     
-    console.log("STDOUT:", result.stdout);
-    console.log("STDERR:", result.stderr);
+    console.log("CONFIG FILE CONTENT:", result.stdout);
+    
+    // Listar tabelas com o usuário root do MySQL (geralmente sem senha ou mesma que o sistema)
+    const listTables = "mysql -e 'SHOW TABLES FROM xtream_iptvpro;'";
+    const tablesResult = await ssh.execCommand(listTables);
+    console.log("TABLES:", tablesResult.stdout);
     
     ssh.dispose();
   } catch (err) {
