@@ -12,7 +12,9 @@ import {
   Database,
   Globe,
   UserCheck,
-  Settings
+  Settings,
+  Menu,
+  X as CloseIcon
 } from "lucide-react";
 import { getOdinConfig } from "@/lib/odin";
 import { useOdinData, useHydrated } from "@/hooks/use-odin";
