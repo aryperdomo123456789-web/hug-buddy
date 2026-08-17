@@ -25,12 +25,10 @@ export function useOdinData() {
   const [resellers, setResellers] = useState<any[]>([]);
   const isFetching = useRef(false);
   const lastFetch = useRef(0);
+  const pollInterval = useRef<any>(null);
 
   const fetchAll = async (quiet = false) => {
-    if (isFetching.current) {
-      console.log("[useOdinData] Já existe uma busca em curso, ignorando...");
-      return;
-    }
+    if (isFetching.current) return;
     
     isFetching.current = true;
     if (!quiet) setLoading(true);
@@ -49,17 +47,29 @@ export function useOdinData() {
         
         lastFetch.current = Date.now();
       } else if (!quiet) {
-        toast.error(response?.error || "Erro ao conectar com o servidor. Verifique a conexão.");
+        console.error("[useOdinData] Response failure:", response?.error);
       }
     } catch (e: any) {
       if (!quiet) {
         toast.error("Erro na comunicação com o backend.");
       }
+      console.error("[useOdinData] Catch error:", e);
     } finally {
       setLoading(false);
       isFetching.current = false;
     }
   };
+
+  useEffect(() => {
+    // Polling real para "espelhamento" - a cada 30 segundos
+    pollInterval.current = setInterval(() => {
+      fetchAll(true);
+    }, 30000);
+    
+    return () => {
+      if (pollInterval.current) clearInterval(pollInterval.current);
+    };
+  }, []);
 
   const stats = {
     totalUsers: customers.length,
@@ -67,6 +77,7 @@ export function useOdinData() {
     activeStreams: streams.filter(s => s.status === 1).length,
     totalStreams: streams.length,
     totalServers: servers.length,
+    totalClients: servers.reduce((acc, s) => acc + (s.total_clients || 0), 0),
     totalResellers: resellers.length,
   };
 
