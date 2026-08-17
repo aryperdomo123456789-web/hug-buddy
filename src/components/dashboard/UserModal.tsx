@@ -15,7 +15,8 @@ export function UserModal({ user, bouquets, resellers, onClose, onSave, loading 
   const [activeTab, setActiveTab] = React.useState<'details' | 'advanced' | 'restrictions' | 'bouquets'>('details');
   const [formData, setFormData] = React.useState<User>(() => {
     if (user) {
-      const exp_days = user.exp_date ? Math.max(0, Math.ceil((user.exp_date - Date.now() / 1000) / 86400)) : 30;
+      const now = typeof window !== 'undefined' ? Date.now() / 1000 : 0;
+      const exp_days = user.exp_date ? Math.max(0, Math.ceil((user.exp_date - now) / 86400)) : 30;
       return { ...user, exp_days };
     }
     return UserSchema.parse({});
