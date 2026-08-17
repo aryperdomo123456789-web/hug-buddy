@@ -19,5 +19,10 @@ Este documento contém as credenciais de acesso atuais configuradas no Mago Pane
 - **Token Atual:** `p0P2pycjQooGKKO2fqdkIagwfNA03DFj`
 - **Localização no Servidor:** `/home/xtreamcodes/iptv_xtream_codes/mago-api/token.txt`
 
+## 👤 Acesso Mago Panel (SaaS)
+- **Dono (Admin):** `mago@dono.com`
+- **Senha Padrão:** `12345678`
+- **Privilégios:** Acesso total, gestão de usuários, vinculação de revendas.
+
 ---
 *Nota: Estas credenciais são injetadas automaticamente nas funções de backend e no instalador remoto.*
