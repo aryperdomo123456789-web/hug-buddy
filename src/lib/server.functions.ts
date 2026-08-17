@@ -354,6 +354,23 @@ export const getInstallScript = createServerFn({ method: "GET" })
 export const getDeployCommand = createServerFn({ method: "GET" })
   .handler(async () => "git clone https://github.com/seu-repo/mago-panel.git && cd mago-panel && chmod +x deploy-aapanel.sh && ./deploy-aapanel.sh");
 
+export const generateM3ULink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: { username: string; password: string }) => d)
+  .handler(async ({ data, context }) => {
+    // Buscar DNS configurado
+    const { data: dnsConfig } = await context.supabase
+      .from('dns_configs')
+      .select('dns_url')
+      .eq('is_default', true)
+      .maybeSingle();
+    
+    const domain = dnsConfig?.dns_url || '23.158.72.30'; // Fallback para o IP do lab se não houver DNS
+    const port = 7999; // Porta Odin MariaDB/Streaming default no lab
+    
+    return `http://${domain}:${port}/get.php?username=${data.username}&password=${data.password}&type=m3u_plus&output=ts`;
+  });
+
 
 export const generateBashScript = (t: string, h: string) => `#!/bin/bash
 
