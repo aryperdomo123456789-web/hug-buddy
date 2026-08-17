@@ -44,11 +44,11 @@ export function StreamList({ streams, loading, onRefresh }: StreamListProps) {
         <table className="w-full">
           <thead>
             <tr className="bg-zinc-950/50 text-zinc-500 text-[10px] uppercase tracking-widest text-left border-b border-zinc-900">
-              <th className="py-4 px-6 font-black">ID</th>
-              <th className="py-4 px-6 font-black">Stream</th>
-              <th className="py-4 px-6 font-black">Categoria</th>
-              <th className="py-4 px-6 font-black">Estado</th>
-              <th className="py-4 px-6 font-black text-right">Ações</th>
+              <th className="py-4 px-6 font-black whitespace-nowrap">ID</th>
+              <th className="py-4 px-6 font-black whitespace-nowrap">Stream</th>
+              <th className="py-4 px-6 font-black whitespace-nowrap">Categoria</th>
+              <th className="py-4 px-6 font-black whitespace-nowrap">Estado</th>
+              <th className="py-4 px-6 font-black text-right whitespace-nowrap">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-900/50">

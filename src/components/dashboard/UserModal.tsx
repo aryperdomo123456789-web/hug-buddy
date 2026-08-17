@@ -119,7 +119,7 @@ export function UserModal({ user, bouquets, resellers, onClose, onSave, loading 
                     className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm outline-none"
                   />
                 </Field>
-                <div className="flex gap-4 pt-4">
+                <div className="flex flex-col sm:flex-row gap-4 pt-4">
                   <Checkbox
                     label="Ativo"
                     checked={formData.enabled === 1}

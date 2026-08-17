@@ -41,12 +41,12 @@ export function ResellerList({ resellers, loading, onRefresh, onDelete, onEdit, 
       <table className="w-full">
         <thead className="bg-zinc-950/50 text-zinc-500 text-[10px] uppercase font-black tracking-widest text-left">
           <tr>
-            <th className="py-4 px-6">ID</th>
-            <th className="py-4 px-6">Revendedor</th>
-            <th className="py-4 px-6">Email</th>
-            <th className="py-4 px-6 text-center">Créditos</th>
-            <th className="py-4 px-6 text-center">Clientes</th>
-            <th className="py-4 px-6 text-right">Ações</th>
+            <th className="py-4 px-6 whitespace-nowrap">ID</th>
+            <th className="py-4 px-6 whitespace-nowrap">Revendedor</th>
+            <th className="py-4 px-6 whitespace-nowrap">Email</th>
+            <th className="py-4 px-6 text-center whitespace-nowrap">Créditos</th>
+            <th className="py-4 px-6 text-center whitespace-nowrap">Clientes</th>
+            <th className="py-4 px-6 text-right whitespace-nowrap">Ações</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-900/50">

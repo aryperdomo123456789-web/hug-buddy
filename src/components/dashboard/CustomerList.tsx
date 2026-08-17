@@ -170,16 +170,16 @@ export function CustomerList({
         <table className="w-full">
           <thead>
             <tr className="bg-zinc-950/50 text-zinc-500 text-[10px] uppercase tracking-widest text-left border-b border-zinc-900">
-              <th className="py-4 px-6 font-black">ID</th>
-              <th className="py-4 px-6 font-black">Utilizador</th>
-              <th className="py-4 px-6 font-black">Dono</th>
-              <th className="py-4 px-6 font-black">Senha</th>
-              <th className="py-4 px-6 font-black text-center">Estado</th>
-              <th className="py-4 px-6 font-black text-center">Teste</th>
-              <th className="py-4 px-6 font-black">Expiração</th>
-              <th className="py-4 px-6 font-black text-center">Conns.</th>
-              <th className="py-4 px-6 font-black">Bouquets</th>
-              <th className="py-4 px-6 font-black text-right">Ações</th>
+              <th className="py-4 px-6 font-black whitespace-nowrap">ID</th>
+              <th className="py-4 px-6 font-black whitespace-nowrap">Utilizador</th>
+              <th className="py-4 px-6 font-black whitespace-nowrap">Dono</th>
+              <th className="py-4 px-6 font-black whitespace-nowrap">Senha</th>
+              <th className="py-4 px-6 font-black text-center whitespace-nowrap">Estado</th>
+              <th className="py-4 px-6 font-black text-center whitespace-nowrap">Teste</th>
+              <th className="py-4 px-6 font-black whitespace-nowrap">Expiração</th>
+              <th className="py-4 px-6 font-black text-center whitespace-nowrap">Conns.</th>
+              <th className="py-4 px-6 font-black whitespace-nowrap">Bouquets</th>
+              <th className="py-4 px-6 font-black text-right whitespace-nowrap">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-900/50">
