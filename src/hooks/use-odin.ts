@@ -61,6 +61,9 @@ export function useOdinData() {
   };
 
   useEffect(() => {
+    // Carga inicial
+    fetchAll();
+
     // Polling real para "espelhamento" - a cada 30 segundos
     pollInterval.current = setInterval(() => {
       fetchAll(true);
@@ -70,6 +73,7 @@ export function useOdinData() {
       if (pollInterval.current) clearInterval(pollInterval.current);
     };
   }, []);
+
 
   const stats = {
     totalUsers: customers.length,
