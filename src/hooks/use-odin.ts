@@ -34,7 +34,13 @@ export function useOdinData() {
     if (!quiet) setLoading(true);
 
     try {
-      const response = await getOdinFullData();
+      const response = await getOdinFullData().catch(err => {
+        // Se falhar por 401/Unauthorized, retornamos erro amigável
+        if (err.message?.includes('Unauthorized')) {
+          return { success: false, error: 'Unauthorized' };
+        }
+        throw err;
+      });
       
       if (response?.success && response.data) {
         console.log("[useOdinData] Data received:", {
