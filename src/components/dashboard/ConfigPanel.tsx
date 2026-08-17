@@ -7,8 +7,13 @@ export function ConfigPanel() {
   const cfg = getOdinConfig();
   const [activeTab, setActiveTab] = useState("db");
 
-  // Usamos window.location.origin apenas se estiver no navegador
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8080';
+  // Usamos localhost como default seguro para SSR
+  const [origin, setOrigin] = useState('http://localhost:8080');
+  
+  React.useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
   const installCmd = `bash <(curl -sSL ${origin}/api/install)`;
 
   return (

@@ -29,6 +29,7 @@ import { DnsPanel } from "@/components/dashboard/DnsPanel";
 import { ResellerList } from "@/components/dashboard/ResellerList";
 import { ResellerModal } from "@/components/dashboard/ResellerModal";
 import { ConfigPanel } from "@/components/dashboard/ConfigPanel";
+import { SaasUserList } from "@/components/dashboard/SaasUserList";
 import { User, Reseller } from "@/types/odin";
 import { toast } from "sonner";
 
@@ -51,7 +52,7 @@ export const Route = createFileRoute("/")({
 function DashboardPage() {
   const data = Route.useLoaderData();
   const odin = data?.odin || {};
-  const hydrated = useHydrated();
+  const isHydrated = useHydrated();
   const [activeTab, setActiveTab] = useState('dashboard');
   
   const handleTabChange = (tabId: string) => {
@@ -75,10 +76,10 @@ function DashboardPage() {
   } = useOdinData();
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!isHydrated) return;
     console.log("DASHBOARD HYDRATED - Triggering fetchAll");
     fetchAll();
-  }, [hydrated]);
+  }, [isHydrated]);
 
 
   const handleDeleteUser = async (user: User) => {
@@ -176,6 +177,8 @@ function DashboardPage() {
     { id: "deploy", label: "Deploy aaPanel", icon: Database },
   ];
 
+
+  if (!isHydrated) return null;
 
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans selection:bg-blue-500/30 overflow-x-hidden" id="odin-app-root">
@@ -310,18 +313,7 @@ function DashboardPage() {
               <DnsPanel />
             )}
             {activeTab === 'saas_users' && (
-              <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-10 text-center">
-                <Users className="mx-auto mb-4 text-blue-500" size={40} />
-                <h2 className="text-xl font-bold mb-2">Gestão SaaS em Preparação</h2>
-                <p className="text-zinc-500 text-sm max-w-md mx-auto">
-                  A interface de gestão de usuários do painel está sendo integrada ao Supabase Auth. 
-                  Em breve você poderá criar usuários Admin e Revendedores vinculados diretamente ao Odin.
-                </p>
-                <div className="mt-8 flex justify-center gap-4">
-                  <div className="px-4 py-2 bg-zinc-800 rounded text-[10px] font-bold uppercase tracking-widest text-zinc-400">Suporte a Roles</div>
-                  <div className="px-4 py-2 bg-zinc-800 rounded text-[10px] font-bold uppercase tracking-widest text-zinc-400">Vínculo Odin ID</div>
-                </div>
-              </div>
+              <SaasUserList />
             )}
             {activeTab === 'config' && (
               <ConfigPanel />
