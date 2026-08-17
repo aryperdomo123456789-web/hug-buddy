@@ -16,7 +16,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
-import { getDefaultDns } from "@/lib/dns.functions";
+import { generateM3ULink } from "@/lib/server.functions";
 
 interface CustomerListProps {
   customers: User[];
@@ -46,11 +46,20 @@ export function CustomerList({
   const [statusFilter, setStatusFilter] = React.useState("all");
   const [perPage, setPerPage] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
-  const [defaultDns, setDefaultDns] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    getDefaultDns().then(dns => setDefaultDns(dns));
-  }, []);
+  const copyM3ULink = async (u: User) => {
+    try {
+      const url = await generateM3ULink({ data: { username: u.username, password: u.password } });
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url);
+        toast.success("Link M3U copiado!");
+      } else {
+        window.alert(`Link M3U:\n${url}`);
+      }
+    } catch (e) {
+      toast.error("Erro ao gerar link M3U");
+    }
+  };
 
   const filteredCustomers = React.useMemo(() => {
     let result = customers;
@@ -226,18 +235,7 @@ export function CustomerList({
                   <td className="py-4 px-6 text-right">
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button 
-                        onClick={() => {
-                          const domain = defaultDns || (typeof window !== 'undefined' ? window.location.hostname : 'localhost');
-                          const port = "80"; // Odin default streaming port
-                          const url = `http://${domain}:${port}/get.php?username=${u.username}&password=${u.password}&type=m3u_plus&output=ts`;
-                          
-                          if (navigator.clipboard) {
-                            navigator.clipboard.writeText(url);
-                            toast.success("Link M3U copiado!");
-                          } else {
-                            window.alert(`Link M3U:\n${url}`);
-                          }
-                        }} 
+                        onClick={() => copyM3ULink(u)} 
                         className="p-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-emerald-500 rounded-lg border border-zinc-800 transition-all"
                         title="Download Playlist / Copiar Link"
                       >

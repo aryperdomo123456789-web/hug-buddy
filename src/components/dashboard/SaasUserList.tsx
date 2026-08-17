@@ -8,7 +8,9 @@ import { supabase } from "@/integrations/supabase/client";
 export function SaasUserList() {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isAddingUser, setIsAddingUser] = useState(false);
   const [newPassword, setNewPassword] = useState("");
+  const [newUser, setNewUser] = useState({ email: '', full_name: '', role: 'reseller' as 'admin' | 'reseller', odin_reseller_id: '' });
   const queryClient = useQueryClient();
 
   const { data: profiles, isLoading } = useQuery({
@@ -34,6 +36,47 @@ export function SaasUserList() {
     },
     onError: (err: any) => toast.error("Erro ao alterar senha: " + err.message)
   });
+
+  const createMutation = useMutation({
+    mutationFn: (data: any) => {
+      const { createSaasUser } = require("@/lib/saas.functions");
+      return createSaasUser({ data });
+    },
+    onSuccess: (res: any) => {
+      queryClient.invalidateQueries({ queryKey: ['saas-profiles'] });
+      setIsAddingUser(false);
+      setNewUser({ email: '', full_name: '', role: 'reseller', odin_reseller_id: '' });
+      toast.success(res.message || "Usuário criado!");
+    },
+    onError: (err: any) => toast.error("Erro ao criar usuário: " + err.message)
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => {
+      const { deleteSaasUser } = require("@/lib/saas.functions");
+      return deleteSaasUser({ data: { id } });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['saas-profiles'] });
+      toast.success("Usuário removido");
+    },
+    onError: (err: any) => toast.error("Erro ao remover: " + err.message)
+  });
+
+  const handleCreateUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUser.email) return;
+    createMutation.mutate({
+      ...newUser,
+      odin_reseller_id: newUser.odin_reseller_id ? Number(newUser.odin_reseller_id) : undefined
+    });
+  };
+
+  const handleDeleteUser = (id: string, name: string) => {
+    if (window.confirm(`Deseja realmente remover o acesso de ${name}?`)) {
+      deleteMutation.mutate(id);
+    }
+  };
 
   const handlePasswordChange = (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,12 +149,12 @@ export function SaasUserList() {
       <div className="bg-[#0f0f12] rounded-2xl border border-zinc-800 shadow-xl overflow-hidden">
         <div className="p-6 border-b border-zinc-900 flex justify-between items-center bg-zinc-950/30">
           <div className="flex gap-4">
-            <button className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg font-bold transition-all flex items-center gap-2 text-sm opacity-50 cursor-not-allowed">
+            <button 
+              onClick={() => setIsAddingUser(true)}
+              className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg font-bold transition-all flex items-center gap-2 text-sm"
+            >
               <UserPlus size={18} /> Novo Usuário Painel
             </button>
-            <span className="text-[10px] text-zinc-600 flex items-center font-bold italic">
-              (Criação via dashboard Supabase recomendada)
-            </span>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
@@ -167,7 +210,10 @@ export function SaasUserList() {
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       {profile.role !== 'admin' && (
-                        <button className="p-2 bg-zinc-800 hover:bg-red-500/20 text-zinc-400 hover:text-red-500 rounded-lg border border-zinc-700 transition-all">
+                        <button 
+                          onClick={() => handleDeleteUser(profile.id, profile.full_name || profile.role)}
+                          className="p-2 bg-zinc-800 hover:bg-red-500/20 text-zinc-400 hover:text-red-500 rounded-lg border border-zinc-700 transition-all"
+                        >
                           <Trash2 size={16} />
                         </button>
                       )}
@@ -214,6 +260,78 @@ export function SaasUserList() {
           </p>
         </div>
       </div>
+
+      {isAddingUser && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[1000] flex items-center justify-center p-6 animate-in fade-in duration-300">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-md p-8 shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold uppercase tracking-tighter text-white">Novo Usuário SaaS</h3>
+              <button onClick={() => setIsAddingUser(false)} className="text-zinc-500 hover:text-white transition-colors">
+                <X size={24} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleCreateUser} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Nome Completo</label>
+                <input 
+                  value={newUser.full_name}
+                  onChange={e => setNewUser(prev => ({ ...prev, full_name: e.target.value }))}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                  placeholder="Ex: João da Silva"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">E-mail de Acesso</label>
+                <input 
+                  type="email"
+                  required
+                  value={newUser.email}
+                  onChange={e => setNewUser(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                  placeholder="email@exemplo.com"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Papel no Painel</label>
+                <select 
+                  value={newUser.role}
+                  onChange={e => setNewUser(prev => ({ ...prev, role: e.target.value as any }))}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                >
+                  <option value="reseller">Revendedor (Restrito)</option>
+                  <option value="admin">Administrador (Dono)</option>
+                </select>
+              </div>
+
+              {newUser.role === 'reseller' && (
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">ID Revendedor Odin (XTREAM)</label>
+                  <input 
+                    type="number"
+                    required={newUser.role === 'reseller'}
+                    value={newUser.odin_reseller_id}
+                    onChange={e => setNewUser(prev => ({ ...prev, odin_reseller_id: e.target.value }))}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                    placeholder="Ex: 5"
+                  />
+                  <p className="text-[9px] text-zinc-600 font-bold italic uppercase">Vínculo obrigatório para restringir visualização de clientes.</p>
+                </div>
+              )}
+
+              <button 
+                type="submit"
+                disabled={createMutation.isPending}
+                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 mt-4"
+              >
+                {createMutation.isPending ? "PROCESSANDO..." : "CRIAR ACESSO AGORA"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

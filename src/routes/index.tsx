@@ -61,6 +61,22 @@ function DashboardPage() {
   const odin = data?.odin || {};
   const isHydrated = useHydrated();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [profile, setProfile] = useState<{ role: string; odin_reseller_id: number | null } | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('role, odin_reseller_id')
+          .eq('id', session.user.id)
+          .single();
+        setProfile(data as any);
+      }
+    };
+    fetchProfile();
+  }, []);
   
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
@@ -177,11 +193,11 @@ function DashboardPage() {
     { id: 'customers', label: 'Clientes', icon: Users },
     { id: 'streams', label: 'Streams', icon: Monitor },
     { id: 'servers', label: 'Servidores', icon: ServerIcon },
-    { id: 'resellers', label: 'Revendedores', icon: UserCheck },
-    { id: 'saas_users', label: 'Usuários SaaS', icon: Users },
-    { id: "dns", label: "DNS Profissional", icon: Globe },
-    { id: "config", label: "Configuração Odin", icon: Settings },
-    { id: "deploy", label: "Deploy aaPanel", icon: Database },
+    { id: 'resellers', label: 'Revendedores', icon: UserCheck, adminOnly: true },
+    { id: 'saas_users', label: 'Usuários SaaS', icon: Users, adminOnly: true },
+    { id: "dns", label: "DNS Profissional", icon: Globe, adminOnly: true },
+    { id: "config", label: "Configuração Odin", icon: Settings, adminOnly: true },
+    { id: "deploy", label: "Deploy aaPanel", icon: Database, adminOnly: true },
     { id: "logout", label: "Sair do Painel", icon: RefreshCw },
   ];
 
@@ -206,7 +222,7 @@ function DashboardPage() {
           </div>
           
           <div className="space-y-2 relative z-[9999]">
-            {navItems.map((item) => {
+            {navItems.filter(item => !item.adminOnly || profile?.role === 'admin').map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
               return (
