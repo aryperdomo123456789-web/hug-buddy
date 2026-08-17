@@ -31,12 +31,12 @@ export const getOdinFullData = createServerFn({ method: "GET" })
 
       const rawResults = await executeBatchQueries(queries);
       const data = parseOdinData(
-        rawResults[0], 
-        rawResults[1], 
-        rawResults[2], 
-        rawResults[3], 
-        rawResults[4], 
-        rawResults[5]
+        rawResults[0] || "", 
+        rawResults[1] || "", 
+        rawResults[2] || "", 
+        rawResults[3] || "", 
+        rawResults[4] || "", 
+        rawResults[5] || ""
       );
 
       return { success: true, data };
