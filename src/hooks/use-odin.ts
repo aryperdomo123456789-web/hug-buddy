@@ -37,6 +37,11 @@ export function useOdinData() {
       const response = await getOdinFullData();
       
       if (response?.success && response.data) {
+        console.log("[useOdinData] Data received:", {
+          customers: response.data.customers?.length,
+          servers: response.data.servers?.length,
+          streams: response.data.streams?.length
+        });
         const { customers, streams, bouquets, servers, resellers } = response.data;
         
         setCustomers(customers || []);
@@ -47,6 +52,7 @@ export function useOdinData() {
         
         lastFetch.current = Date.now();
       } else if (!quiet) {
+
         console.error("[useOdinData] Response failure:", response?.error);
       }
     } catch (e: any) {
@@ -61,6 +67,9 @@ export function useOdinData() {
   };
 
   useEffect(() => {
+    // Carga inicial
+    fetchAll();
+
     // Polling real para "espelhamento" - a cada 30 segundos
     pollInterval.current = setInterval(() => {
       fetchAll(true);
@@ -70,6 +79,7 @@ export function useOdinData() {
       if (pollInterval.current) clearInterval(pollInterval.current);
     };
   }, []);
+
 
   const stats = {
     totalUsers: customers.length,
