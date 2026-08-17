@@ -35,12 +35,11 @@ export function useOdinData() {
 
     try {
       const response = await getOdinFullData().catch(err => {
-        // Se falhar por 401/Unauthorized, retornamos erro amigável
         if (err.message?.includes('Unauthorized')) {
           return { success: false, error: 'Unauthorized' };
         }
         throw err;
-      });
+      }) as any;
       
       if (response?.success && response.data) {
         console.log("[useOdinData] Data received:", {
@@ -58,8 +57,11 @@ export function useOdinData() {
         
         lastFetch.current = Date.now();
       } else if (!quiet) {
-
-        console.error("[useOdinData] Response failure:", response?.error);
+        if (response?.error === 'Unauthorized') {
+          console.warn("[useOdinData] User not authenticated for server functions");
+        } else {
+          console.error("[useOdinData] Response failure:", response?.error);
+        }
       }
     } catch (e: any) {
       if (!quiet) {
