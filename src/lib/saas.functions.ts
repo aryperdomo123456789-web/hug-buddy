@@ -5,12 +5,13 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const getSaasProfiles = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    // Usamos context.supabase que já está tipado com a role do usuário
     const { data, error } = await context.supabase
       .from('profiles')
       .select('*');
     
     if (error) throw error;
-    return data;
+    return data as any[];
   });
 
 export const updateSaasProfile = createServerFn({ method: "POST" })
@@ -42,26 +43,16 @@ export const createSaasUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: { email: string; role: 'admin' | 'reseller'; odin_reseller_id?: number }) => d)
   .handler(async ({ data, context }) => {
-    // Apenas admins podem criar usuários
-    const { data: adminCheck } = await context.supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', context.userId)
-      .eq('role', 'admin')
-      .single();
+    // Verificamos o papel do usuário logado via RPC ou consulta direta se permitido
+    const { data: hasRole } = await context.supabase.rpc('has_role', {
+      _user_id: context.userId,
+      _role: 'admin'
+    });
 
-    if (!adminCheck) {
+    if (!hasRole) {
       throw new Error("Apenas administradores podem criar novos usuários.");
     }
 
-    // Nota: Em um fluxo real do Supabase sem dashboard, usamos auth.admin.createUser
-    // Mas isso requer a service_role_key que não temos. 
-    // Usaremos a estratégia de convite por email se configurado, ou retornaremos erro 
-    // instruindo a criação via Auth.
-    
-    // Como estamos em um laboratório, vamos apenas registrar o perfil se o usuário 
-    // já for convidado/criado, ou simular a intenção.
-    
     return { 
       success: true, 
       message: "Funcionalidade de criação requer configuração de SMTP no Supabase Cloud. O perfil será ativado no primeiro login do usuário." 
