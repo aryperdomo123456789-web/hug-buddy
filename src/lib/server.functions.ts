@@ -38,6 +38,7 @@ async function executeBatchQueries(queries: string[]) {
       const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
       
       const result = await ssh.execCommand(mysqlCmd);
+      console.log(`[SSH] Executed query: ${sql.substring(0, 50)}... Result length: ${result.stdout.length}`);
       
       if (result.code !== 0) {
         console.error(`[SSH] Query ${i} Failed: ${result.stderr}`);
@@ -166,12 +167,17 @@ export const getOdinFullData = createServerFn({ method: "GET" })
       const [uRaw, stRaw, bRaw, svRaw, rRaw] = await executeBatchQueries(queries);
 
       const customers = (uRaw || "").trim().split("\n").filter(Boolean).map(line => {
+        const parts = line.split("\t");
+        if (parts.length < 18) {
+           console.error("[SSH] Customer line format invalid:", line);
+           return null;
+        }
         const [
           id, username, password, exp_date, enabled, admin_enabled, 
           is_trial, is_restreamer, is_isplock, max_connections, 
           bouquet, admin_notes, reseller_notes, allowed_ips, 
           allowed_ua, forced_country, active_cons, owner_id
-        ] = line.split("\t");
+        ] = parts;
         
         return {
           id: Number(id),
@@ -193,7 +199,7 @@ export const getOdinFullData = createServerFn({ method: "GET" })
           active_cons: Number(active_cons || 0),
           owner_id: Number(owner_id || 1)
         };
-      });
+      }).filter(Boolean);
 
       const streams = (stRaw || "").trim().split("\n").filter(Boolean).map(line => {
         const [id, name, cat, icon, source, status] = line.split("\t");
@@ -235,7 +241,9 @@ export const getOdinFullData = createServerFn({ method: "GET" })
       });
 
       const resellers = (rRaw || "").trim().split("\n").filter(Boolean).map(line => {
-        const [id, username, password, email, owner_id, credits, active, mg_id, last_login, user_count] = line.split("\t");
+        const parts = line.split("\t");
+        if (parts.length < 10) return null;
+        const [id, username, password, email, owner_id, credits, active, mg_id, last_login, user_count] = parts;
         return {
           id: Number(id),
           username: username || "",
@@ -248,7 +256,7 @@ export const getOdinFullData = createServerFn({ method: "GET" })
           last_login: Number(last_login || 0),
           user_count: Number(user_count || 0)
         };
-      });
+      }).filter(Boolean);
 
       return { 
         success: true, 
