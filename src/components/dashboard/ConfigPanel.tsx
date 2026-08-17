@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Database, Shield, Terminal, Key, Server } from "lucide-react";
+import { Database, Shield, Terminal, Key, Server, Layout, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { getOdinConfig } from "@/lib/odin";
 
@@ -53,6 +53,49 @@ export function ConfigPanel() {
                 <label className="text-[10px] text-zinc-500 uppercase font-bold mb-1 block">Usuário</label>
                 <input disabled value={cfg.sshUsername} className="w-full bg-black border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-400 cursor-not-allowed" />
               </div>
+            </div>
+          </div>
+
+          {/* Guia de Arquitetura SaaS */}
+          <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="p-3 bg-indigo-500/10 rounded-xl text-indigo-500">
+                <Layout size={24} />
+              </div>
+              <div>
+                <h4 className="font-bold text-zinc-200 uppercase tracking-tighter">Estratégia SaaS & aaPanel</h4>
+                <p className="text-[10px] text-zinc-500 uppercase font-black">Documentação Especializada</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="p-4 bg-black/40 border border-zinc-800 rounded-xl">
+                <h5 className="text-xs font-bold text-zinc-300 mb-2 uppercase">VISÃO DA ARQUITETURA</h5>
+                <p className="text-[11px] text-zinc-500 leading-relaxed">
+                  O Mago Panel utiliza o MariaDB do Odin como "Fonte de Verdade" para espelhamento em tempo real, 
+                  enquanto o Supabase gerencia a identidade SaaS e permissões (Dono vs Revendedor).
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-black/40 border border-zinc-800 rounded-xl">
+                  <h5 className="text-xs font-bold text-zinc-300 mb-2 uppercase">PORTA 6328</h5>
+                  <p className="text-[11px] text-zinc-500">Porta padrão obrigatória para o painel no aaPanel.</p>
+                </div>
+                <div className="p-4 bg-black/40 border border-zinc-800 rounded-xl">
+                  <h5 className="text-xs font-bold text-zinc-300 mb-2 uppercase">NGINX EXCLUSIVO</h5>
+                  <p className="text-[11px] text-zinc-500">Requer arquivo de configuração próprio para evitar conflitos.</p>
+                </div>
+              </div>
+
+              <a 
+                href="/docs/odin/ARQUITETURA_ESPECIALISTA.md" 
+                target="_blank"
+                className="flex items-center justify-center gap-2 w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-xl text-xs font-bold transition-all border border-zinc-700"
+              >
+                <ExternalLink size={14} />
+                VER DOCUMENTAÇÃO COMPLETA
+              </a>
             </div>
           </div>
 
