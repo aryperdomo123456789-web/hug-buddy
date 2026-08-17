@@ -22,7 +22,7 @@ export function StatCard({ label, value, icon: Icon, color = "blue" }: StatCardP
           <Icon size={24} />
         </div>
       </div>
-      <div className="text-2xl font-bold text-zinc-100">{value}</div>
+      <div className="text-2xl font-bold text-zinc-100 stat-card-value">{value}</div>
       <div className="text-sm text-zinc-500 font-medium uppercase tracking-wider mt-1">{label}</div>
     </div>
   );

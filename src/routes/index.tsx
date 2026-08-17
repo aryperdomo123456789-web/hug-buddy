@@ -169,7 +169,7 @@ function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans selection:bg-blue-500/30 overflow-x-hidden">
+    <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans selection:bg-blue-500/30 overflow-x-hidden" id="odin-app-root">
       <div className="flex gap-10 relative">
         <aside className="w-64 shrink-0 relative z-[100] bg-[#0a0a0c]">
           <div className="mb-10 px-4">
