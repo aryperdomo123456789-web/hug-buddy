@@ -166,7 +166,9 @@ function DashboardPage() {
     { id: 'servers', label: 'Servidores', icon: ServerIcon },
     { id: 'resellers', label: 'Revendedores', icon: UserCheck },
     { id: 'dns', label: 'DNS Profissional', icon: Globe },
+    { id: 'deploy', label: 'Deploy aaPanel', icon: Database },
   ];
+
 
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans selection:bg-blue-500/30 overflow-x-hidden" id="odin-app-root">
