@@ -219,8 +219,8 @@ export const getOdinFullData = createServerFn({ method: "GET" })
           // Sanitização para Odin v6 hardware JSON
           const sanitizedHw = hardware ? hardware.replace(/\\n/g, "").replace(/\\/g, "") : "{}";
           hwData = JSON.parse(sanitizedHw); 
-        } catch(e) {
-          console.error("Hardware Parse Error for server", name, e.message);
+        } catch(err: any) {
+          console.error("Hardware Parse Error for server", name, err.message);
         }
         
         return { 
