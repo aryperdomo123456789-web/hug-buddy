@@ -67,6 +67,7 @@ export function useOdinData() {
     activeStreams: streams.filter(s => s.status === 1).length,
     totalStreams: streams.length,
     totalServers: servers.length,
+    totalClients: servers.reduce((acc, s) => acc + (s.total_clients || 0), 0),
     totalResellers: resellers.length,
   };
 

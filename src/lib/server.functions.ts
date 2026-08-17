@@ -154,7 +154,7 @@ export const getOdinFullData = createServerFn({ method: "GET" })
         "SELECT id, username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, reseller_notes, allowed_ips, allowed_ua, forced_country, (SELECT COUNT(*) FROM user_activity_now WHERE user_id = users.id) as active_cons, owner_id FROM users ORDER BY id DESC LIMIT 100",
         "SELECT id, stream_display_name, category_id, stream_icon, stream_source, 1 as stream_status FROM streams LIMIT 100",
         "SELECT id, bouquet_name FROM bouquets",
-        "SELECT id, server_name, status, last_check_ago as last_check FROM streaming_servers",
+        "SELECT id, server_name, status, last_check_ago as last_check, server_hardware, total_clients, http_broadcast_port FROM streaming_servers",
         "SELECT id, username, password, email, owner_id, credits, active, member_group_id, last_login, (SELECT count(*) FROM users WHERE owner_id = reg_users.id) as user_count FROM reg_users"
       ];
 
@@ -208,12 +208,18 @@ export const getOdinFullData = createServerFn({ method: "GET" })
       });
 
       const servers = (svRaw || "").trim().split("\n").filter(Boolean).map(line => {
-        const [id, name, status, last] = line.split("\t");
+        const [id, name, status, last, hardware, clients, port] = line.split("\t");
+        let hwData = {};
+        try { hwData = JSON.parse(hardware || "{}"); } catch(e) {}
+        
         return { 
           id: id || "0", 
           name: name || "Server", 
           status: Number(status || 0), 
-          last_check: Number(last || 0) 
+          last_check: Number(last || 0),
+          hardware: hwData,
+          total_clients: Number(clients || 0),
+          port: port || "80"
         };
       });
 
