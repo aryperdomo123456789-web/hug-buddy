@@ -18,11 +18,11 @@ async function diag() {
     const dbName = "xtream_iptvpro";
     const dbPort = 7999;
 
-    const mysqlCmd = `mysql -h 127.0.0.1 -P ${dbPort} -u ${dbUser} -p'${dbPass}' ${dbName} -N -s -e "SHOW TABLES LIKE '%server%'; SELECT * FROM streaming_servers LIMIT 5;"`;
+    const mysqlCmd = `mysql -h 127.0.0.1 -P ${dbPort} -u ${dbUser} -p'${dbPass}' ${dbName} -N -s -e "DESCRIBE streaming_servers; SELECT COUNT(*) FROM streaming_servers; SELECT id, server_name, status FROM streaming_servers;"`;
     const result = await ssh.execCommand(mysqlCmd);
     
-    console.log("STDOUT:", result.stdout);
-    console.log("STDERR:", result.stderr);
+    console.log("STDOUT:\n", result.stdout);
+    console.log("STDERR:\n", result.stderr);
     
     ssh.dispose();
   } catch (err) {
