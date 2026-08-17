@@ -25,6 +25,7 @@ export function useOdinData() {
   const [bouquets, setBouquets] = useState<Bouquet[]>([]);
   const [resellers, setResellers] = useState<Reseller[]>([]);
   
+  const [totalConns, setTotalConns] = useState(0);
   const isFetching = useRef(false);
   const pollInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -38,13 +39,14 @@ export function useOdinData() {
       const response = await getOdinFullData();
       
       if (response?.success && response.data) {
-        const { customers, streams, bouquets, servers, resellers } = response.data;
+        const { customers, streams, bouquets, servers, resellers, totalConns } = response.data as any;
         
         setCustomers(customers || []);
         setStreams(streams || []);
         setBouquets(bouquets || []);
         setServers(servers || []);
         setResellers(resellers || []);
+        setTotalConns(totalConns || 0);
       } else if (!quiet) {
         if (response?.error !== 'Unauthorized') {
           console.error("[useOdinData] Response failure:", response?.error);
@@ -82,6 +84,9 @@ export function useOdinData() {
     totalServers: servers.length,
     totalClients: servers.reduce((acc, s) => acc + (s.total_clients || 0), 0),
     totalResellers: resellers.length,
+    totalConns: totalConns,
+    totalInput: "0 Mbps",
+    totalOutput: "0 Mbps"
   };
 
   return {

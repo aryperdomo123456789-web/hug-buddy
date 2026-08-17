@@ -14,7 +14,10 @@ import {
   UserCheck,
   Settings,
   Menu,
-  X as CloseIcon
+  X as CloseIcon,
+  Download,
+  Upload,
+  Tv
 } from "lucide-react";
 import { getOdinConfig } from "@/lib/odin";
 import { useOdinData, useHydrated } from "@/hooks/use-odin";
@@ -283,12 +286,35 @@ function DashboardPage() {
 
           <div key={activeTab} className="animate-in fade-in zoom-in-95 duration-300">
             {activeTab === 'dashboard' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                <StatCard label="Clientes" value={stats.totalUsers} icon={Users} color="blue" />
-                <StatCard label="Online" value={stats.onlineUsers} icon={Activity} color="green" />
-                <StatCard label="Streams" value={stats.totalStreams > 0 ? `${stats.activeStreams}/${stats.totalStreams}` : "0/0"} icon={Monitor} color="purple" />
-                <StatCard label="Servidores" value={stats.totalServers} icon={ServerIcon} color="blue" />
-                <StatCard label="Revendas" value={stats.totalResellers} icon={UserCheck} color="blue" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-10">
+                <StatCard 
+                  label="Utilizadores Online" 
+                  value={stats.onlineUsers} 
+                  icon={Users} 
+                  color="blue" 
+                />
+                <StatCard 
+                  label="Conexões Abertas" 
+                  value={stats.totalConns} 
+                  icon={Database} 
+                  color="green" 
+                />
+                <StatCard 
+                  label="Total Input" 
+                  value={stats.totalInput} 
+                  icon={Download} 
+                  secondaryLabel="Total Output"
+                  secondaryValue={stats.totalOutput}
+                  color="pink" 
+                />
+                <StatCard 
+                  label="Streams Online" 
+                  value={stats.activeStreams} 
+                  icon={Tv} 
+                  secondaryLabel="Streams Offline"
+                  secondaryValue={stats.totalStreams - stats.activeStreams}
+                  color="gray" 
+                />
               </div>
             )}
 

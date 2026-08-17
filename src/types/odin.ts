@@ -82,6 +82,9 @@ export interface DashboardStats {
   totalServers: number;
   totalClients: number;
   totalResellers: number;
+  totalConns: number;
+  totalInput: string;
+  totalOutput: string;
 }
 
 export interface SSHResponse<T = any> {
