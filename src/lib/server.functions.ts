@@ -202,6 +202,7 @@ export const getOdinFullData = createServerFn({ method: "GET" })
   });
 
 export const createReseller = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .validator((d: any) => d)
   .handler(async ({ data }) => {
     try {
@@ -214,6 +215,7 @@ export const createReseller = createServerFn({ method: "POST" })
   });
 
 export const updateReseller = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .validator((d: any) => d)
   .handler(async ({ data }) => {
     try {
@@ -226,6 +228,7 @@ export const updateReseller = createServerFn({ method: "POST" })
   });
 
 export const deleteReseller = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .validator((d: any) => d)
   .handler(async ({ data }) => {
     try {
@@ -238,6 +241,7 @@ export const deleteReseller = createServerFn({ method: "POST" })
   });
 
 export const createUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .validator((d: any) => d)
   .handler(async ({ data }) => {
     try {
@@ -250,6 +254,7 @@ export const createUser = createServerFn({ method: "POST" })
   });
 
 export const updateUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .validator((d: any) => d)
   .handler(async ({ data }) => {
     try {
@@ -262,6 +267,7 @@ export const updateUser = createServerFn({ method: "POST" })
   });
 
 export const deleteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .validator((d: any) => d)
   .handler(async ({ data }) => {
     try {
@@ -274,6 +280,7 @@ export const deleteUser = createServerFn({ method: "POST" })
   });
 
 export const toggleUserStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .validator((d: any) => d)
   .handler(async ({ data }) => {
     try {
@@ -286,6 +293,7 @@ export const toggleUserStatus = createServerFn({ method: "POST" })
   });
 
 export const killUserConnections = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .validator((d: any) => d)
   .handler(async ({ data }) => {
     try {
