@@ -71,12 +71,10 @@ function DashboardPage() {
 
   useEffect(() => {
     if (!hydrated) return;
-    // Debounce initial fetch to ensure stability
-    const timer = setTimeout(() => {
-      fetchAll(true);
-    }, 500);
-    return () => clearTimeout(timer);
+    console.log("DASHBOARD HYDRATED - Triggering fetchAll");
+    fetchAll();
   }, [hydrated]);
+
 
   const handleDeleteUser = async (user: User) => {
     if (!user.id) return;
