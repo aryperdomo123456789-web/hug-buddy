@@ -51,7 +51,7 @@ export const Route = createFileRoute("/")({
 function DashboardPage() {
   const data = Route.useLoaderData();
   const odin = data?.odin || {};
-  const hydrated = useHydrated();
+  const isHydrated = useHydrated();
   const [activeTab, setActiveTab] = useState('dashboard');
   
   const handleTabChange = (tabId: string) => {
@@ -75,10 +75,10 @@ function DashboardPage() {
   } = useOdinData();
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!isHydrated) return;
     console.log("DASHBOARD HYDRATED - Triggering fetchAll");
     fetchAll();
-  }, [hydrated]);
+  }, [isHydrated]);
 
 
   const handleDeleteUser = async (user: User) => {
@@ -176,6 +176,8 @@ function DashboardPage() {
     { id: "deploy", label: "Deploy aaPanel", icon: Database },
   ];
 
+
+  if (!isHydrated) return null;
 
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans selection:bg-blue-500/30 overflow-x-hidden" id="odin-app-root">
