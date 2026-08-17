@@ -167,5 +167,7 @@ export function parseOdinData(uRaw: string, stRaw: string, bRaw: string, svRaw: 
     } as Reseller;
   }).filter((x): x is Reseller => x !== null);
 
-  return { customers, streams, bouquets, servers, resellers };
+  const totalConns = Object.values(activityMap).reduce((a, b) => a + b, 0);
+  
+  return { customers, streams, bouquets, servers, resellers, totalConns };
 }
