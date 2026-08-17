@@ -33,7 +33,11 @@ async function executeBatchQueries(queries: string[]) {
     // Concatenamos as queries com um delimitador para maior performance (embora o NodeSSH possa não gostar de múltiplas instruções mysql numa string)
     // Mantemos a execução sequencial mas otimizada
     for (let i = 0; i < queries.length; i++) {
-      const sql = queries[i];
+      const sql = queries[i] || "";
+      if (!sql) {
+        results.push("");
+        continue;
+      }
       // Removendo -N -s se necessário para debugar, mas aqui mantemos para manter o parse tabular
       const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
       
