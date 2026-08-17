@@ -153,6 +153,57 @@ function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-4 md:p-10 font-sans selection:bg-blue-500/30 overflow-x-hidden">
+      {/* Mobile Top Bar */}
+      <div className="md:hidden flex items-center justify-between mb-6 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800">
+        <div className="text-xl font-black text-blue-500 tracking-tighter flex items-center gap-2">
+          <ShieldAlert size={24} /> MAGO PANEL
+        </div>
+        <button 
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="p-2 bg-zinc-800 rounded-lg text-zinc-400"
+        >
+          <Menu size={24} />
+        </button>
+      </div>
+
+      {/* Mobile Drawer */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-[100] md:hidden">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
+          <aside className="absolute top-0 left-0 w-80 h-full bg-[#0a0a0c] p-6 border-r border-zinc-800 shadow-2xl animate-in slide-in-from-left duration-300">
+            <div className="flex justify-between items-center mb-10">
+              <div className="text-2xl font-black text-blue-500 tracking-tighter flex items-center gap-2">
+                <ShieldAlert size={32} /> MAGO PANEL
+              </div>
+              <button onClick={() => setIsMobileMenuOpen(false)} className="text-zinc-500">
+                <CloseIcon size={24} />
+              </button>
+            </div>
+            
+            <nav className="space-y-2">
+              {navItems
+                .filter(item => !item.adminOnly || profile?.role === 'admin')
+                .map((item) => (
+                  <NavItem 
+                    key={item.id}
+                    icon={item.icon}
+                    label={item.label}
+                    active={activeTab === item.id}
+                    onClick={() => {
+                      if (item.id === 'logout') {
+                        handleLogout();
+                        return;
+                      }
+                      setActiveTab(item.id);
+                      setIsMobileMenuOpen(false);
+                    }}
+                  />
+                ))}
+            </nav>
+          </aside>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row gap-6 md:gap-10 relative">
         <aside className="hidden md:block w-64 shrink-0 bg-[#0a0a0c]">
           <div className="mb-10 px-4">
