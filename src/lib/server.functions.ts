@@ -243,9 +243,19 @@ export const deleteReseller = createServerFn({ method: "POST" })
 export const createUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: any) => d)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     try {
-      const sql = `INSERT INTO users (username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, allowed_ips, allowed_ua, forced_country, created_by) VALUES ('${escapeSql(data.username)}', '${escapeSql(data.password)}', ${Number(data.exp_date)}, ${Number(data.enabled)}, ${Number(data.admin_enabled)}, ${Number(data.is_trial)}, ${Number(data.is_restreamer)}, ${Number(data.is_isplock)}, ${Number(data.max_connections || 1)}, '${escapeSql(data.bouquet || "[]")}', '${escapeSql(data.admin_notes || "")}', '${escapeSql(data.allowed_ips || "")}', '${escapeSql(data.allowed_ua || "")}', '${escapeSql(data.forced_country || "Off")}', ${Number(data.owner_id || 1)})`;
+      const { data: profile } = await context.supabase
+        .from('profiles')
+        .select('role, odin_reseller_id')
+        .eq('id', context.userId)
+        .single();
+
+      const isAdmin = profile?.role === 'admin';
+      const resellerId = profile?.odin_reseller_id;
+      const ownerId = isAdmin ? (data.owner_id || 1) : resellerId;
+
+      const sql = `INSERT INTO users (username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, allowed_ips, allowed_ua, forced_country, created_by) VALUES ('${escapeSql(data.username)}', '${escapeSql(data.password)}', ${Number(data.exp_date)}, ${Number(data.enabled)}, ${Number(data.admin_enabled)}, ${Number(data.is_trial)}, ${Number(data.is_restreamer)}, ${Number(data.is_isplock)}, ${Number(data.max_connections || 1)}, '${escapeSql(data.bouquet || "[]")}', '${escapeSql(data.admin_notes || "")}', '${escapeSql(data.allowed_ips || "")}', '${escapeSql(data.allowed_ua || "")}', '${escapeSql(data.forced_country || "Off")}', ${Number(ownerId)})`;
       await executeQuery(sql);
       return { success: true };
     } catch (e: any) {
@@ -256,9 +266,27 @@ export const createUser = createServerFn({ method: "POST" })
 export const updateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: any) => d)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     try {
-      const sql = `UPDATE users SET username='${escapeSql(data.username)}', password='${escapeSql(data.password)}', exp_date=${Number(data.exp_date)}, enabled=${Number(data.enabled)}, admin_enabled=${Number(data.admin_enabled)}, is_trial=${Number(data.is_trial)}, is_restreamer=${Number(data.is_restreamer)}, is_isplock=${Number(data.is_isplock)}, max_connections=${Number(data.max_connections || 1)}, bouquet='${escapeSql(data.bouquet || "[]")}', admin_notes='${escapeSql(data.admin_notes || "")}', allowed_ips='${escapeSql(data.allowed_ips || "")}', allowed_ua='${escapeSql(data.allowed_ua || "")}', forced_country='${escapeSql(data.forced_country || "Off")}', created_by=${Number(data.owner_id || 1)} WHERE id=${Number(data.id)}`;
+      const { data: profile } = await context.supabase
+        .from('profiles')
+        .select('role, odin_reseller_id')
+        .eq('id', context.userId)
+        .single();
+
+      const isAdmin = profile?.role === 'admin';
+      const resellerId = profile?.odin_reseller_id;
+
+      if (!isAdmin) {
+        const checkSql = `SELECT created_by FROM users WHERE id = ${Number(data.id)}`;
+        const checkResult = await executeQuery(checkSql);
+        if (Number(checkResult.trim()) !== resellerId) {
+          throw new Error("Acesso negado.");
+        }
+      }
+
+      const ownerId = isAdmin ? (data.owner_id || 1) : resellerId;
+      const sql = `UPDATE users SET username='${escapeSql(data.username)}', password='${escapeSql(data.password)}', exp_date=${Number(data.exp_date)}, enabled=${Number(data.enabled)}, admin_enabled=${Number(data.admin_enabled)}, is_trial=${Number(data.is_trial)}, is_restreamer=${Number(data.is_restreamer)}, is_isplock=${Number(data.is_isplock)}, max_connections=${Number(data.max_connections || 1)}, bouquet='${escapeSql(data.bouquet || "[]")}', admin_notes='${escapeSql(data.admin_notes || "")}', allowed_ips='${escapeSql(data.allowed_ips || "")}', allowed_ua='${escapeSql(data.allowed_ua || "")}', forced_country='${escapeSql(data.forced_country || "Off")}', created_by=${Number(ownerId)} WHERE id=${Number(data.id)}`;
       await executeQuery(sql);
       return { success: true };
     } catch (e: any) {
