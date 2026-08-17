@@ -177,11 +177,11 @@ function DashboardPage() {
     { id: 'customers', label: 'Clientes', icon: Users },
     { id: 'streams', label: 'Streams', icon: Monitor },
     { id: 'servers', label: 'Servidores', icon: ServerIcon },
-    { id: 'resellers', label: 'Revendedores', icon: UserCheck },
-    { id: 'saas_users', label: 'Usuários SaaS', icon: Users },
-    { id: "dns", label: "DNS Profissional", icon: Globe },
-    { id: "config", label: "Configuração Odin", icon: Settings },
-    { id: "deploy", label: "Deploy aaPanel", icon: Database },
+    { id: 'resellers', label: 'Revendedores', icon: UserCheck, adminOnly: true },
+    { id: 'saas_users', label: 'Usuários SaaS', icon: Users, adminOnly: true },
+    { id: "dns", label: "DNS Profissional", icon: Globe, adminOnly: true },
+    { id: "config", label: "Configuração Odin", icon: Settings, adminOnly: true },
+    { id: "deploy", label: "Deploy aaPanel", icon: Database, adminOnly: true },
     { id: "logout", label: "Sair do Painel", icon: RefreshCw },
   ];
 
