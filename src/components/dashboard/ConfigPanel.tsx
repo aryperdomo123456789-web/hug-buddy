@@ -1,23 +1,21 @@
 import React, { useState } from "react";
-import { Database, Shield, Terminal, Key, Server, Layout, ExternalLink } from "lucide-react";
+import { Database, Key, Server, Layout, ExternalLink, Terminal } from "lucide-react";
 import { toast } from "sonner";
 import { getOdinConfig } from "@/lib/odin";
+import { useHydrated } from "@/hooks/use-odin";
 
 export function ConfigPanel() {
+  const isHydrated = useHydrated();
   const cfg = getOdinConfig();
   const [activeTab, setActiveTab] = useState("db");
 
-  // Usamos localhost como default seguro para SSR
-  const [origin, setOrigin] = useState('http://localhost:8080');
-  
-  React.useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
-
+  const origin = isHydrated ? window.location.origin : 'http://localhost:8080';
   const installCmd = `bash <(curl -sSL ${origin}/api/install)`;
 
+  if (!isHydrated) return null;
+
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in duration-500">
       <div className="flex gap-2 p-1 bg-black/40 border border-zinc-800 rounded-xl w-fit">
         {[
           { id: "db", label: "Banco & SSH", icon: Database },
@@ -56,7 +54,6 @@ export function ConfigPanel() {
             </div>
           </div>
 
-          {/* Guia de Arquitetura SaaS */}
           <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
             <div className="flex items-center gap-4 mb-6">
               <div className="p-3 bg-indigo-500/10 rounded-xl text-indigo-500">
@@ -113,14 +110,6 @@ export function ConfigPanel() {
                 <input disabled value={cfg.dbName} className="w-full bg-black border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-400 cursor-not-allowed" />
               </div>
             </div>
-          </div>
-          
-          <div className="md:col-span-2 bg-blue-500/5 border border-blue-500/20 rounded-xl p-4 flex items-start gap-3">
-            <Shield className="text-blue-500 shrink-0" size={20} />
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              As credenciais estão atualmente configuradas via variáveis de ambiente no laboratório. 
-              Para alterá-las permanentemente, edite o arquivo <code className="text-blue-400">src/lib/odin.ts</code>.
-            </p>
           </div>
         </div>
       )}
