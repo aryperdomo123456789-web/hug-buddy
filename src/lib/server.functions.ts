@@ -30,25 +30,21 @@ async function executeBatchQueries(queries: string[]) {
     });
     
     const results: string[] = [];
-    // Concatenamos as queries com um delimitador para maior performance (embora o NodeSSH possa não gostar de múltiplas instruções mysql numa string)
-    // Mantemos a execução sequencial mas otimizada
     for (let i = 0; i < queries.length; i++) {
       const sql = queries[i] || "";
       if (!sql) {
         results.push("");
         continue;
       }
-      // Removendo -N -s se necessário para debugar, mas aqui mantemos para manter o parse tabular
       const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
       
       const result = await ssh.execCommand(mysqlCmd);
-      console.log(`[SSH] Executed query: ${sql.substring(0, 50)}... Result length: ${result.stdout.length} STDOUT: [${result.stdout.substring(0, 100)}]`);
+      console.log(`[SSH] Executed query ${i} (length: ${result.stdout.length})`);
       
       if (result.code !== 0) {
         console.error(`[SSH] Query ${i} Failed: ${result.stderr}`);
         results.push(""); 
       } else {
-        // Odin às vezes retorna \r\n, limpamos para manter o padrão \t\n
         results.push(result.stdout.replace(/\r/g, "") || "");
       }
     }
@@ -67,96 +63,6 @@ async function executeQuery(sql: string): Promise<string> {
   return results[0] || "";
 }
 
-export const getUsers = createServerFn({ method: "GET" })
-  .handler(async () => {
-    try {
-      // Updated SQL for Odin v6: user_activity_now uses server_id and activity_id
-      const sql = "SELECT id, username, password, exp_date, enabled, (SELECT count(*) FROM user_activity_now WHERE user_id = users.id) as active_cons FROM users ORDER BY id DESC LIMIT 100";
-      const stdout = await executeQuery(sql) || "";
-      
-      const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
-        const parts = line.split("\t");
-        if (parts.length < 6) return null;
-        const [id, username, password, exp_date, enabled, active_cons] = parts;
-        return {
-          id: Number(id),
-          username: username || "",
-          password: password || "",
-          exp_date: Number(exp_date || 0),
-          enabled: Number(enabled || 0),
-          active_cons: Number(active_cons || 0)
-        };
-      }).filter(Boolean);
-      
-      return { success: true, data: rows };
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
-  });
-
-export const getServers = createServerFn({ method: "GET" })
-  .handler(async () => {
-    try {
-      // Em Odin v6, streaming_servers é a tabela correta
-      // Mapeando: id, server_name, status, last_check_ago
-      const sql = "SELECT id, server_name, status, last_check_ago FROM streaming_servers";
-      const stdout = await executeQuery(sql) || "";
-      
-      const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
-        const [id, name, status, last] = line.split("\t");
-        return { 
-          id, 
-          name: name || "Server", 
-          status: Number(status), 
-          last_check: Number(last || 0) 
-        };
-      });
-      
-      return { success: true, data: rows };
-    } catch (e: any) {
-      return { success: false, error: e.message };
-    }
-  });
-
-export const getStreams = createServerFn({ method: "GET" })
-  .handler(async () => {
-    try {
-      const sql = "SELECT id, stream_display_name, category_id, stream_icon, stream_source, 1 FROM streams LIMIT 100";
-      const stdout = await executeQuery(sql) || "";
-      
-      const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
-        const [id, name, cat, icon, source, status] = line.split("\t");
-        return { 
-          id: Number(id), 
-          name, 
-          category_id: Number(cat), 
-          icon, 
-          source, 
-          status: Number(status) 
-        };
-      });
-      return { success: true, data: rows };
-    } catch (e: any) {
-      return { success: false, error: e.message };
-    }
-  });
-
-export const getBouquets = createServerFn({ method: "GET" })
-  .handler(async () => {
-    try {
-      const sql = "SELECT id, bouquet_name FROM bouquets";
-      const stdout = await executeQuery(sql) || "";
-      
-      const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
-        const [id, name] = line.split("\t");
-        return { id: Number(id), name };
-      });
-      return { success: true, data: rows };
-    } catch (e: any) {
-      return { success: false, error: e.message };
-    }
-  });
-
 export const getOdinFullData = createServerFn({ method: "GET" })
   .handler(async () => {
     try {
@@ -174,28 +80,25 @@ export const getOdinFullData = createServerFn({ method: "GET" })
       const activityMap: Record<number, number> = {};
       (actRaw || "").trim().split("\n").filter(Boolean).forEach(line => {
         const [uid, count] = line.split("\t");
-        activityMap[Number(uid)] = Number(count || 0);
+        if (uid) activityMap[Number(uid)] = Number(count || 0);
       });
 
       const customers = (uRaw || "").trim().split("\n").filter(Boolean).map(line => {
         const parts = line.split("\t");
-        if (parts.length < 17) {
-           console.error("[SSH] Customer line format invalid:", line);
-           return null;
-        }
+        if (parts.length < 17) return null;
+        
         const [
           id, username, password, exp_date, enabled, admin_enabled, 
           is_trial, is_restreamer, is_isplock, max_connections, 
           bouquet, admin_notes, reseller_notes, allowed_ips, 
           allowed_ua, forced_country, owner_id
-
         ] = parts;
         
         return {
           id: Number(id),
           username: username || "",
           password: password || "",
-          exp_date: Number(exp_date || 0),
+          exp_date: exp_date === "NULL" ? 0 : Number(exp_date || 0),
           enabled: Number(enabled || 0),
           admin_enabled: Number(admin_enabled || 0),
           is_trial: Number(is_trial || 0),
@@ -234,11 +137,10 @@ export const getOdinFullData = createServerFn({ method: "GET" })
         const [id, name, status, last, hardware, clients, port] = line.split("\t");
         let hwData = {};
         try { 
-          // Sanitização para Odin v6 hardware JSON
           const sanitizedHw = hardware ? hardware.replace(/\\n/g, "").replace(/\\/g, "") : "{}";
           hwData = JSON.parse(sanitizedHw); 
-        } catch(err: any) {
-          console.error("Hardware Parse Error for server", name, err.message);
+        } catch(err) {
+          console.error("Hardware Parse Error", name);
         }
         
         return { 
@@ -255,18 +157,18 @@ export const getOdinFullData = createServerFn({ method: "GET" })
       const resellers = (rRaw || "").trim().split("\n").filter(Boolean).map(line => {
         const parts = line.split("\t");
         if (parts.length < 10) return null;
-        const [id, username, password, email, owner_id, credits, active, mg_id, last_login, user_count] = parts;
+        const [id, username, password, email, owner_id, credits, status, mg_id, last_login, user_count] = parts;
 
         return {
           id: Number(id),
           username: username || "",
           password: password || "",
           email: email || "",
-          owner_id: Number(owner_id || 1),
+          owner_id: Number(owner_id || 0),
           credits: Number(credits || 0),
-          active: Number(active || 1),
+          active: Number(status || 1),
           member_group_id: Number(mg_id || 2),
-          last_login: Number(last_login || 0),
+          last_login: last_login === "NULL" ? 0 : Number(last_login || 0),
           user_count: Number(user_count || 0)
         };
       }).filter(Boolean);
@@ -284,7 +186,7 @@ export const createReseller = createServerFn({ method: "POST" })
   .validator((d: any) => d)
   .handler(async ({ data }) => {
     try {
-      const sql = `INSERT INTO reg_users (username, password, email, owner_id, credits, active, member_group_id) VALUES ('${escapeSql(data.username)}', '${escapeSql(data.password)}', '${escapeSql(data.email)}', ${Number(data.owner_id || 1)}, ${Number(data.credits || 0)}, ${Number(data.active || 1)}, ${Number(data.member_group_id || 2)})`;
+      const sql = `INSERT INTO reg_users (username, password, email, owner_id, credits, status, member_group_id) VALUES ('${escapeSql(data.username)}', '${escapeSql(data.password)}', '${escapeSql(data.email)}', ${Number(data.owner_id || 0)}, ${Number(data.credits || 0)}, ${Number(data.active || 1)}, ${Number(data.member_group_id || 2)})`;
       await executeQuery(sql);
       return { success: true };
     } catch (e: any) {
@@ -296,7 +198,7 @@ export const updateReseller = createServerFn({ method: "POST" })
   .validator((d: any) => d)
   .handler(async ({ data }) => {
     try {
-      const sql = `UPDATE reg_users SET username='${escapeSql(data.username)}', password='${escapeSql(data.password)}', email='${escapeSql(data.email)}', owner_id=${Number(data.owner_id || 1)}, credits=${Number(data.credits || 0)}, active=${Number(data.active || 1)}, member_group_id=${Number(data.member_group_id || 2)} WHERE id=${Number(data.id)}`;
+      const sql = `UPDATE reg_users SET username='${escapeSql(data.username)}', password='${escapeSql(data.password)}', email='${escapeSql(data.email)}', owner_id=${Number(data.owner_id || 0)}, credits=${Number(data.credits || 0)}, status=${Number(data.active || 1)}, member_group_id=${Number(data.member_group_id || 2)} WHERE id=${Number(data.id)}`;
       await executeQuery(sql);
       return { success: true };
     } catch (e: any) {
@@ -320,7 +222,7 @@ export const createUser = createServerFn({ method: "POST" })
   .validator((d: any) => d)
   .handler(async ({ data }) => {
     try {
-      const sql = `INSERT INTO users (username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, allowed_ips, allowed_ua, forced_country) VALUES ('${escapeSql(data.username)}', '${escapeSql(data.password)}', ${Number(data.exp_date)}, ${Number(data.enabled)}, ${Number(data.admin_enabled)}, ${Number(data.is_trial)}, ${Number(data.is_restreamer)}, ${Number(data.is_isplock)}, ${Number(data.max_connections || 1)}, '${escapeSql(data.bouquet || "[]")}', '${escapeSql(data.admin_notes || "")}', '${escapeSql(data.allowed_ips || "")}', '${escapeSql(data.allowed_ua || "")}', '${escapeSql(data.forced_country || "Off")}')`;
+      const sql = `INSERT INTO users (username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, allowed_ips, allowed_ua, forced_country, created_by) VALUES ('${escapeSql(data.username)}', '${escapeSql(data.password)}', ${Number(data.exp_date)}, ${Number(data.enabled)}, ${Number(data.admin_enabled)}, ${Number(data.is_trial)}, ${Number(data.is_restreamer)}, ${Number(data.is_isplock)}, ${Number(data.max_connections || 1)}, '${escapeSql(data.bouquet || "[]")}', '${escapeSql(data.admin_notes || "")}', '${escapeSql(data.allowed_ips || "")}', '${escapeSql(data.allowed_ua || "")}', '${escapeSql(data.forced_country || "Off")}', ${Number(data.owner_id || 1)})`;
       await executeQuery(sql);
       return { success: true };
     } catch (e: any) {
@@ -332,7 +234,7 @@ export const updateUser = createServerFn({ method: "POST" })
   .validator((d: any) => d)
   .handler(async ({ data }) => {
     try {
-      const sql = `UPDATE users SET username='${escapeSql(data.username)}', password='${escapeSql(data.password)}', exp_date=${Number(data.exp_date)}, enabled=${Number(data.enabled)}, admin_enabled=${Number(data.admin_enabled)}, is_trial=${Number(data.is_trial)}, is_restreamer=${Number(data.is_restreamer)}, is_isplock=${Number(data.is_isplock)}, max_connections=${Number(data.max_connections || 1)}, bouquet='${escapeSql(data.bouquet || "[]")}', admin_notes='${escapeSql(data.admin_notes || "")}', allowed_ips='${escapeSql(data.allowed_ips || "")}', allowed_ua='${escapeSql(data.allowed_ua || "")}', forced_country='${escapeSql(data.forced_country || "Off")}' WHERE id=${Number(data.id)}`;
+      const sql = `UPDATE users SET username='${escapeSql(data.username)}', password='${escapeSql(data.password)}', exp_date=${Number(data.exp_date)}, enabled=${Number(data.enabled)}, admin_enabled=${Number(data.admin_enabled)}, is_trial=${Number(data.is_trial)}, is_restreamer=${Number(data.is_restreamer)}, is_isplock=${Number(data.is_isplock)}, max_connections=${Number(data.max_connections || 1)}, bouquet='${escapeSql(data.bouquet || "[]")}', admin_notes='${escapeSql(data.admin_notes || "")}', allowed_ips='${escapeSql(data.allowed_ips || "")}', allowed_ua='${escapeSql(data.allowed_ua || "")}', forced_country='${escapeSql(data.forced_country || "Off")}', created_by=${Number(data.owner_id || 1)} WHERE id=${Number(data.id)}`;
       await executeQuery(sql);
       return { success: true };
     } catch (e: any) {
@@ -368,7 +270,6 @@ export const killUserConnections = createServerFn({ method: "POST" })
   .validator((d: any) => d)
   .handler(async ({ data }) => {
     try {
-      // In Odin v6, removing from activity table disconnects the user
       const sql = `DELETE FROM user_activity_now WHERE user_id=${data.id}`;
       await executeQuery(sql);
       return { success: true };
@@ -377,13 +278,8 @@ export const killUserConnections = createServerFn({ method: "POST" })
     }
   });
 
-export const getInstallScript = createServerFn({ method: "GET" })
-  .handler(async () => "bash <(curl -sSL https://mago.panel/api/install)");
-
 export const generateBashScript = (t: string, h: string) => `#!/bin/bash
 # ODIN API INSTALLER
-# Token: ${t}
-# Host: ${h}
 echo "Instalando Mago API no Odin Engine..."
 mkdir -p /home/xtreamcodes/iptv_xtream_codes/mago-api
 echo "${t}" > /home/xtreamcodes/iptv_xtream_codes/mago-api/token.txt
