@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 // Mago Panel - Dashboard IPTV (Odin v6)
-// Documentação completa no README.md e pasta /docs
 // Deploy aaPanel: Porta 6328 e Nginx Exclusivo.
-// Espelhamento Real Odin v6 Ativado 🚀
+import { supabase } from "@/integrations/supabase/client";
+import { useRouter } from "@tanstack/react-router";
 
 import { 
   Users, 
@@ -17,7 +17,7 @@ import {
   UserCheck,
   Settings
 } from "lucide-react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { getOdinConfig } from "@/lib/odin";
 import { useOdinData, useHydrated } from "@/hooks/use-odin";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -34,6 +34,12 @@ import { User, Reseller } from "@/types/odin";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
+  beforeLoad: async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      throw redirect({ to: "/auth" });
+    }
+  },
   component: DashboardPage,
   loader: async () => {
     const cfg = getOdinConfig();
@@ -50,6 +56,7 @@ export const Route = createFileRoute("/")({
 });
 
 function DashboardPage() {
+  const router = useRouter();
   const data = Route.useLoaderData();
   const odin = data?.odin || {};
   const isHydrated = useHydrated();
@@ -175,7 +182,14 @@ function DashboardPage() {
     { id: "dns", label: "DNS Profissional", icon: Globe },
     { id: "config", label: "Configuração Odin", icon: Settings },
     { id: "deploy", label: "Deploy aaPanel", icon: Database },
+    { id: "logout", label: "Sair do Painel", icon: RefreshCw },
   ];
+
+  const handleLogout = async () => {
+    if (!window.confirm("Deseja realmente sair do Mago Panel?")) return;
+    await supabase.auth.signOut();
+    router.navigate({ to: "/auth" });
+  };
 
 
   if (!isHydrated) return null;
@@ -201,7 +215,10 @@ function DashboardPage() {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log("NAV CLICK:", item.id);
+                    if (item.id === 'logout') {
+                      handleLogout();
+                      return;
+                    }
                     setActiveTab(item.id);
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 border relative ${
