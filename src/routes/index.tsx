@@ -215,7 +215,7 @@ function DashboardPage() {
             className="absolute -right-3 top-10 z-50 p-1.5 bg-blue-600 rounded-full text-white border-2 border-[#0a0a0c] hover:bg-blue-500 transition-all shadow-lg hidden md:block"
             title={isSidebarCollapsed ? "Expandir Menu" : "Recolher Menu"}
           >
-            {isSidebarCollapsed ? <Menu size={14} /> : <X as any size={14} />}
+            {isSidebarCollapsed ? <Menu size={14} /> : <CloseIcon size={14} />}
           </button>
 
           <div className={`mb-10 px-4 flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-start'}`}>
