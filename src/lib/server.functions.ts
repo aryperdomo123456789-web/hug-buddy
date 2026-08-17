@@ -173,10 +173,13 @@ export const getOdinFullData = createServerFn({ method: "GET" })
         };
       }).filter(Boolean);
 
+      console.log(`[SSH] Processed ${customers.length} customers and ${resellers.length} resellers`);
+
       return { 
         success: true, 
         data: { customers, streams, bouquets, servers, resellers } 
       };
+
     } catch (error: any) {
       return { success: false, error: error.message };
     }
