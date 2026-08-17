@@ -42,7 +42,6 @@ export const createSaasUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: { email: string; role: 'admin' | 'reseller'; odin_reseller_id?: number; full_name?: string }) => d)
   .handler(async ({ data, context }) => {
-    // 1. Verificar se o executor é admin
     const { data: hasRole } = await (context.supabase.rpc as any)('has_role', {
       _user_id: context.userId,
       _role: 'admin'
@@ -52,33 +51,27 @@ export const createSaasUser = createServerFn({ method: "POST" })
       throw new Error("Apenas administradores podem criar novos usuários.");
     }
 
-    // 2. Importar o cliente admin para criar o usuário no Auth
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
 
-    // 3. Criar usuário no Supabase Auth (gera uma senha aleatória que deve ser resetada pelo email ou login)
-    // No Lovable Cloud, o signUp via admin costuma requerer confirmação se configurado.
-    // Usamos admin.createUser para maior controle
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
-      password: Math.random().toString(36).slice(-12), // Senha temporária
+      password: Math.random().toString(36).slice(-12),
       email_confirm: true,
       user_metadata: { full_name: data.full_name || data.email.split('@')[0] }
     });
 
     if (authError) throw authError;
 
-    // 4. O trigger de perfil (se existir) cria o profile, mas vamos garantir os campos role e odin_reseller_id
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .update({
         role: data.role,
-        odin_reseller_id: data.odin_reseller_id,
-        full_name: data.full_name
+        odin_reseller_id: data.odin_reseller_id ?? null,
+        full_name: data.full_name ?? null
       })
       .eq('id', authUser.user.id);
 
     if (profileError) {
-      // Rollback auth user if profile fails
       await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
       throw profileError;
     }
@@ -86,7 +79,7 @@ export const createSaasUser = createServerFn({ method: "POST" })
     return { 
       success: true, 
       userId: authUser.user.id,
-      message: "Usuário SaaS criado com sucesso. Instrua o usuário a usar a recuperação de senha no primeiro acesso." 
+      message: "Usuário SaaS criado com sucesso." 
     };
   });
 
