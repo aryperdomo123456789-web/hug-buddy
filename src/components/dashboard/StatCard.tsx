@@ -4,7 +4,9 @@ interface StatCardProps {
   label: string;
   value: string | number;
   icon: LucideIcon;
-  color?: "blue" | "green" | "red" | "purple";
+  color?: "blue" | "green" | "red" | "purple" | "pink" | "gray";
+  secondaryLabel?: string;
+  secondaryValue?: string | number;
 }
 
 export function StatCard({ label, value, icon: Icon, color = "blue" }: StatCardProps) {
