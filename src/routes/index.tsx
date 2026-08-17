@@ -236,9 +236,9 @@ function DashboardPage() {
                activeTab === 'streams' ? 'Streams' : 
                activeTab === 'servers' ? 'Servidores' : 
                activeTab === 'resellers' ? 'Revendedores' : 
-               active_tab === "dns" ? "DNS Profissional" : 
-               active_tab === "config" ? "Configuração Odin" :
-               active_tab === "deploy" ? "Deploy aaPanel" : ""}
+               activeTab === 'dns' ? 'DNS Profissional' : 
+               activeTab === 'config' ? 'Configuração Odin' :
+               activeTab === 'deploy' ? 'Deploy aaPanel' : ''}
 
             </h1>
             <button 
