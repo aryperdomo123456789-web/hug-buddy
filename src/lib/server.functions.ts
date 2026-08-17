@@ -39,6 +39,9 @@ async function executeBatchQueries(queries: string[]) {
       const remoteCmd = `timeout 15s ${mysqlCmd}`;
       const result = await ssh.execCommand(remoteCmd);
       
+      console.log(`[SSH] Query Executed: ${sql.substring(0, 50)}...`);
+      console.log(`[SSH] Result Code: ${result.code}, Stdout length: ${result.stdout.length}`);
+      
       if (result.code !== 0) {
         console.error(`[SSH] Query Error: ${result.stderr}`);
         results.push(""); 
