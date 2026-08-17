@@ -207,24 +207,30 @@ function DashboardPage() {
 
       <div className="flex flex-col md:flex-row gap-6 md:gap-10 relative">
         <aside 
-          className={`hidden md:flex flex-col shrink-0 bg-[#0a0a0c] transition-all duration-300 ease-in-out border-r border-zinc-900/50 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}
+          className={`hidden md:flex flex-col shrink-0 bg-[#0a0a0c] transition-all duration-300 ease-in-out border-r border-zinc-900/50 relative ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}
         >
-          <div className={`mb-10 px-4 flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
-            {!isSidebarCollapsed && (
-              <div className="animate-in fade-in duration-500">
-                <div className="text-2xl font-black text-blue-500 tracking-tighter flex items-center gap-2">
+          {/* Botão de Toggle Flutuante */}
+          <button 
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="absolute -right-3 top-10 z-50 p-1.5 bg-blue-600 rounded-full text-white border-2 border-[#0a0a0c] hover:bg-blue-500 transition-all shadow-lg hidden md:block"
+            title={isSidebarCollapsed ? "Expandir Menu" : "Recolher Menu"}
+          >
+            {isSidebarCollapsed ? <Menu size={14} /> : <X as any size={14} />}
+          </button>
+
+          <div className={`mb-10 px-4 flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-start'}`}>
+            {!isSidebarCollapsed ? (
+              <div className="animate-in fade-in duration-500 overflow-hidden">
+                <div className="text-2xl font-black text-blue-500 tracking-tighter flex items-center gap-2 whitespace-nowrap">
                   <ShieldAlert size={32} /> MAGO PANEL
                 </div>
-                <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em] mt-1">Odin v6 Engine</div>
+                <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em] mt-1 whitespace-nowrap">Odin v6 Engine</div>
+              </div>
+            ) : (
+              <div className="text-blue-500 animate-in zoom-in duration-300">
+                <ShieldAlert size={32} />
               </div>
             )}
-            <button 
-              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-500 transition-colors"
-              title={isSidebarCollapsed ? "Expandir Menu" : "Recolher Menu"}
-            >
-              <Menu size={20} />
-            </button>
           </div>
           
           <nav className="space-y-2">
