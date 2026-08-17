@@ -84,6 +84,9 @@ export function useOdinData() {
     totalServers: servers.length,
     totalClients: servers.reduce((acc, s) => acc + (s.total_clients || 0), 0),
     totalResellers: resellers.length,
+    totalConns: totalConns,
+    totalInput: "0 Mbps",
+    totalOutput: "0 Mbps"
   };
 
   return {
