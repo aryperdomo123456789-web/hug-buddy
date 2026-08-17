@@ -14,7 +14,8 @@ import {
   Monitor,
   Database,
   Globe,
-  UserCheck
+  UserCheck,
+  Settings
 } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { getOdinConfig } from "@/lib/odin";
@@ -27,6 +28,7 @@ import { StreamList } from "@/components/dashboard/StreamList";
 import { DnsPanel } from "@/components/dashboard/DnsPanel";
 import { ResellerList } from "@/components/dashboard/ResellerList";
 import { ResellerModal } from "@/components/dashboard/ResellerModal";
+import { ConfigPanel } from "@/components/dashboard/ConfigPanel";
 import { User, Reseller } from "@/types/odin";
 import { toast } from "sonner";
 
@@ -168,8 +170,9 @@ function DashboardPage() {
     { id: 'streams', label: 'Streams', icon: Monitor },
     { id: 'servers', label: 'Servidores', icon: ServerIcon },
     { id: 'resellers', label: 'Revendedores', icon: UserCheck },
-    { id: 'dns', label: 'DNS Profissional', icon: Globe },
-    { id: 'deploy', label: 'Deploy aaPanel', icon: Database },
+    { id: "dns", label: "DNS Profissional", icon: Globe },
+    { id: "config", label: "Configuração Odin", icon: Settings },
+    { id: "deploy", label: "Deploy aaPanel", icon: Database },
   ];
 
 
@@ -233,8 +236,9 @@ function DashboardPage() {
                activeTab === 'streams' ? 'Streams' : 
                activeTab === 'servers' ? 'Servidores' : 
                activeTab === 'resellers' ? 'Revendedores' : 
-               activeTab === 'dns' ? 'DNS Profissional' : 
-               activeTab === 'deploy' ? 'Deploy aaPanel' : ''}
+               active_tab === "dns" ? "DNS Profissional" : 
+               active_tab === "config" ? "Configuração Odin" :
+               active_tab === "deploy" ? "Deploy aaPanel" : ""}
 
             </h1>
             <button 
@@ -303,6 +307,9 @@ function DashboardPage() {
             )}
             {activeTab === 'dns' && (
               <DnsPanel />
+            )}
+            {activeTab === 'config' && (
+              <ConfigPanel />
             )}
             {activeTab === 'deploy' && (
               <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8 max-w-2xl mx-auto text-center">
