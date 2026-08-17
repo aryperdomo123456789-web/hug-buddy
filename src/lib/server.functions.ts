@@ -94,14 +94,15 @@ export const getServers = createServerFn({ method: "GET" })
   .handler(async () => {
     try {
       // Em Odin v6, streaming_servers é a tabela correta
-      const sql = "SELECT id, server_name, status, 0 FROM streaming_servers";
+      // Mapeando: id, server_name, status, last_check_ago
+      const sql = "SELECT id, server_name, status, last_check_ago FROM streaming_servers";
       const stdout = await executeQuery(sql) || "";
       
       const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
         const [id, name, status, last] = line.split("\t");
         return { 
           id, 
-          name, 
+          name: name || "Server", 
           status: Number(status), 
           last_check: Number(last || 0) 
         };
@@ -159,7 +160,7 @@ export const getOdinFullData = createServerFn({ method: "GET" })
         "SELECT id, username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, reseller_notes, allowed_ips, allowed_ua, forced_country, (SELECT COUNT(*) FROM user_activity_now WHERE user_id = users.id) as active_cons, owner_id FROM users ORDER BY id DESC LIMIT 100",
         "SELECT id, stream_display_name, category_id, stream_icon, stream_source, 1 as stream_status FROM streams LIMIT 100",
         "SELECT id, bouquet_name FROM bouquets",
-        "SELECT id, server_name, status, 0 as last_check FROM streaming_servers",
+        "SELECT id, server_name, status, last_check_ago as last_check FROM streaming_servers",
         "SELECT id, username, password, email, owner_id, credits, active, member_group_id, last_login, (SELECT count(*) FROM users WHERE owner_id = reg_users.id) as user_count FROM reg_users"
       ];
 

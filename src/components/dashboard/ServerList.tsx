@@ -40,7 +40,7 @@ export function ServerList({ servers, loading, onRefresh }: ServerListProps) {
             <div className="space-y-3 pt-4 border-t border-zinc-800/50">
               <div className="flex items-center gap-2 text-zinc-500">
                 <Activity size={14} />
-                <span className="text-[10px] font-bold uppercase">Última Verificação: {new Date(server.last_check * 1000).toLocaleString()}</span>
+                <span className="text-[10px] font-bold uppercase">Última Verificação: {server.last_check > 0 ? new Date(server.last_check * 1000).toLocaleString() : 'N/A'}</span>
               </div>
             </div>
           </div>
