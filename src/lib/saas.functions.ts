@@ -24,9 +24,15 @@ export const updateSaasProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => ProfileValidator.parse(d))
   .handler(async ({ data, context }) => {
+    // Filter out undefined values to satisfy exactOptionalPropertyTypes
+    const updateData: any = {};
+    if (data.full_name !== undefined) updateData.full_name = data.full_name;
+    if (data.role !== undefined) updateData.role = data.role;
+    if (data.odin_reseller_id !== undefined) updateData.odin_reseller_id = data.odin_reseller_id;
+
     const { error } = await context.supabase
       .from('profiles')
-      .update(data)
+      .update(updateData)
       .eq('id', data.id);
     
     if (error) throw error;
