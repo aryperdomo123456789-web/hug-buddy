@@ -57,8 +57,8 @@ function DashboardPage() {
   const data = Route.useLoaderData();
   const odin = data?.odin || {};
   const isHydrated = useHydrated();
-  
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
