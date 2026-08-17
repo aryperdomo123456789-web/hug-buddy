@@ -260,7 +260,6 @@ export function SaasUserList() {
           </p>
         </div>
       </div>
-      </div>
 
       {isAddingUser && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[1000] flex items-center justify-center p-6 animate-in fade-in duration-300">
