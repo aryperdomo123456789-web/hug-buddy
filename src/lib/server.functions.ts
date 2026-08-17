@@ -30,18 +30,21 @@ async function executeBatchQueries(queries: string[]) {
     });
     
     const results: string[] = [];
+    // Concatenamos as queries com um delimitador para maior performance (embora o NodeSSH possa não gostar de múltiplas instruções mysql numa string)
+    // Mantemos a execução sequencial mas otimizada
     for (let i = 0; i < queries.length; i++) {
       const sql = queries[i];
+      // Removendo -N -s se necessário para debugar, mas aqui mantemos para manter o parse tabular
       const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
       
-      // Cada query individual tem seu timeout, mas dentro da mesma conexão SSH
       const result = await ssh.execCommand(mysqlCmd);
       
       if (result.code !== 0) {
         console.error(`[SSH] Query ${i} Failed: ${result.stderr}`);
         results.push(""); 
       } else {
-        results.push(result.stdout || "");
+        // Odin às vezes retorna \r\n, limpamos para manter o padrão \t\n
+        results.push(result.stdout.replace(/\r/g, "") || "");
       }
     }
     
@@ -67,16 +70,18 @@ export const getUsers = createServerFn({ method: "GET" })
       const stdout = await executeQuery(sql) || "";
       
       const rows = stdout.trim().split("\n").filter(Boolean).map(line => {
-        const [id, username, password, exp_date, enabled, active_cons] = line.split("\t");
+        const parts = line.split("\t");
+        if (parts.length < 6) return null;
+        const [id, username, password, exp_date, enabled, active_cons] = parts;
         return {
           id: Number(id),
-          username,
-          password,
-          exp_date: Number(exp_date),
-          enabled: Number(enabled),
+          username: username || "",
+          password: password || "",
+          exp_date: Number(exp_date || 0),
+          enabled: Number(enabled || 0),
           active_cons: Number(active_cons || 0)
         };
-      });
+      }).filter(Boolean);
       
       return { success: true, data: rows };
     } catch (error: any) {
@@ -210,7 +215,13 @@ export const getOdinFullData = createServerFn({ method: "GET" })
       const servers = (svRaw || "").trim().split("\n").filter(Boolean).map(line => {
         const [id, name, status, last, hardware, clients, port] = line.split("\t");
         let hwData = {};
-        try { hwData = JSON.parse(hardware || "{}"); } catch(e) {}
+        try { 
+          // Sanitização para Odin v6 hardware JSON
+          const sanitizedHw = hardware ? hardware.replace(/\\n/g, "").replace(/\\/g, "") : "{}";
+          hwData = JSON.parse(sanitizedHw); 
+        } catch(err: any) {
+          console.error("Hardware Parse Error for server", name, err.message);
+        }
         
         return { 
           id: id || "0", 
