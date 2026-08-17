@@ -11,18 +11,15 @@ async function diag() {
       readyTimeout: 30000,
     });
     
-    console.log("CONNECTED TO SSH");
-    
     const dbUser = "user_iptvpro";
     const dbPass = "Y92RYuXHLP58AbOciQW";
     const dbName = "xtream_iptvpro";
     const dbPort = 7999;
 
-    const mysqlCmd = `mysql -h 127.0.0.1 -P ${dbPort} -u ${dbUser} -p'${dbPass}' ${dbName} -N -s -e "DESCRIBE streaming_servers; SELECT COUNT(*) FROM streaming_servers; SELECT id, server_name, status FROM streaming_servers;"`;
+    const mysqlCmd = `mysql -h 127.0.0.1 -P ${dbPort} -u ${dbUser} -p'${dbPass}' ${dbName} -e "DESCRIBE streaming_servers;"`;
     const result = await ssh.execCommand(mysqlCmd);
     
-    console.log("STDOUT:\n", result.stdout);
-    console.log("STDERR:\n", result.stderr);
+    console.log("COLUMNS OF streaming_servers:\n", result.stdout);
     
     ssh.dispose();
   } catch (err) {
