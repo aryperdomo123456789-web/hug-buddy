@@ -166,7 +166,9 @@ function DashboardPage() {
     { id: 'servers', label: 'Servidores', icon: ServerIcon },
     { id: 'resellers', label: 'Revendedores', icon: UserCheck },
     { id: 'dns', label: 'DNS Profissional', icon: Globe },
+    { id: 'deploy', label: 'Deploy aaPanel', icon: Database },
   ];
+
 
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-10 font-sans selection:bg-blue-500/30 overflow-x-hidden" id="odin-app-root">
@@ -228,7 +230,9 @@ function DashboardPage() {
                activeTab === 'streams' ? 'Streams' : 
                activeTab === 'servers' ? 'Servidores' : 
                activeTab === 'resellers' ? 'Revendedores' : 
-               activeTab === 'dns' ? 'DNS Profissional' : ''}
+               activeTab === 'dns' ? 'DNS Profissional' : 
+               activeTab === 'deploy' ? 'Deploy aaPanel' : ''}
+
             </h1>
             <button 
               onClick={() => fetchAll(false)}
@@ -297,6 +301,25 @@ function DashboardPage() {
             {activeTab === 'dns' && (
               <DnsPanel />
             )}
+            {activeTab === 'deploy' && (
+              <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8 max-w-2xl mx-auto text-center">
+                <Database className="mx-auto mb-6 text-blue-500" size={48} />
+                <h2 className="text-2xl font-bold mb-4 uppercase tracking-tight">Mover para aaPanel</h2>
+                <p className="text-zinc-400 mb-8 text-sm">
+                  Execute o comando abaixo no terminal do seu novo servidor com aaPanel para instalar o painel de forma profissional e independente do servidor Odin.
+                </p>
+                <div className="bg-black p-4 rounded-xl font-mono text-xs text-blue-400 border border-zinc-800 break-all mb-6 select-all cursor-pointer" onClick={() => {
+                  navigator.clipboard.writeText("git clone https://github.com/seu-repo/mago-panel.git && cd mago-panel && chmod +x deploy-aapanel.sh && ./deploy-aapanel.sh");
+                  toast.success("Comando copiado!");
+                }}>
+                  git clone https://github.com/seu-repo/mago-panel.git && cd mago-panel && chmod +x deploy-aapanel.sh && ./deploy-aapanel.sh
+                </div>
+                <div className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">
+                  Certifique-se de ter o Bun ou Node.js instalado via aaPanel
+                </div>
+              </div>
+            )}
+
           </div>
         </main>
       </div>

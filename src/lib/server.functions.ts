@@ -282,7 +282,11 @@ export const killUserConnections = createServerFn({ method: "POST" })
   });
 
 export const getInstallScript = createServerFn({ method: "GET" })
-  .handler(async () => "bash <(curl -sSL https://mago.panel/api/install)");
+  .handler(async () => "bash <(curl -sSL https://id-preview--71a12a47-d6b3-4362-a2b3-4497a0a13af3.lovable.app/api/install)");
+
+export const getDeployCommand = createServerFn({ method: "GET" })
+  .handler(async () => "git clone https://github.com/seu-repo/mago-panel.git && cd mago-panel && chmod +x deploy-aapanel.sh && ./deploy-aapanel.sh");
+
 
 export const generateBashScript = (t: string, h: string) => `#!/bin/bash
 
