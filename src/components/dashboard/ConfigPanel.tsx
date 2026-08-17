@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Database, Shield, Terminal, Key, Server, Settings } from "lucide-react";
+import { Database, Shield, Terminal, Key, Server } from "lucide-react";
 import { toast } from "sonner";
 import { getOdinConfig } from "@/lib/odin";
 
@@ -7,7 +7,9 @@ export function ConfigPanel() {
   const cfg = getOdinConfig();
   const [activeTab, setActiveTab] = useState("db");
 
-  const installCmd = \`bash <(curl -sSL \${window.location.origin}/api/install)\`;
+  // Usamos window.location.origin apenas se estiver no navegador
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8080';
+  const installCmd = `bash <(curl -sSL ${origin}/api/install)`;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -19,11 +21,11 @@ export function ConfigPanel() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={\`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all \${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
               activeTab === tab.id 
                 ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" 
                 : "text-zinc-500 hover:text-zinc-300"
-            }\`}
+            }`}
           >
             <tab.icon size={14} />
             {tab.label}
