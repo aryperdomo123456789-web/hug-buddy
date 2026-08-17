@@ -170,6 +170,7 @@ function DashboardPage() {
     { id: 'streams', label: 'Streams', icon: Monitor },
     { id: 'servers', label: 'Servidores', icon: ServerIcon },
     { id: 'resellers', label: 'Revendedores', icon: UserCheck },
+    { id: 'saas_users', label: 'Usuários SaaS', icon: Users },
     { id: "dns", label: "DNS Profissional", icon: Globe },
     { id: "config", label: "Configuração Odin", icon: Settings },
     { id: "deploy", label: "Deploy aaPanel", icon: Database },
@@ -236,10 +237,10 @@ function DashboardPage() {
                activeTab === 'streams' ? 'Streams' : 
                activeTab === 'servers' ? 'Servidores' : 
                activeTab === 'resellers' ? 'Revendedores' : 
+               activeTab === 'saas_users' ? 'Usuários SaaS' :
                activeTab === 'dns' ? 'DNS Profissional' : 
                activeTab === 'config' ? 'Configuração Odin' :
                activeTab === 'deploy' ? 'Deploy aaPanel' : ''}
-
             </h1>
             <button 
               onClick={() => fetchAll(false)}
@@ -307,6 +308,20 @@ function DashboardPage() {
             )}
             {activeTab === 'dns' && (
               <DnsPanel />
+            )}
+            {activeTab === 'saas_users' && (
+              <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-10 text-center">
+                <Users className="mx-auto mb-4 text-blue-500" size={40} />
+                <h2 className="text-xl font-bold mb-2">Gestão SaaS em Preparação</h2>
+                <p className="text-zinc-500 text-sm max-w-md mx-auto">
+                  A interface de gestão de usuários do painel está sendo integrada ao Supabase Auth. 
+                  Em breve você poderá criar usuários Admin e Revendedores vinculados diretamente ao Odin.
+                </p>
+                <div className="mt-8 flex justify-center gap-4">
+                  <div className="px-4 py-2 bg-zinc-800 rounded text-[10px] font-bold uppercase tracking-widest text-zinc-400">Suporte a Roles</div>
+                  <div className="px-4 py-2 bg-zinc-800 rounded text-[10px] font-bold uppercase tracking-widest text-zinc-400">Vínculo Odin ID</div>
+                </div>
+              </div>
             )}
             {activeTab === 'config' && (
               <ConfigPanel />
