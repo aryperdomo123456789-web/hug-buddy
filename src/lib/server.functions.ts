@@ -243,3 +243,12 @@ export const generateM3ULink = createServerFn({ method: "POST" })
     
     return `http://${domain}:${port}/get.php?username=${data.username}&password=${data.password}&type=m3u_plus&output=ts`;
   });
+
+export const generateBashScript = (t: string, h: string) => `#!/bin/bash
+
+# ODIN API INSTALLER
+echo "Instalando Mago API no Odin Engine..."
+mkdir -p /home/xtreamcodes/iptv_xtream_codes/mago-api
+echo "${t}" > /home/xtreamcodes/iptv_xtream_codes/mago-api/token.txt
+echo "Instalação concluída com sucesso!"
+`;
