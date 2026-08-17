@@ -206,12 +206,25 @@ function DashboardPage() {
       )}
 
       <div className="flex flex-col md:flex-row gap-6 md:gap-10 relative">
-        <aside className="hidden md:block w-64 shrink-0 bg-[#0a0a0c]">
-          <div className="mb-10 px-4">
-            <div className="text-2xl font-black text-blue-500 tracking-tighter flex items-center gap-2">
-              <ShieldAlert size={32} /> MAGO PANEL
-            </div>
-            <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em] mt-1">Odin v6 Engine</div>
+        <aside 
+          className={`hidden md:flex flex-col shrink-0 bg-[#0a0a0c] transition-all duration-300 ease-in-out border-r border-zinc-900/50 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}
+        >
+          <div className={`mb-10 px-4 flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
+            {!isSidebarCollapsed && (
+              <div className="animate-in fade-in duration-500">
+                <div className="text-2xl font-black text-blue-500 tracking-tighter flex items-center gap-2">
+                  <ShieldAlert size={32} /> MAGO PANEL
+                </div>
+                <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em] mt-1">Odin v6 Engine</div>
+              </div>
+            )}
+            <button 
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-500 transition-colors"
+              title={isSidebarCollapsed ? "Expandir Menu" : "Recolher Menu"}
+            >
+              <Menu size={20} />
+            </button>
           </div>
           
           <nav className="space-y-2">
@@ -221,7 +234,7 @@ function DashboardPage() {
                 <NavItem 
                   key={item.id}
                   icon={item.icon}
-                  label={item.label}
+                  label={isSidebarCollapsed ? "" : item.label}
                   active={activeTab === item.id}
                   onClick={() => {
                     if (item.id === 'logout') {
@@ -234,16 +247,18 @@ function DashboardPage() {
               ))}
           </nav>
           
-          <div className="mt-20 pt-10 border-t border-zinc-900 px-4 opacity-50">
-            <div className="flex items-center gap-3 text-zinc-500 mb-6">
-              <Database size={16} />
-              <div className="text-xs font-bold uppercase tracking-widest">Database</div>
+          {!isSidebarCollapsed && (
+            <div className="mt-20 pt-10 border-t border-zinc-900 px-4 opacity-50 animate-in fade-in duration-500">
+              <div className="flex items-center gap-3 text-zinc-500 mb-6">
+                <Database size={16} />
+                <div className="text-xs font-bold uppercase tracking-widest">Database</div>
+              </div>
+              <div className="space-y-3 text-[10px] uppercase font-bold text-zinc-600">
+                <div>Host: {odin.dbHost}</div>
+                <div>DB: {odin.dbName}</div>
+              </div>
             </div>
-            <div className="space-y-3 text-[10px] uppercase font-bold text-zinc-600">
-              <div>Host: {odin.dbHost}</div>
-              <div>DB: {odin.dbName}</div>
-            </div>
-          </div>
+          )}
         </aside>
 
         <main className="flex-1">
