@@ -29,43 +29,26 @@ async function executeBatchQueries(queries: string[]) {
       compress: true,
     });
     
-    // Combine queries with markers to execute in a single SSH call
-    const combinedSql = queries.map((q, i) => `SELECT '---QUERY_${i}---'; ${q}`).join("; ");
-    const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${combinedSql}"`;
-    
-    console.log(`[SSH] Executing combined batch of ${queries.length} queries...`);
-    const result = await ssh.execCommand(mysqlCmd);
-    
-    if (result.code !== 0) {
-      console.error(`[SSH] Batch Query Error: ${result.stderr}`);
-      ssh.dispose();
-      return queries.map(() => "");
-    }
-
-    const fullOutput = result.stdout;
     const results: string[] = [];
-    
     for (let i = 0; i < queries.length; i++) {
-      const startMarker = `---QUERY_${i}---`;
-      const nextMarker = `---QUERY_${i + 1}---`;
+      const sql = queries[i];
+      const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
       
-      let startIdx = fullOutput.indexOf(startMarker);
-      if (startIdx === -1) {
-        results.push("");
-        continue;
+      // Cada query individual tem seu timeout, mas dentro da mesma conexão SSH
+      const result = await ssh.execCommand(mysqlCmd);
+      
+      if (result.code !== 0) {
+        console.error(`[SSH] Query ${i} Failed: ${result.stderr}`);
+        results.push(""); 
+      } else {
+        results.push(result.stdout || "");
       }
-      
-      startIdx += startMarker.length;
-      let endIdx = nextMarker ? fullOutput.indexOf(nextMarker) : fullOutput.length;
-      if (endIdx === -1) endIdx = fullOutput.length;
-      
-      results.push(fullOutput.substring(startIdx, endIdx).trim());
     }
     
     ssh.dispose();
     return results;
   } catch (error: any) {
-    console.error(`[SSH] Critical Failure:`, error.message);
+    console.error(`[SSH] Batch Critical Failure:`, error.message);
     try { if (ssh.isConnected()) ssh.dispose(); } catch (e) {}
     return queries.map(() => "");
   }
