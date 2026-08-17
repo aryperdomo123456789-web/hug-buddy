@@ -5,7 +5,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const getSaasProfiles = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // Usamos context.supabase que já está tipado com a role do usuário
     const { data, error } = await context.supabase
       .from('profiles')
       .select('*');
@@ -43,8 +42,9 @@ export const createSaasUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: { email: string; role: 'admin' | 'reseller'; odin_reseller_id?: number }) => d)
   .handler(async ({ data, context }) => {
-    // Verificamos o papel do usuário logado via RPC ou consulta direta se permitido
-    const { data: hasRole } = await context.supabase.rpc('has_role', {
+    // Verificamos o papel do usuário logado via RPC
+    // Usamos context.supabase.rpc.has_role (com type cast se necessário)
+    const { data: hasRole } = await (context.supabase.rpc as any)('has_role', {
       _user_id: context.userId,
       _role: 'admin'
     });
