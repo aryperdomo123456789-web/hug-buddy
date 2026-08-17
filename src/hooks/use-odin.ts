@@ -25,6 +25,7 @@ export function useOdinData() {
   const [bouquets, setBouquets] = useState<Bouquet[]>([]);
   const [resellers, setResellers] = useState<Reseller[]>([]);
   
+  const [totalConns, setTotalConns] = useState(0);
   const isFetching = useRef(false);
   const pollInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
