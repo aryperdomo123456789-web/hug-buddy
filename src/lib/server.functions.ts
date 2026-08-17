@@ -42,7 +42,7 @@ async function executeBatchQueries(queries: string[]) {
       const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
       
       const result = await ssh.execCommand(mysqlCmd);
-      console.log(`[SSH] Executed query: ${sql.substring(0, 50)}... Result length: ${result.stdout.length}`);
+      console.log(`[SSH] Executed query: ${sql.substring(0, 50)}... Result length: ${result.stdout.length} STDOUT: [${result.stdout.substring(0, 100)}]`);
       
       if (result.code !== 0) {
         console.error(`[SSH] Query ${i} Failed: ${result.stderr}`);
