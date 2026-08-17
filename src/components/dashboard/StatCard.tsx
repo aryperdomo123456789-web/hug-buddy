@@ -9,7 +9,14 @@ interface StatCardProps {
   secondaryValue?: string | number;
 }
 
-export function StatCard({ label, value, icon: Icon, color = "blue" }: StatCardProps) {
+export function StatCard({ 
+  label, 
+  value, 
+  icon: Icon, 
+  color = "blue",
+  secondaryLabel,
+  secondaryValue
+}: StatCardProps) {
   const colors = {
     blue: "text-blue-500 bg-blue-500/10 border-blue-500/20",
     green: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
