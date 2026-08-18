@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Plan } from "@/types/odin";
-import { X, Save, Clock, Package, DollarSign } from "lucide-react";
+import { X, Save } from "lucide-react";
 
 interface PlanModalProps {
   plan: Plan | null;
@@ -11,7 +11,20 @@ interface PlanModalProps {
 
 export function PlanModal({ plan, onClose, onSave, loading }: PlanModalProps) {
   const [data, setData] = useState<Plan>(plan || { 
-    name: "", connections: 1, duration: 1, duration_unit: 'months', price: 0, status: 'active', bouquets: [], sort_order: 0, is_trial: false, has_adult_content: false
+    id: "",
+    name: "", 
+    connections: 1, 
+    duration: 1, 
+    duration_unit: 'months', 
+    price: 0, 
+    status: 'active', 
+    bouquets: [], 
+    sort_order: 0, 
+    is_trial: false, 
+    has_adult_content: false,
+    odin_server_id: null,
+    odin_package_id: null,
+    template: null
   } as Plan);
 
   return (
@@ -67,9 +80,9 @@ export function PlanModal({ plan, onClose, onSave, loading }: PlanModalProps) {
           </div>
 
           <textarea 
-            placeholder="Template de Mensagem"
+            placeholder="Template de Mensagem (Deixe em branco para usar o padrão)"
             value={data.template || ""}
-            onChange={e => setData({...data, template: e.target.value})}
+            onChange={e => setData({...data, template: e.target.value || null})}
             className="w-full h-32 bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-xs font-mono text-zinc-300"
           />
         </div>
@@ -81,7 +94,8 @@ export function PlanModal({ plan, onClose, onSave, loading }: PlanModalProps) {
             disabled={loading} 
             className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-all"
           >
-            <Save size={16} /> Salvar Plano
+            {loading ? <div className="w-4 h-4 border-2 border-white/20 border-t-white animate-spin rounded-full" /> : <Save size={16} />} 
+            Salvar Plano
           </button>
         </div>
       </div>
