@@ -155,7 +155,9 @@ async function executeBatchQueries(queries: string[]) {
   const cfg = await getConfig();
   
   try {
-    console.log(`[SSH] Conectando em ${cfg.sshHost}:${cfg.sshPort}...`);
+    const logMsg = `[SSH] Conectando em ${cfg.sshHost}:${cfg.sshPort} (User: ${cfg.sshUsername})...`;
+    process.stdout.write(logMsg + "\n");
+
     await ssh.connect({
       host: cfg.sshHost,
       port: cfg.sshPort,
@@ -175,12 +177,17 @@ async function executeBatchQueries(queries: string[]) {
       }
       // Tentativa principal: Credenciais oficiais via TCP loopback (recomendado pelo Odin)
       const mysqlCmd = `mysql -h ${cfg.dbHost} -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
+      process.stdout.write(`[SSH] Executando query: ${sql.substring(0, 50)}...\n`);
       const result = await ssh.execCommand(mysqlCmd);
+
+
       
       if (result.code !== 0) {
         // Fallback: Acesso via socket local (root) se as credenciais de usuário falharem
         const mysqlCmdFallback = `mysql -u root -p'${cfg.sshPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
+        console.log(`[SSH] Fallback query para: ${sql.substring(0, 50)}...`);
         const resultFallback = await ssh.execCommand(mysqlCmdFallback);
+
         results.push(resultFallback.stdout.trim() || "");
       } else {
         results.push(result.stdout.trim() || "");
