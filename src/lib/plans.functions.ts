@@ -29,6 +29,9 @@ const PlanValidator = z.object({
   status: z.enum(['active', 'inactive']).default('active'),
   sort_order: z.number().int().default(0),
   template: z.string().nullable().optional(),
+  plan_price: z.number().nullable().optional(),
+  pay_url: z.string().nullable().optional(),
+  dns_host: z.string().nullable().optional(),
 });
 
 export const getPlans = createServerFn({ method: "GET" })

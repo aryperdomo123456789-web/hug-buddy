@@ -61,6 +61,7 @@ export type Database = {
           bouquets: Json | null
           connections: number | null
           created_at: string | null
+          dns_host: string | null
           duration: number | null
           duration_unit: string | null
           has_adult_content: boolean | null
@@ -69,6 +70,8 @@ export type Database = {
           name: string
           odin_package_id: number | null
           odin_server_id: string | null
+          pay_url: string | null
+          plan_price: number | null
           price: number | null
           sort_order: number | null
           status: string | null
@@ -79,6 +82,7 @@ export type Database = {
           bouquets?: Json | null
           connections?: number | null
           created_at?: string | null
+          dns_host?: string | null
           duration?: number | null
           duration_unit?: string | null
           has_adult_content?: boolean | null
@@ -87,6 +91,8 @@ export type Database = {
           name: string
           odin_package_id?: number | null
           odin_server_id?: string | null
+          pay_url?: string | null
+          plan_price?: number | null
           price?: number | null
           sort_order?: number | null
           status?: string | null
@@ -97,6 +103,7 @@ export type Database = {
           bouquets?: Json | null
           connections?: number | null
           created_at?: string | null
+          dns_host?: string | null
           duration?: number | null
           duration_unit?: string | null
           has_adult_content?: boolean | null
@@ -105,6 +112,8 @@ export type Database = {
           name?: string
           odin_package_id?: number | null
           odin_server_id?: string | null
+          pay_url?: string | null
+          plan_price?: number | null
           price?: number | null
           sort_order?: number | null
           status?: string | null

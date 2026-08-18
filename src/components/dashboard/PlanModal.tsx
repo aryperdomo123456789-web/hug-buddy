@@ -30,6 +30,9 @@ export function PlanModal({ plan, onClose, onSave, loading, odinPackages = [], b
     odin_server_id: null,
     odin_package_id: null,
     template: null,
+    plan_price: null,
+    pay_url: null,
+    dns_host: null,
     can_gen_mag: true,
     can_gen_enigma: true,
     only_mag: false,
@@ -319,21 +322,58 @@ export function PlanModal({ plan, onClose, onSave, loading, odinPackages = [], b
           )}
 
           {activeTab === 'template' && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">URL de Pagamento (pay_url)</label>
+                  <input 
+                    placeholder="Ex: https://checkout.com/plano-vip" 
+                    value={data.pay_url || ""} 
+                    onChange={e => setData({...data, pay_url: e.target.value || null})}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-sm text-zinc-300 focus:border-blue-500 outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Host de Link Curto (dns_host)</label>
+                  <input 
+                    placeholder="Ex: d.meuapp.tv" 
+                    value={data.dns_host || ""} 
+                    onChange={e => setData({...data, dns_host: e.target.value || null})}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-sm text-zinc-300 focus:border-blue-500 outline-none"
+                  />
+                </div>
+              </div>
+
               <div className="bg-blue-600/5 border border-blue-600/20 p-4 rounded-2xl space-y-2">
                 <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Variáveis Dinâmicas</p>
                 <div className="flex flex-wrap gap-2">
-                  {['{username}', '{password}', '{dns}', '{expires_at}', '{connections}', '{plan_price}'].map(v => (
+                  {['{username}', '{password}', '{dns}', '{dns_host}', '{expires_at}', '{connections}', '{plan_price}', '{pay_url}', '{package}'].map(v => (
                     <span key={v} className="px-2 py-1 bg-zinc-900 border border-zinc-800 text-zinc-400 text-[9px] font-mono rounded-md">{v}</span>
                   ))}
                 </div>
               </div>
-              <textarea 
-                placeholder="Ex: Olá {username}, sua assinatura expira em {expires_at}..."
-                value={data.template || ""}
-                onChange={e => setData({...data, template: e.target.value || null})}
-                className="w-full h-48 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-xs font-mono text-zinc-300 focus:border-blue-500 outline-none transition-all leading-relaxed"
-              />
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Modelo de Mensagem Personalizado</label>
+                  <button 
+                    onClick={() => setData({
+                      ...data, 
+                      template: `✅ *Usuário:* {username}\n✅ *Senha:* {password}\n📦 *Plano:* {package}\n💳 *Assinar/Renovar:* {pay_url}\n💵 *Valor:* {plan_price}\n🗓️ *Vencimento:* {expires_at}\n📶 *Conexões:* {connections}\n\n🟠 *DNS XCIPTV:* {dns}\n🟢 *Link (M3U):* {dns}/get.php?username={username}&password={password}&type=m3u_plus&output=mpegts\n🟢 *Link Curto:* http://e.{dns_host}/p/{username}/{password}/m3u\n\n📺 *WebPlayer:* http://assistir.online/`
+                    })}
+                    className="text-[9px] font-black text-blue-500 hover:text-blue-400 uppercase tracking-widest"
+                  >
+                    Carregar Exemplo
+                  </button>
+                </div>
+                <textarea 
+                  placeholder="Ex: Olá {username}, sua assinatura expira em {expires_at}..."
+                  value={data.template || ""}
+                  onChange={e => setData({...data, template: e.target.value || null})}
+                  className="w-full h-64 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-xs font-mono text-zinc-300 focus:border-blue-500 outline-none transition-all leading-relaxed"
+                />
+              </div>
+              
               <p className="text-[9px] text-zinc-600 italic ml-2 uppercase font-bold tracking-widest">
                 Deixe em branco para usar o template padrão das configurações globais.
               </p>
