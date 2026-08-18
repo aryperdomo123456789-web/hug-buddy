@@ -1,5 +1,5 @@
 import React from "react";
-import { User, UserSchema } from "@/types/odin";
+import { User, UserSchema, Plan } from "@/types/odin";
 import { X, Save, Info, Shield, Lock, Layout } from "lucide-react";
 
 interface UserModalProps {
@@ -7,8 +7,10 @@ interface UserModalProps {
   bouquets: any[];
   resellers: any[];
   canChangeOwner: boolean;
+  plans?: Plan[];
   onClose: () => void;
   onSave: (data: User) => Promise<void>;
+
   loading?: boolean;
 }
 
@@ -51,7 +53,7 @@ function parseBouquetIds(value: unknown): number[] {
   return [];
 }
 
-export function UserModal({ user, bouquets, resellers, canChangeOwner, onClose, onSave, loading }: UserModalProps) {
+export function UserModal({ user, bouquets, resellers, canChangeOwner, plans = [], onClose, onSave, loading }: UserModalProps) {
   const [activeTab, setActiveTab] = React.useState<'details' | 'advanced' | 'restrictions' | 'bouquets'>('details');
   const [formData, setFormData] = React.useState<User>(() => {
     if (user) {
@@ -111,7 +113,34 @@ export function UserModal({ user, bouquets, resellers, canChangeOwner, onClose, 
           {activeTab === 'details' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
               <div className="space-y-6">
+                {!user && (
+                  <Field label="Vincular a Plano (Opcional)">
+                    <select
+                      onChange={e => {
+                        const plan = plans.find(p => p.id === e.target.value);
+                        if (plan) {
+                          setFormData(prev => ({
+                            ...prev,
+                            max_connections: plan.connections,
+                            is_trial: plan.is_trial ? 1 : 0,
+                            bouquet: JSON.stringify(plan.bouquets),
+                            exp_days: plan.duration_unit === 'days' ? plan.duration : 
+                                     plan.duration_unit === 'months' ? plan.duration * 30 : 
+                                     plan.duration_unit === 'hours' ? Math.ceil(plan.duration / 24) : 30
+                          }));
+                        }
+                      }}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none transition-all"
+                    >
+                      <option value="">Nenhum plano selecionado</option>
+                      {plans.map(p => (
+                        <option key={p.id} value={p.id}>{p.name} ({p.connections} Conns)</option>
+                      ))}
+                    </select>
+                  </Field>
+                )}
                 <Field label="Nome de Utilizador">
+
                   <input
                     type="text"
                     required
