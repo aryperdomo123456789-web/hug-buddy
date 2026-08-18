@@ -474,13 +474,6 @@ function DashboardPage() {
             }}
           >
             <div key={activeTab} className="animate-in fade-in zoom-in-95 duration-300 fill-mode-both">
-            {activeTab === "dashboard" && (
-              <ServerList 
-                servers={servers}
-                loading={loading}
-                onRefresh={() => fetchAll(false)}
-              />
-            )}
             {activeTab === "customers" && (
               <CustomerList
                 customers={customers}
@@ -500,13 +493,6 @@ function DashboardPage() {
                 onDelete={handleDeleteUser}
                 onToggleStatus={handleToggleStatus}
                 onKill={handleKillConnections}
-              />
-            )}
-            {activeTab === "streams" && (
-              <StreamList
-                streams={streams}
-                loading={loading}
-                onRefresh={() => fetchAll(false)}
               />
             )}
 
