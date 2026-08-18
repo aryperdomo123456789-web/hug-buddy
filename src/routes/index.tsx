@@ -213,12 +213,19 @@ function DashboardPage() {
 
   useEffect(() => {
     let timeoutId: number | undefined;
-    if (data?.initialSnapshot) {
-      fetchAll(true);
-      timeoutId = window.setTimeout(() => fetchAll(true), 10000);
-    } else {
-      fetchAll();
-    }
+    
+    const triggerInitialFetch = async () => {
+      if (data?.initialSnapshot) {
+        // Já temos dados do loader, apenas agenda o próximo sync silencioso
+        timeoutId = window.setTimeout(() => fetchAll(true, { trigger: "deferred_sync" }), 5000);
+      } else {
+        // Não temos dados, forçar carregamento inicial
+        await fetchAll(false, { trigger: "initial_retry" });
+      }
+    };
+
+    triggerInitialFetch();
+
     return () => {
       if (timeoutId) window.clearTimeout(timeoutId);
     };
