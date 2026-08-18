@@ -165,7 +165,7 @@ async function executeBatchQueries(queries: string[]) {
       keepaliveInterval: 10000,
     });
     
-    console.log(`[SSH] Executando ${queries.length} queries via socket local...`);
+    console.log(`[SSH] Executando ${queries.length} queries via canal oficial...`);
     const results: string[] = [];
     
     for (const sql of queries) {
@@ -173,14 +173,13 @@ async function executeBatchQueries(queries: string[]) {
         results.push("");
         continue;
       }
-      // Tentativa 1: Socket Local (mais provável para root)
-      const mysqlCmd = `mysql -u root -p'${cfg.sshPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
+      // Tentativa principal: Credenciais oficiais via TCP loopback (recomendado pelo Odin)
+      const mysqlCmd = `mysql -h ${cfg.dbHost} -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
       const result = await ssh.execCommand(mysqlCmd);
       
       if (result.code !== 0) {
-        console.warn(`[SSH] Query via socket falhou, tentando 127.0.0.1...`);
-        // Tentativa 2: 127.0.0.1 (fallback)
-        const mysqlCmdFallback = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u root -p'${cfg.sshPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
+        // Fallback: Acesso via socket local (root) se as credenciais de usuário falharem
+        const mysqlCmdFallback = `mysql -u root -p'${cfg.sshPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
         const resultFallback = await ssh.execCommand(mysqlCmdFallback);
         results.push(resultFallback.stdout.trim() || "");
       } else {
