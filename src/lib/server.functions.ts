@@ -72,7 +72,7 @@ function normalizeBouquetPayload(value: unknown): string {
       .map((item) => {
         if (item && typeof item === "object") {
           const candidate = item as Record<string, unknown>;
-          return toFiniteNumber(candidate.id ?? candidate.M_ID ?? candidate.m_id);
+          return toFiniteNumber(candidate["id"] ?? candidate["M_ID"] ?? candidate["m_id"]);
         }
         return toFiniteNumber(item);
       })
@@ -83,9 +83,9 @@ function normalizeBouquetPayload(value: unknown): string {
   if (value && typeof value === "object") {
     const candidate = value as Record<string, unknown>;
     const ids = [
-      candidate.id,
-      candidate.M_ID,
-      candidate.m_id,
+      candidate["id"],
+      candidate["M_ID"],
+      candidate["m_id"],
     ]
       .map((item) => toFiniteNumber(item))
       .filter((id) => id > 0);
