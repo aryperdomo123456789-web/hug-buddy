@@ -179,6 +179,23 @@ function safeStringify(value: unknown): string {
   }
 }
 
+function isBenignAbortError(error: unknown): boolean {
+  const message = (
+    error instanceof Error ? `${error.name}: ${error.message}` : String(error ?? "")
+  ).toLowerCase();
+  const stack = error instanceof Error ? (error.stack || "").toLowerCase() : "";
+
+  return (
+    message === "error: aborted" ||
+    message.trim() === "aborted" ||
+    message.includes("aborterror") ||
+    message.includes("the operation was aborted") ||
+    message.includes("the user aborted a request") ||
+    stack.includes("abortincoming") ||
+    stack.includes("socketonclose")
+  );
+}
+
 export function publishRuntimeError(
   error: unknown,
   context: {
@@ -188,6 +205,11 @@ export function publishRuntimeError(
     componentStack?: string;
   },
 ) {
+  // Cancelamentos de requisição (F5, navegação, socket fechado) não são bugs.
+  if (isBenignAbortError(error)) {
+    return currentEntry;
+  }
+
   const parts = toMessage(error);
   const fingerprint = [
     parts.title,
