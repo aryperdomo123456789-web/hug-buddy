@@ -298,11 +298,13 @@ export function useOdinData(initialData: OdinSnapshot | null = null, initialSync
       } else if (!quiet) {
         const message = (response as any)?.error || "Falha ao carregar dados do Odin.";
         console.error("[useOdinData] Response failure:", message);
-        publishRuntimeError(new Error(String(message)), {
-          source: "manual",
-          phase: "effect",
-          route: typeof window !== "undefined" ? window.location.pathname : "/",
-        });
+        if (!isBenignAbortError(message)) {
+          publishRuntimeError(new Error(String(message)), {
+            source: "manual",
+            phase: "effect",
+            route: typeof window !== "undefined" ? window.location.pathname : "/",
+          });
+        }
       }
     } catch (e: any) {
       if (isBenignAbortError(e)) {
