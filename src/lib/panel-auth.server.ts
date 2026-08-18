@@ -27,7 +27,7 @@ export interface PanelSession {
   full_name: string | null;
 }
 
-const AUTH_STORE_PATH = "/www/wwwroot/gerar.suafontee.com/hug-buddy/.panel-auth.json";
+const AUTH_STORE_PATH = "/tmp/mago-panel-auth.json";
 const SESSION_COOKIE = "mago_panel_session";
 const DEFAULT_EMAIL = "mago@dono.com";
 const DEFAULT_PASSWORD = "12345678";
