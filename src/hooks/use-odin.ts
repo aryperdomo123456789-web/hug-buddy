@@ -70,7 +70,7 @@ function normalizeBouquetValue(value: unknown): string {
       .map((item) => {
         if (item && typeof item === "object") {
           const candidate = item as Record<string, unknown>;
-          return toLegacyId(candidate.id ?? candidate.M_ID ?? candidate.m_id);
+          return toLegacyId(candidate["id"] ?? candidate["M_ID"] ?? candidate["m_id"]);
         }
         return toLegacyId(item);
       })
@@ -80,7 +80,7 @@ function normalizeBouquetValue(value: unknown): string {
 
   if (value && typeof value === "object") {
     const candidate = value as Record<string, unknown>;
-    const ids = [candidate.id, candidate.M_ID, candidate.m_id]
+    const ids = [candidate["id"], candidate["M_ID"], candidate["m_id"]]
       .map((item) => toLegacyId(item))
       .filter((id) => id > 0);
     return JSON.stringify(ids);
@@ -120,7 +120,7 @@ function normalizeCustomerRecord(customer: any) {
 }
 
 function normalizeSimpleRecord<T extends Record<string, any>>(record: T, fallbackId: unknown) {
-  const id = toLegacyId(record?.id ?? record?.M_ID ?? record?.m_id ?? fallbackId);
+  const id = toLegacyId(record?.["id"] ?? record?.["M_ID"] ?? record?.["m_id"] ?? fallbackId);
   return {
     ...record,
     id,

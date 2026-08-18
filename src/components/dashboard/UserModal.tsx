@@ -18,7 +18,7 @@ function parseBouquetIds(value: unknown): number[] {
       .map((item) => {
         if (item && typeof item === "object") {
           const candidate = item as Record<string, unknown>;
-          const legacy = candidate.id ?? candidate.M_ID ?? candidate.m_id;
+          const legacy = candidate["id"] ?? candidate["M_ID"] ?? candidate["m_id"];
           const parsed = Number(legacy);
           return Number.isFinite(parsed) ? parsed : 0;
         }
@@ -31,7 +31,7 @@ function parseBouquetIds(value: unknown): number[] {
 
   if (value && typeof value === "object") {
     const candidate = value as Record<string, unknown>;
-    return [candidate.id, candidate.M_ID, candidate.m_id]
+    return [candidate["id"], candidate["M_ID"], candidate["m_id"]]
       .map((item) => Number(item))
       .filter((id) => Number.isFinite(id) && id > 0);
   }
