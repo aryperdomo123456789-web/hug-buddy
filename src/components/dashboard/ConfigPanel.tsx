@@ -1,13 +1,35 @@
 import React, { useState } from "react";
-import { Database, Key, Server, Layout, ExternalLink, Terminal } from "lucide-react";
+import { Database, Key, Server, Layout, ExternalLink, Terminal, Tag, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { getOdinConfig } from "@/lib/odin";
-import { useHydrated } from "@/hooks/use-odin";
+import { useOdinData, useHydrated } from "@/hooks/use-odin";
 
 export function ConfigPanel() {
   const isHydrated = useHydrated();
   const cfg = getOdinConfig();
+  const { settings, actions } = useOdinData();
   const [activeTab, setActiveTab] = useState("db");
+  const [defaultTemplate, setDefaultTemplate] = useState("");
+
+  React.useEffect(() => {
+    if (settings?.default_message_template?.template) {
+      setDefaultTemplate(settings.default_message_template.template);
+    }
+  }, [settings]);
+
+  const handleSaveTemplate = async () => {
+    try {
+      await actions.saveAppSetting({ 
+        data: { 
+          key: 'default_message_template', 
+          value: { template: defaultTemplate } 
+        } 
+      });
+      toast.success("Template padrão atualizado!");
+    } catch (e) {
+      toast.error("Erro ao salvar template");
+    }
+  };
 
   const origin = isHydrated ? window.location.origin : 'http://localhost:8080';
   const installCmd = `bash <(curl -sSL ${origin}/api/install)`;
@@ -20,6 +42,7 @@ export function ConfigPanel() {
         {[
           { id: "db", label: "Banco & SSH", icon: Database },
           { id: "api", label: "Instalador API", icon: Key },
+          { id: "templates", label: "Templates", icon: MessageSquare },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -137,6 +160,50 @@ export function ConfigPanel() {
 
           <div className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest flex items-center justify-center gap-2">
             <Key size={12} /> Token Ativo: {cfg.apiToken.substring(0, 10)}...
+          </div>
+        </div>
+      )}
+
+      {activeTab === "templates" && (
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="p-3 bg-blue-500/10 rounded-xl text-blue-500">
+              <MessageSquare size={24} />
+            </div>
+            <div>
+              <h4 className="font-bold text-zinc-200 uppercase tracking-tighter">Template de Mensagem Padrão</h4>
+              <p className="text-[10px] text-zinc-500 uppercase font-black">Configuração Global de Vendas</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <textarea 
+              value={defaultTemplate}
+              onChange={(e) => setDefaultTemplate(e.target.value)}
+              className="w-full h-80 bg-black border border-zinc-800 rounded-xl p-4 text-xs font-mono text-blue-400 focus:border-blue-500 outline-none transition-all"
+              placeholder="Digite o template aqui..."
+            />
+            
+            <div className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-4 text-[10px] text-zinc-500 uppercase font-bold leading-loose">
+              <p className="text-blue-500 mb-2">Variáveis Disponíveis:</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div>{"{username}"}</div>
+                <div>{"{password}"}</div>
+                <div>{"{package}"}</div>
+                <div>{"{plan_price}"}</div>
+                <div>{"{expires_at}"}</div>
+                <div>{"{connections}"}</div>
+                <div>{"{dns}"}</div>
+                <div>{"{dns_host}"}</div>
+              </div>
+            </div>
+
+            <button 
+              onClick={handleSaveTemplate}
+              className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2"
+            >
+              <Save size={14} /> SALVAR TEMPLATE PADRÃO
+            </button>
           </div>
         </div>
       )}
