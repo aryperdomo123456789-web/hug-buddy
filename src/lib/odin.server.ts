@@ -43,16 +43,17 @@ export async function executeBatchQueries(queries: string[]): Promise<string[]> 
         }
       }
       cachedSsh = new NodeSSH();
-      console.log(`[SSH] Connecting to ${cfg.sshHost}...`);
+      console.log(`[SSH] Connecting to ${cfg.sshHost}:${cfg.sshPort} as ${cfg.sshUsername}...`);
       await cachedSsh.connect({
         host: cfg.sshHost,
         port: cfg.sshPort,
         username: cfg.sshUsername,
         password: cfg.sshPassword,
-        readyTimeout: 45000,
-        keepaliveInterval: 10000,
+        readyTimeout: 60000,
+        keepaliveInterval: 5000,
         compress: true,
       });
+      console.log(`[SSH] Connection established.`);
     }
 
     lastSshUsage = Date.now();
@@ -65,13 +66,11 @@ export async function executeBatchQueries(queries: string[]): Promise<string[]> 
         continue;
       }
       
-      // Tentativa 1: Credenciais Oficiais (TCP 127.0.0.1:7999)
       const mysqlCmd = `mysql -h ${cfg.dbHost} -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
+      console.log(`[SSH] Executing SQL on ${cfg.dbName}...`);
       const result = await ssh.execCommand(mysqlCmd);
 
       if (result.code !== 0) {
-        console.warn(`[SSH] Query oficial falhou (Code ${result.code}), tentando root socket...`);
-        // Tentativa 2: Fallback via socket local (root)
         const mysqlCmdFallback = `mysql -u root -p'${cfg.sshPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
         const resultFallback = await ssh.execCommand(mysqlCmdFallback);
         
@@ -113,7 +112,7 @@ export function parseOdinData(
   actRaw: string,
   srvActRaw = "",
   streamStateRaw = "",
-) {
+): any {
   const activityMap: Record<number, number> = {};
   (actRaw || "").trim().split("\n").filter(Boolean).forEach(line => {
     const [uid, count] = line.split("\t");

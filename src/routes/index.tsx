@@ -63,7 +63,7 @@ export const Route = createFileRoute("/")({
       initialSnapshot = snapshot?.success ? snapshot.data : null;
       if (!snapshot?.success) {
         initialLoadError = {
-          message: snapshot?.error || "Falha ao carregar dados do Odin.",
+          message: "Falha ao carregar dados do Odin.",
         };
       }
     } catch (error: any) {

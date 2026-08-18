@@ -191,12 +191,13 @@ export function useOdinData(initialData: OdinSnapshot | null = null, initialSync
       });
 
       if (response && (response as any).success && (response as any).data) {
+        const rawData = (response as any).data;
         console.log("[useOdinData] Data received:", {
-          customers: (response as any).data.customers?.length,
-          servers: (response as any).data.servers?.length,
-          streams: (response as any).data.streams?.length
+          customers: rawData.customers?.length,
+          servers: rawData.servers?.length,
+          streams: rawData.streams?.length
         });
-        const { customers, streams, bouquets, servers, resellers } = (response as any).data;
+        const { customers, streams, bouquets, servers, resellers } = rawData;
         const now = Date.now();
         const normalizedCustomers = (customers || [])
           .map((customer: any) => normalizeCustomerRecord(customer))

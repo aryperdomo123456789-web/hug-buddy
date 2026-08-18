@@ -51,10 +51,7 @@ export default {
     // Interceptação manual ANTES do roteador TanStack
     if (url.pathname === '/api/public/install') {
       try {
-        const cfg = getOdinConfig();
-        const script = generateBashScript(cfg.apiToken, cfg.sshHost);
-        
-        return new Response(script, {
+        return new Response(`#!/bin/bash\necho "Mago Panel API Active"`, {
           status: 200,
           headers: {
             'Content-Type': 'text/plain; charset=utf-8',
