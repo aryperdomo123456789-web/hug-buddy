@@ -638,6 +638,27 @@ function DashboardPage() {
           loading={loading}
         />
       )}
+      {showPlanModal && (
+        <PlanModal
+          plan={editingPlan}
+          loading={loading}
+          onClose={() => {
+            setShowPlanModal(false);
+            setEditingPlan(null);
+          }}
+          onSave={async (data) => {
+            try {
+              await savePlan({ data });
+              setShowPlanModal(false);
+              fetchAll(false);
+              toast.success("Plano salvo!");
+            } catch (e) {
+              toast.error("Erro ao salvar plano");
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
+
