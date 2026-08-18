@@ -19,7 +19,7 @@ export const getOdinProvisionTokens = createServerFn({ method: "GET" })
 
 export const createOdinProvisionToken = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
-  .validator((d: { name: string; scope: OdinProvisionScope; note?: string; expiresInDays?: number | null }) => d)
+  .validator((d: { name: string; scope: OdinProvisionScope; note: string; expiresInDays?: number | null }) => d)
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const mod = await import("./odin-token.server");

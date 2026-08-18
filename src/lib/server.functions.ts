@@ -1,8 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { NodeSSH } from "node-ssh";
-import { escapeSql } from "./odin";
+import { escapeSql, getOdinConfig } from "./odin";
 import { requirePanelAuth } from "./panel-auth.server";
 export { getPlans, savePlan, deletePlan, getAppSettings, saveAppSetting } from "./plans.functions";
+import type { User, Reseller } from "@/types/odin";
 
 /**
  * ODIN INFRASTRUCTURE CONFIGURATION
@@ -401,8 +402,8 @@ export const seedActiveOdinConfig = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
   .handler(async ({ context }) => {
     assertAdminOnly(context as PanelContext);
-    const { getOdinRuntimeConfig, saveOdinRuntimeConfig } = await import("./odin-runtime.server");
-    const current = getOdinRuntimeConfig();
+    const current = getOdinConfig();
+    const { saveOdinRuntimeConfig } = await import("./odin-runtime.server");
     const saved = saveOdinRuntimeConfig(current);
     return { success: true, data: saved };
   });

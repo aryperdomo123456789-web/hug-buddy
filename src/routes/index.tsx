@@ -91,13 +91,13 @@ class MainSectionBoundary extends React.Component<
   { children: React.ReactNode; onError?: (error: Error, info: React.ErrorInfo) => void },
   { error: Error | null; info: React.ErrorInfo | null }
 > {
-  state = { error: null as Error | null, info: null as React.ErrorInfo | null };
+  override state = { error: null as Error | null, info: null as React.ErrorInfo | null };
 
   static getDerivedStateFromError(error: Error) {
     return { error, info: null };
   }
 
-  componentDidCatch(error: Error, info: React.ErrorInfo) {
+  override componentDidCatch(error: Error, info: React.ErrorInfo) {
     this.props.onError?.(error, info);
     this.setState({ info });
   }
@@ -107,7 +107,7 @@ class MainSectionBoundary extends React.Component<
     window.location.reload();
   };
 
-  render() {
+  override render() {
     if (this.state.error) {
       const message = this.state.error.message || "Erro de renderização no painel.";
       return (

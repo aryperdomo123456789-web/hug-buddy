@@ -47,7 +47,7 @@ export const changePanelPassword = createServerFn({ method: "POST" })
   });
 
 export const upsertPanelUser = createServerFn({ method: "POST" })
-  .validator((d: { email: string; role: PanelRole; full_name?: string; odin_reseller_id?: number | null; password?: string }) => d)
+  .validator((d: { email: string; role: PanelRole; full_name: string | null; odin_reseller_id?: number | null; password?: string }) => d)
   .handler(async ({ data }) => {
     const session = getPanelSessionFromRequest();
     if (!session || session.role !== "admin") {
