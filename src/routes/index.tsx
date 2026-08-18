@@ -28,7 +28,6 @@ import { SaasUserList } from "@/components/dashboard/SaasUserList";
 import { PlanList } from "@/components/dashboard/PlanList";
 import { PlanModal } from "@/components/dashboard/PlanModal";
 import { NavItem } from "@/components/dashboard/NavItem";
-import { StatCard } from "@/components/dashboard/StatCard";
 import { ServerList } from "@/components/dashboard/ServerList";
 import { User, Reseller, Profile, Plan, Server } from "@/types/odin";
 import { getOdinFullData, generateM3ULink } from "@/lib/server.functions";
@@ -36,16 +35,6 @@ import { getPlans, savePlan, deletePlan as deletePlanFn } from "@/lib/plans.func
 import { getCurrentPanelSession, logoutPanel } from "@/lib/panel-auth.functions";
 import { publishRuntimeError } from "@/lib/runtime-error-bus";
 import { toast } from "sonner";
-
-function toFiniteNumber(value: unknown): number {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string") {
-    const normalized = value.replace(/\s+/g, "").replace(/,/g, ".").replace(/[^0-9.+-]/g, "");
-    const parsed = Number(normalized);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  return 0;
-}
 
 function formatStableTime(value: number): string {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -484,44 +473,11 @@ function DashboardPage() {
           >
             <div key={activeTab} className="animate-in fade-in zoom-in-95 duration-300 fill-mode-both">
             {activeTab === "dashboard" && (
-              <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <StatCard 
-                    label="Utilizadores Online" 
-                    value={loading ? "..." : stats.onlineUsers} 
-                    icon={Users} 
-                    color="blue"
-                    secondaryLabel="usuários em tempo real"
-                  />
-                  <StatCard 
-                    label="Conexões Abertas" 
-                    value={loading ? "..." : stats.openConnections} 
-                    icon={Activity} 
-                    color="green"
-                    secondaryLabel="sessões em tempo real"
-                  />
-                  <StatCard 
-                    label="Total Input" 
-                    value={loading ? "..." : (servers.reduce((acc, s) => acc + (toFiniteNumber(s.input_mbps) || 0), 0)).toFixed(2)} 
-                    icon={Database} 
-                    color="pink"
-                    secondaryLabel="Mbps recebidos"
-                  />
-                  <StatCard 
-                    label="Total Output" 
-                    value={loading ? "..." : (servers.reduce((acc, s) => acc + (toFiniteNumber(s.output_mbps) || 0), 0)).toFixed(2)} 
-                    icon={Globe} 
-                    color="gray"
-                    secondaryLabel={`${stats.totalUsers} clientes no ecossistema`}
-                  />
-                </div>
-                
-                <ServerList 
-                  servers={servers}
-                  loading={loading}
-                  onRefresh={() => fetchAll(false)}
-                />
-              </div>
+              <ServerList 
+                servers={servers}
+                loading={loading}
+                onRefresh={() => fetchAll(false)}
+              />
             )}
             {activeTab === "customers" && (
               <CustomerList
