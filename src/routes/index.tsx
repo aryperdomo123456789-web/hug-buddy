@@ -13,7 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Tag,
-  MessageSquare
+  MessageSquare,
+  Activity
 } from "lucide-react";
 import { getOdinConfig } from "@/lib/odin";
 import { useOdinData } from "@/hooks/use-odin";
@@ -27,7 +28,9 @@ import { SaasUserList } from "@/components/dashboard/SaasUserList";
 import { PlanList } from "@/components/dashboard/PlanList";
 import { PlanModal } from "@/components/dashboard/PlanModal";
 import { NavItem } from "@/components/dashboard/NavItem";
-import { User, Reseller, Profile, Plan } from "@/types/odin";
+import { StatCard } from "@/components/dashboard/StatCard";
+import { ServerList } from "@/components/dashboard/ServerList";
+import { User, Reseller, Profile, Plan, Server } from "@/types/odin";
 import { getOdinFullData, generateM3ULink } from "@/lib/server.functions";
 import { getPlans, savePlan, deletePlan as deletePlanFn } from "@/lib/plans.functions";
 import { getCurrentPanelSession, logoutPanel } from "@/lib/panel-auth.functions";
@@ -144,7 +147,7 @@ function DashboardPage() {
   const router = useRouter();
   const data = Route.useLoaderData();
   const odin = data?.odin || {};
-  const [activeTab, setActiveTab] = useState("customers");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -158,6 +161,7 @@ function DashboardPage() {
   const {
     loading,
     customers,
+    servers,
     bouquets,
     resellers,
     plans,
@@ -305,6 +309,7 @@ function DashboardPage() {
   };
 
   const navItems = [
+    { id: "dashboard", label: "Dashboard", icon: Activity },
     { id: "customers", label: "Clientes", icon: Users },
     { id: "resellers", label: "Revendedores", icon: UserCheck, adminOnly: true },
     { id: "plans", label: "Planos de Venda", icon: Tag, adminOnly: true },
@@ -467,6 +472,46 @@ function DashboardPage() {
             }}
           >
             <div key={activeTab} className="animate-in fade-in zoom-in-95 duration-300 fill-mode-both">
+            {activeTab === "dashboard" && (
+              <div className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <StatCard 
+                    label="Utilizadores Online" 
+                    value={loading ? "..." : (customers.filter(c => c.active_cons > 0).length)} 
+                    icon={Users} 
+                    color="blue"
+                    secondaryLabel="usuários em tempo real"
+                  />
+                  <StatCard 
+                    label="Conexões Abertas" 
+                    value={loading ? "..." : (servers.reduce((acc, s) => acc + (s.live_connections || 0), 0))} 
+                    icon={Activity} 
+                    color="green"
+                    secondaryLabel="sessões em tempo real"
+                  />
+                  <StatCard 
+                    label="Total Input" 
+                    value={loading ? "..." : (servers.reduce((acc, s) => acc + (s.input_mbps || 0), 0)).toFixed(2)} 
+                    icon={Database} 
+                    color="pink"
+                    secondaryLabel="Mbps recebidos"
+                  />
+                  <StatCard 
+                    label="Total Output" 
+                    value={loading ? "..." : (servers.reduce((acc, s) => acc + (s.output_mbps || 0), 0)).toFixed(2)} 
+                    icon={Globe} 
+                    color="gray"
+                    secondaryLabel={`${customers.length} clientes no ecossistema`}
+                  />
+                </div>
+                
+                <ServerList 
+                  servers={servers}
+                  loading={loading}
+                  onRefresh={() => fetchAll(false)}
+                />
+              </div>
+            )}
             {activeTab === "customers" && (
               <CustomerList
                 customers={customers}
