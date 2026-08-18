@@ -110,14 +110,15 @@ export const getAppSettings = createServerFn({ method: "GET" })
     return settings;
   });
 
+const SettingsSchema = z.record(z.string(), z.any());
+
 export const saveAppSettings = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
-  .validator((d: any) => z.record(z.any()).parse(d))
+  .validator((d: any) => SettingsSchema.parse(d))
   .handler(async ({ data }) => {
     const supabase = await getDb();
     
     for (const [key, value] of Object.entries(data)) {
-      // Use delete + insert as a manual upsert if upsert types are broken
       await supabase.from('app_settings').delete().eq('key', key);
       const { error } = await supabase
         .from('app_settings')
