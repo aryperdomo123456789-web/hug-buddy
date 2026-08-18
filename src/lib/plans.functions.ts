@@ -1,7 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+
+import { requirePanelAuth } from "./panel-auth.middleware";
 import { Plan } from "@/types/odin";
+
+/**
+ * Planos e configurações do painel usam a autenticação local do Mago Panel
+ * (não a sessão Supabase do navegador), por isso o acesso ao banco é feito
+ * com o cliente privilegiado carregado dinamicamente dentro do handler.
+ */
+const db = async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
+};
 
 const PlanValidator = z.object({
   id: z.string().uuid().optional(),
@@ -21,85 +32,89 @@ const PlanValidator = z.object({
 });
 
 export const getPlans = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+  .middleware([requirePanelAuth])
+  .handler(async () => {
+    const supabase = await db();
+    const { data, error } = await supabase
       .from('plans')
       .select('*')
       .order('sort_order', { ascending: true });
-    
+
     if (error) throw error;
-    return data as Plan[];
+    return (data || []) as Plan[];
   });
 
 export const savePlan = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requirePanelAuth])
   .validator((d) => PlanValidator.parse(d))
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data }) => {
+    const supabase = await db();
     const { id, ...saveData } = data;
-    
-    // Convert undefined to null for Supabase to satisfy exactOptionalPropertyTypes
+
     const sanitizedData: any = { ...saveData };
-    Object.keys(sanitizedData).forEach(key => {
+    Object.keys(sanitizedData).forEach((key) => {
       if (sanitizedData[key] === undefined) {
         sanitizedData[key] = null;
       }
     });
 
     if (id) {
-      const { error } = await context.supabase
+      const { error } = await supabase
         .from('plans')
         .update(sanitizedData)
         .eq('id', id);
       if (error) throw error;
     } else {
-      const { error } = await context.supabase
+      const { error } = await supabase
         .from('plans')
         .insert(sanitizedData);
       if (error) throw error;
     }
-    
+
     return { success: true };
   });
 
 export const deletePlan = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requirePanelAuth])
   .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
+  .handler(async ({ data }) => {
+    const supabase = await db();
+    const { error } = await supabase
       .from('plans')
       .delete()
       .eq('id', data.id);
-    
+
     if (error) throw error;
     return { success: true };
   });
 
 export const getAppSettings = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+  .middleware([requirePanelAuth])
+  .handler(async () => {
+    const supabase = await db();
+    const { data, error } = await supabase
       .from('app_settings')
       .select('*');
-    
+
     if (error) throw error;
-    
+
     const settings: Record<string, any> = {};
-    data?.forEach(s => {
+    data?.forEach((s: any) => {
       settings[s.key] = s.value;
     });
-    
+
     return settings;
   });
 
 export const saveAppSetting = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requirePanelAuth])
   .validator((d) => z.object({ key: z.string(), value: z.any() }).parse(d))
-  .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
+  .handler(async ({ data }) => {
+    const supabase = await db();
+    const { error } = await supabase
       .from('app_settings')
       .upsert({ key: data.key, value: data.value });
-    
+
     if (error) throw error;
     return { success: true };
   });
