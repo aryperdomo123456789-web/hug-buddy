@@ -73,8 +73,10 @@ export const quickCreateTestUser = createServerFn({ method: "POST" })
     else if (plan.duration_unit === 'years') expDate += plan.duration * 86400 * 365;
 
     const ownerId = data.overrideOwnerId || 1;
-    const sql = `INSERT INTO users (username, password, created_by, max_connections, enabled, is_trial, exp_date, bouquet) 
-                 VALUES ('${escapeSql(username)}', '${escapeSql(password)}', ${ownerId}, ${plan.connections}, 1, ${plan.is_trial ? 1 : 0}, ${expDate}, '${JSON.stringify(plan.bouquets)}')`;
+    const isRestreamer = plan.is_restream ? 1 : 0;
+    
+    const sql = `INSERT INTO users (username, password, created_by, max_connections, enabled, is_trial, exp_date, bouquet, is_restreamer) 
+                 VALUES ('${escapeSql(username)}', '${escapeSql(password)}', ${ownerId}, ${plan.connections}, 1, ${plan.is_trial ? 1 : 0}, ${expDate}, '${JSON.stringify(plan.bouquets)}', ${isRestreamer})`;
     
     await executeQuery(sql);
     

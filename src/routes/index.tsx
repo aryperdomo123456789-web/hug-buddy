@@ -267,6 +267,10 @@ function DashboardPage() {
           .replace(/{dns_host}/g, dnsHost);
 
         await navigator.clipboard.writeText(processed);
+        
+        // Show success alert with template preview
+        window.alert(`✅ TESTE GERADO COM SUCESSO!\n\nUsuário: ${username}\nSenha: ${password}\n\nO template foi copiado:\n\n${processed}`);
+        
         toast.info("Credenciais copiadas para a área de transferência!");
       } else {
         toast.dismiss();
