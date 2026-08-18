@@ -306,7 +306,7 @@ export function SaasUserList({ resellers = [] }: { resellers?: Reseller[] }) {
                       .from('profiles')
                       .update({
                         odin_reseller_id: editingProfile.odin_reseller_id,
-                        permissions: editingProfile.permissions
+                        permissions: editingProfile.permissions as any
                       })
                       .eq('id', editingProfile.id);
                     
