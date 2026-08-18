@@ -23,7 +23,9 @@ export const getOdinFullData = createServerFn({ method: "GET" })
     ];
 
     const results = await executeBatchQueries(queries);
-    if (!results || results.length < 5) {
+    console.log("[RPC] Queries executed. Results count:", results.length);
+    if (!results || results.length < 5 || !results[0]) {
+      console.error("[RPC] Results[0] is empty or incomplete results");
       throw new Error("Resposta do Odin incompleta ou vazia.");
     }
     

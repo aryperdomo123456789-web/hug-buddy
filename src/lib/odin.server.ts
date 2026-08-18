@@ -43,7 +43,7 @@ export async function executeBatchQueries(queries: string[]): Promise<string[]> 
         }
       }
       cachedSsh = new NodeSSH();
-      console.log(`[SSH] Connecting to ${cfg.sshHost}...`);
+      console.log(`[SSH] Connecting to ${cfg.sshHost}:${cfg.sshPort} as ${cfg.sshUsername}...`);
       await cachedSsh.connect({
         host: cfg.sshHost,
         port: cfg.sshPort,
@@ -53,6 +53,7 @@ export async function executeBatchQueries(queries: string[]): Promise<string[]> 
         keepaliveInterval: 5000,
         compress: true,
       });
+      console.log(`[SSH] Connection established.`);
     }
 
     lastSshUsage = Date.now();
@@ -66,6 +67,7 @@ export async function executeBatchQueries(queries: string[]): Promise<string[]> 
       }
       
       const mysqlCmd = `mysql -h ${cfg.dbHost} -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
+      console.log(`[SSH] Executing SQL on ${cfg.dbName}...`);
       const result = await ssh.execCommand(mysqlCmd);
 
       if (result.code !== 0) {
