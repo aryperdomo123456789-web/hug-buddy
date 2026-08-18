@@ -636,8 +636,10 @@ function DashboardPage() {
           }}
           onSave={handleSaveUser}
           loading={loading}
+          plans={plans}
         />
       )}
+
       {showPlanModal && (
         <PlanModal
           plan={editingPlan}
