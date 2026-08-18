@@ -31,8 +31,9 @@ import { PlanList } from "@/components/dashboard/PlanList";
 import { PlanModal } from "@/components/dashboard/PlanModal";
 import { NavItem } from "@/components/dashboard/NavItem";
 import { ServerList } from "@/components/dashboard/ServerList";
-import { User, Reseller, Profile, Plan, Server } from "@/types/odin";
-import { getOdinFullData, generateM3ULink } from "@/lib/server.functions";
+import { User, Reseller, Profile, Plan, Server, OdinSnapshot } from "@/types/odin";
+import { getOdinFullData, generateM3ULink, quickCreateTestUser } from "@/lib/server.functions";
+
 import { getPlans, savePlan, deletePlan as deletePlanFn } from "@/lib/plans.functions";
 import { getCurrentPanelSession, logoutPanel } from "@/lib/panel-auth.functions";
 import { publishRuntimeError } from "@/lib/runtime-error-bus";
@@ -430,6 +431,55 @@ function DashboardPage() {
         </aside>
 
         <main className="flex-1">
+          {/* Quick Test Generator Dashboard Section */}
+          <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-blue-600/10 p-2 rounded-xl border border-blue-600/20">
+                <ShieldAlert className="text-blue-500" size={20} />
+              </div>
+              <div>
+                <h2 className="text-lg font-black uppercase tracking-tighter text-zinc-100">Teste Rápido</h2>
+                <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Geração instantânea de usuários</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {plans.filter(p => p.is_trial).map(plan => (
+                <button
+                  key={plan.id}
+                  onClick={async () => {
+                    const tid = toast.loading(`Gerando teste para ${plan.name}...`);
+                    try {
+                      const res = await quickCreateTestUser({ data: { planId: plan.id! } });
+                      if (res.success) {
+                        const m3u = await generateM3ULink({ data: { username: res.data!.username, password: res.data!.password } });
+                        navigator.clipboard.writeText(m3u);
+                        toast.success(`Teste Criado! User: ${res.data!.username}. Link M3U copiado!`, { id: tid });
+                        fetchAll(false);
+                      }
+                    } catch (e) {
+                      toast.error("Falha ao gerar teste", { id: tid });
+                    }
+                  }}
+                  className="bg-zinc-900/50 hover:bg-blue-600 border border-zinc-800 hover:border-blue-400 p-4 rounded-2xl transition-all group flex flex-col items-center justify-center text-center gap-2"
+                >
+                  <div className="bg-zinc-950 group-hover:bg-blue-500 p-2 rounded-xl transition-colors">
+                    <Activity className="text-zinc-500 group-hover:text-white" size={16} />
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-white">
+                    {plan.name}
+                  </span>
+                </button>
+              ))}
+              
+              {plans.filter(p => p.is_trial).length === 0 && (
+                <div className="col-span-full py-6 text-center bg-zinc-900/20 border border-dashed border-zinc-800 rounded-2xl">
+                  <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-widest">Nenhum plano de teste configurado</p>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="flex justify-between items-start gap-4 mb-8 flex-wrap">
             <div>
               <h1 className="text-3xl font-bold uppercase tracking-tighter">
@@ -456,6 +506,7 @@ function DashboardPage() {
               </button>
             </div>
           </div>
+
 
           <MainSectionBoundary
             onError={(error, info) => {
