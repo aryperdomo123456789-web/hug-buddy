@@ -177,7 +177,7 @@ export function useOdinData(initialData: OdinSnapshot | null = null, initialSync
     try {
       const response = await getOdinFullData();
 
-      if (response?.success && response.data) {
+      if (response && 'success' in response && response.success && 'data' in response && response.data) {
         console.log("[useOdinData] Data received:", {
           customers: response.data.customers?.length,
           servers: response.data.servers?.length,
@@ -257,7 +257,7 @@ export function useOdinData(initialData: OdinSnapshot | null = null, initialSync
           console.error("[useOdinData] Supabase fetch error:", err);
         }
       } else if (!quiet) {
-        const message = response?.error || "Falha ao carregar dados do Odin.";
+        const message = (response && 'error' in response ? response.error : null) || "Falha ao carregar dados do Odin.";
         console.error("[useOdinData] Response failure:", message);
         publishRuntimeError(new Error(message), {
           source: "manual",

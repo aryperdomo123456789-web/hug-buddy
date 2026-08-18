@@ -374,10 +374,10 @@ export const getOdinFullData = createServerFn({ method: "GET" })
       return {
         success: true,
         data: { customers: scopedCustomers, streams, bouquets, servers, resellers: scopedResellers }
-      };
+      } as const;
 
     } catch (error: any) {
-      return { success: false, error: error.message };
+      return { success: false, error: error.message } as const;
     }
   });
 
@@ -395,7 +395,7 @@ export const saveOdinConfig = createServerFn({ method: "POST" })
     assertAdminOnly(context as PanelContext);
     const { saveOdinRuntimeConfig } = await import("./odin-runtime.server");
     const saved = saveOdinRuntimeConfig(data ?? {});
-    return { success: true, data: saved };
+    return { success: true, data: saved } as const;
   });
 
 export const seedActiveOdinConfig = createServerFn({ method: "POST" })
@@ -405,7 +405,7 @@ export const seedActiveOdinConfig = createServerFn({ method: "POST" })
     const current = getOdinConfig();
     const { saveOdinRuntimeConfig } = await import("./odin-runtime.server");
     const saved = saveOdinRuntimeConfig(current);
-    return { success: true, data: saved };
+    return { success: true, data: saved } as const;
   });
 
 export const testOdinConnection = createServerFn({ method: "GET" })
@@ -435,8 +435,8 @@ export const testOdinConnection = createServerFn({ method: "GET" })
       if (result.code !== 0) {
         return {
           success: false,
-          error: result.stderr || "MySQL query failed",
-        };
+          error: (result.stderr || "MySQL query failed") as string,
+        } as const;
       }
 
       return {
@@ -447,10 +447,10 @@ export const testOdinConnection = createServerFn({ method: "GET" })
           dbHost: cfg.dbHost,
           dbName: cfg.dbName,
         },
-      };
+      } as const;
     } catch (error: any) {
       try { if (ssh.isConnected()) ssh.dispose(); } catch {}
-      return { success: false, error: error?.message || String(error) };
+      return { success: false, error: (error?.message || String(error)) as string } as const;
     }
   });
 
