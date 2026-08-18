@@ -160,8 +160,8 @@ async function executeBatchQueries(queries: string[]) {
       port: cfg.sshPort,
       username: cfg.sshUsername,
       password: cfg.sshPassword,
-      readyTimeout: 60000,
-      keepaliveInterval: 10000,
+      readyTimeout: 30000,
+      keepaliveInterval: 5000,
       compress: true,
     });
     
@@ -215,7 +215,10 @@ export const getOdinFullData = createServerFn({ method: "GET" })
         "SELECT server_id, COUNT(*) as total_streams, SUM(stream_status = 1) as live_streams, SUM(stream_status = 0) as offline_streams, SUM(bitrate) as bitrate_sum, AVG(bitrate) as avg_bitrate FROM streams_sys GROUP BY server_id"
       ];
 
-      const [uRaw, stRaw, bRaw, svRaw, rRaw, actRaw, srvActRaw, streamStatusRaw, serverStateRaw] = await executeBatchQueries(queries);
+      const [uRaw, stRaw, bRaw, svRaw, rRaw, actRaw, srvActRaw, streamStatusRaw, serverStateRaw] = await executeBatchQueries(queries).catch(e => {
+        console.error("[SSH] RPC handler failed:", e);
+        throw e;
+      });
 
       const activityMap: Record<number, number> = {};
       (actRaw || "").trim().split("\n").filter(Boolean).forEach(line => {

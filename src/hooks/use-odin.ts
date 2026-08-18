@@ -170,7 +170,17 @@ export function useOdinData(initialData: OdinSnapshot | null = null, initialSync
     if (isFetching.current) return;
 
     isFetching.current = true;
-    if (!quiet) setLoading(true);
+    if (!quiet) {
+      setLoading(true);
+      // Timeout de segurança para resetar o loading caso o RPC trave
+      setTimeout(() => {
+        if (isFetching.current) {
+          console.warn("[useOdinData] RPC timeout detected, resetting loading state.");
+          setLoading(false);
+          isFetching.current = false;
+        }
+      }, 45000); 
+    }
     const hadDataBeforeFetch =
       customers.length > 0 || servers.length > 0 || streams.length > 0 || bouquets.length > 0 || resellers.length > 0;
 
