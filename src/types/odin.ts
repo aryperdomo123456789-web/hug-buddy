@@ -74,6 +74,24 @@ export interface Profile {
   created_at?: string;
 }
 
+export interface Plan {
+  id: string;
+  name: string;
+  odin_server_id: string | null;
+  odin_package_id: number | null;
+  bouquets: number[];
+  connections: number;
+  duration: number;
+  duration_unit: 'minutes' | 'hours' | 'days' | 'months' | 'years';
+  price: number;
+  is_trial: boolean;
+  has_adult_content: boolean;
+  status: 'active' | 'inactive';
+  sort_order: number;
+  template: string | null;
+  created_at?: string;
+}
+
 export interface DashboardStats {
   totalUsers: number;
   onlineUsers: number;
