@@ -66,16 +66,16 @@ export function CustomerList({
     try {
       // 1. Get plan-specific template or fallback to global template
       const userPlan = plans.find(p => p.name === u.package_name);
-      const globalTemplate = settings?.['default_message_template']?.template || "";
+      const globalTemplate = settings?.['global_template'] || "";
       const template = userPlan?.template || globalTemplate;
 
       if (!template) {
-        toast.error("Template de mensagem não configurado");
+        toast.error("Template de mensagem não configurado (Global ou no Plano)");
         return;
       }
 
       // 2. Fetch DNS config for links
-      const dns = settings?.['dns_config']?.host || window.location.hostname;
+      const dns = settings?.['dns_config']?.host || window.location.origin;
 
       // 3. Simple placeholder replacement
       let msg = template
@@ -83,10 +83,11 @@ export function CustomerList({
         .replace(/{password}/g, u.password)
         .replace(/{connections}/g, String(u.max_connections))
         .replace(/{package}/g, u.package_name || userPlan?.name || 'N/A')
-        .replace(/{plan_price}/g, userPlan?.price ? `R$ ${Number(userPlan.price).toFixed(2)}` : 'N/A')
+        .replace(/{plan_price}/g, userPlan?.plan_price ? `R$ ${Number(userPlan.plan_price).toFixed(2)}` : (userPlan?.price ? `R$ ${Number(userPlan.price).toFixed(2)}` : 'N/A'))
+        .replace(/{pay_url}/g, userPlan?.pay_url || 'N/A')
         .replace(/{dns}/g, dns)
-        .replace(/{dns_host}/g, dns.replace(/^https?:\/\//, ''))
-        .replace(/{expires_at}/g, u.exp_date ? new Date(u.exp_date * 1000).toLocaleDateString() : 'Ilimitado');
+        .replace(/{dns_host}/g, userPlan?.dns_host || dns.replace(/^https?:\/\//, ''))
+        .replace(/{expires_at}/g, u.exp_date ? new Date(u.exp_date * 1000).toLocaleDateString('pt-BR') : 'Ilimitado');
       
       navigator.clipboard.writeText(msg);
       toast.success("Mensagem de venda copiada!");
