@@ -251,22 +251,26 @@ export function parseOdinData(
 
   const packages = (packagesRaw || "").trim().split("\n").filter(Boolean).map(line => {
     const parts = line.split("\t");
-    // Mapeamento simples de pacotes Odin
+    const isTrial = Number(parts[14] || 0); // is_trial
+    
     return {
       id: Number(parts[0]),
       name: parts[1] || "Package",
-      is_trial: Number(parts[2] || 0),
-      max_connections: Number(parts[3] || 1),
-      official_duration: Number(parts[4] || 0),
-      official_duration_in: parts[5] || "months",
-      trial_duration: Number(parts[6] || 0),
-      trial_duration_in: parts[7] || "hours",
-      groups: parts[8] || "[]",
-      bouquets: parts[9] || "[]",
-      raw: parts
+      is_trial: isTrial === 1,
+      connections: Number(parts[23] || 1),
+      duration: isTrial ? Number(parts[12] || 0) : Number(parts[10] || 0),
+      duration_unit: (isTrial ? (parts[13] || "hours") : (parts[11] || "months")) as any,
+      bouquets: safeParseJson(parts[9] || "[]"),
+      can_gen_mag: Number(parts[17] || 1) === 1,
+      can_gen_enigma: Number(parts[19] || 1) === 1,
+      only_mag: Number(parts[18] || 0) === 1,
+      only_enigma: Number(parts[20] || 0) === 1,
+      lock_stb: Number(parts[21] || 0) === 1,
+      is_restream: Number(parts[22] || 0) === 1
     };
   });
 
   return { customers, streams, bouquets, servers, resellers, packages };
 }
+
 
