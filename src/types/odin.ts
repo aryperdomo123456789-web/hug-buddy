@@ -1,5 +1,23 @@
 import { z } from "zod";
 
+export interface Plan {
+  id?: string;
+  name: string;
+  odin_server_id?: string | null;
+  odin_package_id?: number | null;
+  bouquets: number[];
+  connections: number;
+  duration: number;
+  duration_unit: 'minutes' | 'hours' | 'days' | 'months' | 'years';
+  price: number;
+  is_trial: boolean;
+  has_adult_content: boolean;
+  status: 'active' | 'inactive';
+  sort_order: number;
+  template?: string | null;
+  created_at?: string;
+}
+
 export const UserSchema = z.object({
   id: z.number().optional(),
   username: z.string().default(""),
@@ -36,7 +54,7 @@ export const ResellerSchema = z.object({
   owner_id: z.number().int().default(1),
   credits: z.number().default(0),
   active: z.number().int().default(1),
-  member_group_id: z.number().int().default(2),
+  member_group_id: z.number().int().default(2), // 2 = Reseller, 5 = Subreseller?
   last_login: z.number().optional(),
   user_count: z.number().default(0),
 });
@@ -50,6 +68,7 @@ export interface Stream {
   icon: string;
   source: string;
   status: number;
+  bitrate_mbps?: number;
 }
 
 export interface Server {
@@ -57,9 +76,21 @@ export interface Server {
   name: string;
   status: number;
   last_check: number;
-  hardware: any;
+  hardware: Record<string, any>;
   total_clients: number;
   port: string;
+  server_type?: number;
+  live_connections?: number;
+  live_users?: number;
+  live_streams?: number;
+  offline_streams?: number;
+  total_streams?: number;
+  input_mbps?: number;
+  output_mbps?: number;
+  avg_bitrate_mbps?: number;
+  bytes_sent?: number;
+  bytes_received?: number;
+  network_speed?: string | number;
 }
 
 export interface Bouquet {
@@ -69,28 +100,18 @@ export interface Bouquet {
 
 export interface Profile {
   id: string;
-  role: 'admin' | 'reseller';
+  role: "admin" | "reseller";
   odin_reseller_id: number | null;
   full_name: string | null;
-  created_at?: string;
+  updated_at?: string | null;
 }
 
-export interface Plan {
-  id: string;
-  name: string;
-  odin_server_id: string | null;
-  odin_package_id: number | null;
-  bouquets: number[];
-  connections: number;
-  duration: number;
-  duration_unit: 'minutes' | 'hours' | 'days' | 'months' | 'years';
-  price: number;
-  is_trial: boolean;
-  has_adult_content: boolean;
-  status: 'active' | 'inactive';
-  sort_order: number;
-  template: string | null;
-  created_at?: string;
+export interface OdinSnapshot {
+  customers: User[];
+  streams: Stream[];
+  bouquets: Bouquet[];
+  servers: Server[];
+  resellers: Reseller[];
 }
 
 export interface DashboardStats {
@@ -101,9 +122,7 @@ export interface DashboardStats {
   totalServers: number;
   totalClients: number;
   totalResellers: number;
-  totalConns: number;
-  totalInput: string;
-  totalOutput: string;
+  openConnections?: number;
 }
 
 export interface SSHResponse<T = any> {

@@ -6,17 +6,56 @@ interface UserModalProps {
   user: User | null;
   bouquets: any[];
   resellers: any[];
+  canChangeOwner: boolean;
   onClose: () => void;
   onSave: (data: User) => Promise<void>;
   loading?: boolean;
 }
 
-export function UserModal({ user, bouquets, resellers, onClose, onSave, loading }: UserModalProps) {
+function parseBouquetIds(value: unknown): number[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => {
+        if (item && typeof item === "object") {
+          const candidate = item as Record<string, unknown>;
+          const legacy = candidate.id ?? candidate.M_ID ?? candidate.m_id;
+          const parsed = Number(legacy);
+          return Number.isFinite(parsed) ? parsed : 0;
+        }
+
+        const parsed = Number(item);
+        return Number.isFinite(parsed) ? parsed : 0;
+      })
+      .filter((id) => id > 0);
+  }
+
+  if (value && typeof value === "object") {
+    const candidate = value as Record<string, unknown>;
+    return [candidate.id, candidate.M_ID, candidate.m_id]
+      .map((item) => Number(item))
+      .filter((id) => Number.isFinite(id) && id > 0);
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    try {
+      const parsed = JSON.parse(value);
+      return parseBouquetIds(parsed);
+    } catch {
+      return value
+        .split(",")
+        .map((part) => Number(part.trim()))
+        .filter((id) => Number.isFinite(id) && id > 0);
+    }
+  }
+
+  return [];
+}
+
+export function UserModal({ user, bouquets, resellers, canChangeOwner, onClose, onSave, loading }: UserModalProps) {
   const [activeTab, setActiveTab] = React.useState<'details' | 'advanced' | 'restrictions' | 'bouquets'>('details');
   const [formData, setFormData] = React.useState<User>(() => {
     if (user) {
-      const now = typeof window !== 'undefined' ? Date.now() / 1000 : 0;
-      const exp_days = user.exp_date ? Math.max(0, Math.ceil((user.exp_date - now) / 86400)) : 30;
+      const exp_days = user.exp_date ? Math.max(0, Math.ceil((user.exp_date - Date.now() / 1000) / 86400)) : 30;
       return { ...user, exp_days };
     }
     return UserSchema.parse({});
@@ -98,17 +137,25 @@ export function UserModal({ user, bouquets, resellers, onClose, onSave, loading 
                     className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm outline-none"
                   />
                 </Field>
-                <Field label="Dono / Revendedor">
-                  <select
-                    value={formData.owner_id}
-                    onChange={e => updateField('owner_id', Number(e.target.value))}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none transition-all"
-                  >
-                    {resellers.map(r => (
-                      <option key={r.id} value={r.id}>{r.username}</option>
-                    ))}
-                  </select>
-                </Field>
+                {canChangeOwner ? (
+                  <Field label="Dono / Revendedor">
+                    <select
+                      value={formData.owner_id}
+                      onChange={e => updateField('owner_id', Number(e.target.value))}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none transition-all"
+                    >
+                      {resellers.map(r => (
+                        <option key={r.id} value={r.id}>{r.username}</option>
+                      ))}
+                    </select>
+                  </Field>
+                ) : (
+                  <Field label="Revendedor Vinculado">
+                    <div className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-400">
+                      O vínculo é controlado pelo Dono.
+                    </div>
+                  </Field>
+                )}
               </div>
               <div className="space-y-6">
                 <Field label="Máximo de Conexões">
@@ -201,13 +248,12 @@ export function UserModal({ user, bouquets, resellers, onClose, onSave, loading 
                     type="checkbox"
                     checked={(() => {
                       try {
-                        const current = JSON.parse(formData.bouquet || "[]");
+                        const current = parseBouquetIds(formData.bouquet);
                         return current.includes(Number(b.id));
                       } catch(e) { return false; }
                     })()}
                     onChange={(e) => {
-                      let current = [];
-                      try { current = JSON.parse(formData.bouquet || "[]"); } catch(e) {}
+                      let current = parseBouquetIds(formData.bouquet);
                       if (e.target.checked) {
                         current.push(Number(b.id));
                       } else {
