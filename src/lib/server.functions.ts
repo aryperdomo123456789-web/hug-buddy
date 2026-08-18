@@ -265,7 +265,7 @@ export const getOdinFullData = createServerFn({ method: "GET" })
           id, username, password, exp_date, enabled, admin_enabled, 
           is_trial, is_restreamer, is_isplock, max_connections, 
           bouquet, admin_notes, reseller_notes, allowed_ips, 
-          allowed_ua, forced_country, owner_id
+          allowed_ua, forced_country, owner_id, package_name
         ] = parts;
         
         return normalizeLegacyId({
@@ -286,9 +286,10 @@ export const getOdinFullData = createServerFn({ method: "GET" })
           allowed_ua: allowed_ua || "",
           forced_country: forced_country || "Off",
           active_cons: activityMap[Number(id)] || 0,
-          owner_id: Number(owner_id || 1)
+          owner_id: Number(owner_id || 1),
+          package_name: package_name || undefined,
         }, id);
-      }).filter(Boolean);
+      }).filter((x): x is (User & { M_ID: number; m_id: number }) => x !== null);
 
       const streams = (stRaw || "").trim().split("\n").filter(Boolean).map(line => {
         const [id, name, cat, icon, source] = line.split("\t");
@@ -316,8 +317,8 @@ export const getOdinFullData = createServerFn({ method: "GET" })
         const serverId = Number(id || 0);
         const activity = serverActivityMap[serverId] || { conns: 0, users: 0, streams: 0 };
         const streamState = serverStateMap[serverId] || { total: 0, live: 0, offline: 0, bitrate: 0, avgBitrate: 0 };
-        const bytesSent = toFiniteNumber(hwData.bytes_sent);
-        const bytesReceived = toFiniteNumber(hwData.bytes_received);
+        const bytesSent = toFiniteNumber(hwData["bytes_sent"]);
+        const bytesReceived = toFiniteNumber(hwData["bytes_received"]);
         const avgBitrate = toFiniteNumber(streamState.avgBitrate);
         const outputMbps = toFiniteNumber(streamState.bitrate) / 1000;
         const serverName = name || "Server";
@@ -341,14 +342,14 @@ export const getOdinFullData = createServerFn({ method: "GET" })
           avg_bitrate_mbps: avgBitrate,
           bytes_sent: bytesSent,
           bytes_received: bytesReceived,
-          network_speed: hwData.network_speed ?? hwData.network ?? ""
+          network_speed: hwData["network_speed"] ?? hwData["network"] ?? ""
         }, id);
       });
 
       const resellers = (rRaw || "").trim().split("\n").filter(Boolean).map(line => {
         const parts = line.split("\t");
         if (parts.length < 10) return null;
-        const [id, username, password, email, owner_id, credits, status, mg_id, last_login, user_count] = parts;
+        const [id, username, password, email, owner_id, credits, status, member_group_id, last_login, user_count] = parts;
 
         return normalizeLegacyId({
           id: Number(id),
@@ -358,11 +359,11 @@ export const getOdinFullData = createServerFn({ method: "GET" })
           owner_id: Number(owner_id || 0),
           credits: Number(credits || 0),
           active: Number(status || 1),
-          member_group_id: Number(mg_id || 2),
+          member_group_id: Number(member_group_id || 2),
           last_login: last_login === "NULL" ? 0 : Number(last_login || 0),
           user_count: Number(user_count || 0)
         }, id);
-      }).filter(Boolean);
+      }).filter((x): x is (Reseller & { M_ID: number; m_id: number }) => x !== null);
 
       const scopedCustomers = filterCustomersForContext(customers, context as PanelContext);
       const scopedResellers = filterResellersForContext(resellers, context as PanelContext);
