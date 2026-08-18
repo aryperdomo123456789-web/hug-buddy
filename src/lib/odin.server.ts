@@ -147,6 +147,7 @@ export function parseOdinData(
 
   const customers: User[] = (uRaw || "").trim().split("\n").filter(Boolean).map(line => {
     const parts = line.split("\t");
+    // Odin v6 users table: [id, username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, reseller_notes, allowed_ips, allowed_ua, forced_country, owner_id, package_name]
     if (parts.length < 16) return null;
     const [
       id, username, password, exp_date, enabled, admin_enabled,
@@ -155,7 +156,7 @@ export function parseOdinData(
       allowed_ua, forced_country, owner_id
     ] = parts;
 
-    const p_name = parts[17] || undefined;
+    const p_name = parts[17] || "";
 
     return {
       id: Number(id),
