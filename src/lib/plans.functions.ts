@@ -38,16 +38,24 @@ export const savePlan = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { id, ...saveData } = data;
     
+    // Convert undefined to null for Supabase to satisfy exactOptionalPropertyTypes
+    const sanitizedData: any = { ...saveData };
+    Object.keys(sanitizedData).forEach(key => {
+      if (sanitizedData[key] === undefined) {
+        sanitizedData[key] = null;
+      }
+    });
+
     if (id) {
       const { error } = await context.supabase
         .from('plans')
-        .update(saveData)
+        .update(sanitizedData)
         .eq('id', id);
       if (error) throw error;
     } else {
       const { error } = await context.supabase
         .from('plans')
-        .insert(saveData);
+        .insert(sanitizedData);
       if (error) throw error;
     }
     
