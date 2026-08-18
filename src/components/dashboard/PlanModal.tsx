@@ -16,7 +16,6 @@ export function PlanModal({ plan, onClose, onSave, loading, odinPackages = [], b
   const [bouquetSearch, setBouquetSearch] = useState("");
   
   const [data, setData] = useState<Plan>(plan || { 
-    id: "",
     name: "", 
     connections: 1, 
     duration: 1, 
@@ -390,8 +389,12 @@ export function PlanModal({ plan, onClose, onSave, loading, odinPackages = [], b
             Descartar
           </button>
           <button 
-            onClick={() => onSave(data)} 
+            onClick={() => {
+              const { id, ...cleanData } = data;
+              onSave(data);
+            }} 
             disabled={loading} 
+
             className="bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 transition-all shadow-xl shadow-blue-600/20"
           >
             {loading ? <div className="w-4 h-4 border-2 border-white/20 border-t-white animate-spin rounded-full" /> : <Save size={16} />} 

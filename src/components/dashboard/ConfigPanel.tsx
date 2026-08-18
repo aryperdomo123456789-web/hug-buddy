@@ -14,7 +14,7 @@ import {
   getOdinProvisionTokens,
   revokeOdinProvisionToken,
 } from "@/lib/odin-token.functions";
-import { getAppSettings, saveAppSetting } from "@/lib/plans.functions";
+import { getAppSettings, saveAppSettings } from "@/lib/plans.functions";
 
 type OdinFormState = OdinConfig;
 

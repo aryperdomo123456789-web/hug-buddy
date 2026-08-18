@@ -59,6 +59,8 @@ export type Database = {
       plans: {
         Row: {
           bouquets: Json | null
+          can_gen_enigma: boolean | null
+          can_gen_mag: boolean | null
           connections: number | null
           created_at: string | null
           dns_host: string | null
@@ -66,10 +68,15 @@ export type Database = {
           duration_unit: string | null
           has_adult_content: boolean | null
           id: string
+          is_restream: boolean | null
           is_trial: boolean | null
+          lock_stb: boolean | null
           name: string
           odin_package_id: number | null
           odin_server_id: string | null
+          only_enigma: boolean | null
+          only_mag: boolean | null
+          output_formats: Json | null
           pay_url: string | null
           plan_price: number | null
           price: number | null
@@ -80,6 +87,8 @@ export type Database = {
         }
         Insert: {
           bouquets?: Json | null
+          can_gen_enigma?: boolean | null
+          can_gen_mag?: boolean | null
           connections?: number | null
           created_at?: string | null
           dns_host?: string | null
@@ -87,10 +96,15 @@ export type Database = {
           duration_unit?: string | null
           has_adult_content?: boolean | null
           id?: string
+          is_restream?: boolean | null
           is_trial?: boolean | null
+          lock_stb?: boolean | null
           name: string
           odin_package_id?: number | null
           odin_server_id?: string | null
+          only_enigma?: boolean | null
+          only_mag?: boolean | null
+          output_formats?: Json | null
           pay_url?: string | null
           plan_price?: number | null
           price?: number | null
@@ -101,6 +115,8 @@ export type Database = {
         }
         Update: {
           bouquets?: Json | null
+          can_gen_enigma?: boolean | null
+          can_gen_mag?: boolean | null
           connections?: number | null
           created_at?: string | null
           dns_host?: string | null
@@ -108,10 +124,15 @@ export type Database = {
           duration_unit?: string | null
           has_adult_content?: boolean | null
           id?: string
+          is_restream?: boolean | null
           is_trial?: boolean | null
+          lock_stb?: boolean | null
           name?: string
           odin_package_id?: number | null
           odin_server_id?: string | null
+          only_enigma?: boolean | null
+          only_mag?: boolean | null
+          output_formats?: Json | null
           pay_url?: string | null
           plan_price?: number | null
           price?: number | null
