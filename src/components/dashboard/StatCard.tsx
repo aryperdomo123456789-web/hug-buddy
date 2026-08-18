@@ -16,7 +16,8 @@ export function StatCard({ label, value, icon: Icon, color = "blue" }: StatCardP
   };
 
   return (
-    <div className="bg-[#0f0f12] p-6 rounded-2xl border border-zinc-800 shadow-lg hover:border-blue-500/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.1)] transition-all duration-300 group">
+    <div className="relative overflow-hidden bg-[#0f0f12] p-4 md:p-6 rounded-2xl border border-zinc-800 shadow-lg hover:border-blue-500/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.1)] transition-all duration-300 group">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       <div className="flex justify-between items-start mb-4">
         <div className={`p-3 rounded-xl ${colors[color]} group-hover:scale-110 transition-transform duration-300`}>
           <Icon size={24} />

@@ -6,12 +6,52 @@ interface UserModalProps {
   user: User | null;
   bouquets: any[];
   resellers: any[];
+  canChangeOwner: boolean;
   onClose: () => void;
   onSave: (data: User) => Promise<void>;
   loading?: boolean;
 }
 
-export function UserModal({ user, bouquets, resellers, onClose, onSave, loading }: UserModalProps) {
+function parseBouquetIds(value: unknown): number[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => {
+        if (item && typeof item === "object") {
+          const candidate = item as Record<string, unknown>;
+          const legacy = candidate.id ?? candidate.M_ID ?? candidate.m_id;
+          const parsed = Number(legacy);
+          return Number.isFinite(parsed) ? parsed : 0;
+        }
+
+        const parsed = Number(item);
+        return Number.isFinite(parsed) ? parsed : 0;
+      })
+      .filter((id) => id > 0);
+  }
+
+  if (value && typeof value === "object") {
+    const candidate = value as Record<string, unknown>;
+    return [candidate.id, candidate.M_ID, candidate.m_id]
+      .map((item) => Number(item))
+      .filter((id) => Number.isFinite(id) && id > 0);
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    try {
+      const parsed = JSON.parse(value);
+      return parseBouquetIds(parsed);
+    } catch {
+      return value
+        .split(",")
+        .map((part) => Number(part.trim()))
+        .filter((id) => Number.isFinite(id) && id > 0);
+    }
+  }
+
+  return [];
+}
+
+export function UserModal({ user, bouquets, resellers, canChangeOwner, onClose, onSave, loading }: UserModalProps) {
   const [activeTab, setActiveTab] = React.useState<'details' | 'advanced' | 'restrictions' | 'bouquets'>('details');
   const [formData, setFormData] = React.useState<User>(() => {
     if (user) {
@@ -45,8 +85,8 @@ export function UserModal({ user, bouquets, resellers, onClose, onSave, loading 
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-[#0f0f12] w-full max-w-4xl rounded-2xl border border-zinc-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="p-6 border-b border-zinc-900 flex justify-between items-center bg-zinc-950/50">
+      <div className="bg-[#0f0f12] w-full max-w-4xl rounded-2xl border border-zinc-800 shadow-2xl overflow-hidden flex flex-col h-[95vh] md:h-auto md:max-h-[90vh]">
+        <div className="p-4 md:p-6 border-b border-zinc-900 flex justify-between items-center bg-zinc-950/50">
           <div>
             <h2 className="text-xl font-bold uppercase tracking-tighter text-zinc-100">
               {user ? `Editar: ${user.username}` : "Novo Utilizador"}
@@ -69,7 +109,7 @@ export function UserModal({ user, bouquets, resellers, onClose, onSave, loading 
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8">
           {activeTab === 'details' && (
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
               <div className="space-y-6">
                 <Field label="Nome de Utilizador">
                   <input
@@ -97,17 +137,25 @@ export function UserModal({ user, bouquets, resellers, onClose, onSave, loading 
                     className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm outline-none"
                   />
                 </Field>
-                <Field label="Dono / Revendedor">
-                  <select
-                    value={formData.owner_id}
-                    onChange={e => updateField('owner_id', Number(e.target.value))}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none transition-all"
-                  >
-                    {resellers.map(r => (
-                      <option key={r.id} value={r.id}>{r.username}</option>
-                    ))}
-                  </select>
-                </Field>
+                {canChangeOwner ? (
+                  <Field label="Dono / Revendedor">
+                    <select
+                      value={formData.owner_id}
+                      onChange={e => updateField('owner_id', Number(e.target.value))}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none transition-all"
+                    >
+                      {resellers.map(r => (
+                        <option key={r.id} value={r.id}>{r.username}</option>
+                      ))}
+                    </select>
+                  </Field>
+                ) : (
+                  <Field label="Revendedor Vinculado">
+                    <div className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-400">
+                      O vínculo é controlado pelo Dono.
+                    </div>
+                  </Field>
+                )}
               </div>
               <div className="space-y-6">
                 <Field label="Máximo de Conexões">
@@ -118,7 +166,7 @@ export function UserModal({ user, bouquets, resellers, onClose, onSave, loading 
                     className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm outline-none"
                   />
                 </Field>
-                <div className="flex gap-4 pt-4">
+                <div className="flex flex-col sm:flex-row gap-4 pt-4">
                   <Checkbox
                     label="Ativo"
                     checked={formData.enabled === 1}
@@ -142,7 +190,7 @@ export function UserModal({ user, bouquets, resellers, onClose, onSave, loading 
           )}
 
           {activeTab === 'advanced' && (
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
               <div className="space-y-6">
                 <Checkbox
                   label="Restreamer"
@@ -193,20 +241,19 @@ export function UserModal({ user, bouquets, resellers, onClose, onSave, loading 
           )}
 
           {activeTab === 'bouquets' && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {bouquets.map(b => (
                 <div key={b.id} className="flex items-center gap-3 p-4 bg-zinc-950/50 rounded-xl border border-zinc-900">
                   <input
                     type="checkbox"
                     checked={(() => {
                       try {
-                        const current = JSON.parse(formData.bouquet || "[]");
+                        const current = parseBouquetIds(formData.bouquet);
                         return current.includes(Number(b.id));
                       } catch(e) { return false; }
                     })()}
                     onChange={(e) => {
-                      let current = [];
-                      try { current = JSON.parse(formData.bouquet || "[]"); } catch(e) {}
+                      let current = parseBouquetIds(formData.bouquet);
                       if (e.target.checked) {
                         current.push(Number(b.id));
                       } else {
@@ -223,18 +270,18 @@ export function UserModal({ user, bouquets, resellers, onClose, onSave, loading 
           )}
         </form>
 
-        <div className="p-6 border-t border-zinc-900 bg-zinc-950/50 flex justify-end gap-4">
+        <div className="p-4 md:p-6 border-t border-zinc-900 bg-zinc-950/50 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-300 transition-colors"
+            className="order-2 sm:order-1 px-6 py-3 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-300 transition-colors min-h-[44px]"
           >
             Cancelar
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className={`${loading ? 'bg-zinc-800 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500'} text-white px-8 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 text-xs uppercase tracking-widest`}
+            className={`order-1 sm:order-2 ${loading ? 'bg-zinc-800 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500'} text-white px-8 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-widest min-h-[44px]`}
           >
             {loading ? <div className="w-4 h-4 border-2 border-zinc-500 border-t-zinc-200 animate-spin rounded-full" /> : <Save size={16} />} 
             {loading ? "Processando..." : (user ? "Salvar Alterações" : "Criar Utilizador")}

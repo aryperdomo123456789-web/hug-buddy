@@ -21,20 +21,20 @@ export function ResellerList({ resellers, loading, onRefresh, onDelete, onEdit, 
 
   return (
     <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800 shadow-xl overflow-hidden">
-      <div className="p-6 border-b border-zinc-900 flex justify-between items-center bg-zinc-950/30">
-        <div className="flex gap-4">
-          <button onClick={onRefresh} className="bg-zinc-900 hover:bg-zinc-800 text-zinc-400 p-2 rounded-lg border border-zinc-800 transition-all" disabled={loading}>
+      <div className="p-4 md:p-6 border-b border-zinc-900 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-zinc-950/30">
+        <div className="flex gap-2 w-full sm:w-auto">
+          <button onClick={onRefresh} className="bg-zinc-900 hover:bg-zinc-800 text-zinc-400 p-3 rounded-lg border border-zinc-800 transition-all min-w-[44px] min-h-[44px] flex items-center justify-center" disabled={loading}>
             <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
           </button>
-          <button onClick={onAdd} className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg font-bold transition-all flex items-center gap-2 text-sm">
-            <PlusCircle size={18} /> Adicionar Revenda
+          <button onClick={onAdd} className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg font-bold transition-all flex items-center justify-center gap-2 text-sm min-h-[44px]">
+            <PlusCircle size={18} /> <span className="hidden xs:inline">Adicionar Revenda</span><span className="xs:hidden">Novo</span>
           </button>
         </div>
         <input 
           placeholder="Pesquisar revendas..." 
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
-          className="bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-4 text-xs text-zinc-300 w-64"
+          className="w-full sm:w-64 bg-zinc-900 border border-zinc-800 rounded-lg py-2.5 px-4 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 min-h-[44px]"
         />
       </div>
 

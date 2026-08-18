@@ -42,13 +42,68 @@ export const ResellerSchema = z.object({
 
 export type Reseller = z.infer<typeof ResellerSchema>;
 
+export interface Stream {
+  id: number;
+  name: string;
+  category_id: number;
+  icon: string;
+  source: string;
+  status: number;
+  bitrate_mbps?: number;
+}
+
+export interface Server {
+  id: string;
+  name: string;
+  status: number;
+  last_check: number;
+  hardware: any;
+  total_clients: number;
+  port: string;
+  server_type?: number;
+  live_connections?: number;
+  live_users?: number;
+  live_streams?: number;
+  offline_streams?: number;
+  total_streams?: number;
+  input_mbps?: number;
+  output_mbps?: number;
+  avg_bitrate_mbps?: number;
+  bytes_sent?: number;
+  bytes_received?: number;
+  network_speed?: string | number;
+}
+
+export interface Bouquet {
+  id: number;
+  name: string;
+}
+
+export interface Profile {
+  id: string;
+  role: "admin" | "reseller";
+  odin_reseller_id: number | null;
+  full_name: string | null;
+  updated_at?: string | null;
+}
+
+export interface OdinSnapshot {
+  customers: User[];
+  streams: Stream[];
+  bouquets: Bouquet[];
+  servers: Server[];
+  resellers: Reseller[];
+}
+
 export interface DashboardStats {
   totalUsers: number;
   onlineUsers: number;
   activeStreams: number;
   totalStreams: number;
   totalServers: number;
+  totalClients: number;
   totalResellers: number;
+  openConnections?: number;
 }
 
 export interface SSHResponse<T = any> {

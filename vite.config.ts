@@ -11,5 +11,9 @@ export default defineConfig({
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
+    // This app runs on aaPanel/Node.js, so we must avoid the Cloudflare preset.
+    nitro: {
+      preset: "node_server",
+    },
   },
 });

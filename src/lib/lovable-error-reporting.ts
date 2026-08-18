@@ -1,3 +1,5 @@
+import { publishRuntimeError } from "./runtime-error-bus";
+
 type LovableErrorOptions = {
   mechanism?: "manual" | "onerror" | "unhandledrejection" | "react_error_boundary";
   handled?: boolean;
@@ -25,6 +27,11 @@ declare global {
 
 export function reportLovableError(error: unknown, context: Record<string, unknown> = {}) {
   if (typeof window === "undefined") return;
+  publishRuntimeError(error, {
+    source: "manual",
+    phase: "manual",
+    route: window.location.pathname,
+  });
   window.__lovableEvents?.captureException?.(
     error,
     {

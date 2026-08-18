@@ -30,3 +30,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.odin-config.json
+.odin-provision-tokens.json
+.odin-provision-audit.jsonl
+backups/

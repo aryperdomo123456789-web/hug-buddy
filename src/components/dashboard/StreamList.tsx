@@ -17,22 +17,22 @@ export function StreamList({ streams, loading, onRefresh }: StreamListProps) {
 
   return (
     <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800 shadow-xl overflow-hidden">
-      <div className="p-6 border-b border-zinc-900 bg-zinc-950/30 flex justify-between items-center">
+      <div className="p-4 md:p-6 border-b border-zinc-900 bg-zinc-950/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
           <Monitor className="text-purple-500" size={24} />
-          <h2 className="text-xl font-bold text-zinc-100 uppercase tracking-tighter">Gestão de Streams</h2>
+          <h2 className="text-lg md:text-xl font-bold text-zinc-100 uppercase tracking-tighter">Gestão de Streams</h2>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4 w-full sm:w-auto">
           <input 
             type="text" 
             placeholder="Pesquisar Streams..." 
-            className="bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-4 text-xs text-zinc-300 w-64 focus:outline-none focus:border-purple-500 transition-all"
+            className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg py-2.5 px-4 text-xs text-zinc-300 sm:w-64 focus:outline-none focus:border-purple-500 transition-all min-h-[44px]"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <button 
             onClick={onRefresh} 
-            className="bg-zinc-900 hover:bg-zinc-800 text-zinc-400 p-2 rounded-lg border border-zinc-800 transition-all"
+            className="bg-zinc-900 hover:bg-zinc-800 text-zinc-400 p-3 rounded-lg border border-zinc-800 transition-all min-w-[44px] min-h-[44px] flex items-center justify-center"
             disabled={loading}
           >
             <RefreshCw size={18} className={loading ? "animate-spin" : ""} />

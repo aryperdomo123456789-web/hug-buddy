@@ -16,7 +16,16 @@ import {
   ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
-import { getDefaultDns } from "@/lib/dns.functions";
+import { generateM3ULink } from "@/lib/server.functions";
+
+function formatStableDate(value: number): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(value * 1000));
+}
 
 interface CustomerListProps {
   customers: User[];
@@ -46,11 +55,6 @@ export function CustomerList({
   const [statusFilter, setStatusFilter] = React.useState("all");
   const [perPage, setPerPage] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
-  const [defaultDns, setDefaultDns] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    getDefaultDns().then(dns => setDefaultDns(dns));
-  }, []);
 
   const filteredCustomers = React.useMemo(() => {
     let result = customers;
@@ -198,7 +202,7 @@ export function CustomerList({
                     </span>
                   </td>
                   <td className="py-4 px-6 font-mono text-zinc-400">
-                    {u.exp_date ? new Date(u.exp_date * 1000).toLocaleDateString() : 'Unlimited'}
+                    {u.exp_date ? formatStableDate(u.exp_date) : "Unlimited"}
                   </td>
                   <td className="py-4 px-6 text-center font-mono">
                     <div className="flex items-center justify-center gap-2">
@@ -226,18 +230,19 @@ export function CustomerList({
                   <td className="py-4 px-6 text-right">
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button 
-                        onClick={() => {
-                          const domain = defaultDns || window.location.hostname;
-                          const port = "80"; // Odin default streaming port
-                          const url = `http://${domain}:${port}/get.php?username=${u.username}&password=${u.password}&type=m3u_plus&output=ts`;
-                          
-                          if (navigator.clipboard) {
-                            navigator.clipboard.writeText(url);
-                            toast.success("Link M3U copiado!");
-                          } else {
-                            window.alert(`Link M3U:\n${url}`);
+                        onClick={async () => {
+                          try {
+                            const url = await generateM3ULink({ data: { username: u.username, password: u.password } });
+                            if (navigator.clipboard) {
+                              navigator.clipboard.writeText(url);
+                              toast.success("Link M3U copiado!");
+                            } else {
+                              window.alert(`Link M3U:\n${url}`);
+                            }
+                          } catch (e) {
+                            toast.error("Erro ao gerar link M3U");
                           }
-                        }} 
+                        }}
                         className="p-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-emerald-500 rounded-lg border border-zinc-800 transition-all"
                         title="Download Playlist / Copiar Link"
                       >
