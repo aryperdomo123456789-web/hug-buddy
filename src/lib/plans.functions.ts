@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { db } from "./supabase";
 import { requirePanelAuth } from "./panel-auth.middleware";
 import { Plan } from "@/types/odin";
 
@@ -31,10 +30,15 @@ export const PlanValidator = z.object({
   output_formats: z.array(z.string()).default(["m3u8", "ts"]),
 });
 
+const getDb = async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
+};
+
 export const getPlans = createServerFn({ method: "GET" })
   .middleware([requirePanelAuth])
   .handler(async () => {
-    const supabase = await db();
+    const supabase = await getDb();
     const { data, error } = await supabase
       .from('plans')
       .select('*')
@@ -48,7 +52,7 @@ export const savePlan = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
   .validator((d) => PlanValidator.parse(d))
   .handler(async ({ data }) => {
-    const supabase = await db();
+    const supabase = await getDb();
     const { id, ...saveData } = data;
     
     console.log("[savePlan] Data received:", { id, ...saveData });
@@ -80,7 +84,7 @@ export const deletePlan = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
   .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
-    const supabase = await db();
+    const supabase = await getDb();
     const { error } = await supabase
       .from('plans')
       .delete()
@@ -93,7 +97,7 @@ export const deletePlan = createServerFn({ method: "POST" })
 export const getAppSettings = createServerFn({ method: "GET" })
   .middleware([requirePanelAuth])
   .handler(async () => {
-    const supabase = await db();
+    const supabase = await getDb();
     const { data, error } = await supabase
       .from('app_settings')
       .select('*');
@@ -101,7 +105,7 @@ export const getAppSettings = createServerFn({ method: "GET" })
     if (error) throw error;
     
     const settings: Record<string, any> = {};
-    (data || []).forEach(item => {
+    (data || []).forEach((item: any) => {
       settings[item.key] = item.value;
     });
     
@@ -112,7 +116,7 @@ export const saveAppSettings = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
   .validator((d) => z.record(z.any()).parse(d))
   .handler(async ({ data }) => {
-    const supabase = await db();
+    const supabase = await getDb();
     
     for (const [key, value] of Object.entries(data)) {
       const { error } = await supabase
