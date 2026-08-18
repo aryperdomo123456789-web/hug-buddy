@@ -14,11 +14,13 @@ import {
   ChevronRight,
   Tag,
   MessageSquare,
-  Activity
+  Activity,
+  Monitor
 } from "lucide-react";
 import { getOdinConfig } from "@/lib/odin";
 import { useOdinData } from "@/hooks/use-odin";
 import { CustomerList } from "@/components/dashboard/CustomerList";
+import { StreamList } from "@/components/dashboard/StreamList";
 import { UserModal } from "@/components/dashboard/UserModal";
 import { DnsPanel } from "@/components/dashboard/DnsPanel";
 import { ResellerList } from "@/components/dashboard/ResellerList";
@@ -161,6 +163,7 @@ function DashboardPage() {
     loading,
     customers,
     servers,
+    streams,
     bouquets,
     resellers,
     plans,
@@ -311,6 +314,7 @@ function DashboardPage() {
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: Activity },
     { id: "customers", label: "Clientes", icon: Users },
+    { id: "streams", label: "Gestão de Canais", icon: Database },
     { id: "resellers", label: "Revendedores", icon: UserCheck, adminOnly: true },
     { id: "plans", label: "Planos de Venda", icon: Tag, adminOnly: true },
     { id: "saas_users", label: "Usuários SaaS", icon: Users, adminOnly: true },
@@ -498,6 +502,13 @@ function DashboardPage() {
                 onDelete={handleDeleteUser}
                 onToggleStatus={handleToggleStatus}
                 onKill={handleKillConnections}
+              />
+            )}
+            {activeTab === "streams" && (
+              <StreamList
+                streams={streams}
+                loading={loading}
+                onRefresh={() => fetchAll(false)}
               />
             )}
 
