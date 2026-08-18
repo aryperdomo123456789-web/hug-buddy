@@ -175,18 +175,13 @@ function DashboardPage() {
     let cancelled = false;
 
     const fetchProfile = async () => {
-      try {
-        const session = await getCurrentPanelSession();
-        if (cancelled || !session) return;
-        setProfile({
-          id: session.userId,
-          role: session.role,
-          odin_reseller_id: session.odin_reseller_id,
-          full_name: session.full_name,
-        });
-      } catch (error) {
-        console.warn("[Dashboard] Could not refresh panel session.", error);
-      }
+      // Perfil estático para laboratório
+      setProfile({
+        id: 'lab-user',
+        role: 'admin',
+        odin_reseller_id: null,
+        full_name: 'Mago Lab',
+      });
     };
 
     fetchProfile();
