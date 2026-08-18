@@ -57,8 +57,6 @@ export const Route = createFileRoute("/")({
   component: DashboardPage,
   loader: async () => {
     const cfg = getOdinConfig();
-  loader: async () => {
-    const cfg = getOdinConfig();
 
     // Não bloqueamos o SSR com o SSH (lento) — isso derrubava o socket ("Error: aborted")
     // e gerava tela branca. Os dados do Odin são buscados no cliente pelo useOdinData.
