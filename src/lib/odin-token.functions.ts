@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-
+import { z } from "zod";
 import { requirePanelAuth } from "./panel-auth.server";
 import type { OdinProvisionScope } from "@/lib/odin-token.server";
 
@@ -19,14 +19,14 @@ export const getOdinProvisionTokens = createServerFn({ method: "GET" })
 
 export const createOdinProvisionToken = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
-  .validator((d: { name: string; scope: OdinProvisionScope; note: string; expiresInDays?: number | null }) => d)
+  .validator((d: { name: string; scope: OdinProvisionScope; note?: string; expiresInDays?: number | null }) => d)
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const mod = await import("./odin-token.server");
     const created = mod.createProvisionToken({
       name: data.name,
       scope: data.scope,
-      note: data.note,
+      note: data.note || "",
       createdBy: context.userId,
       expiresInDays: data.expiresInDays,
     });
