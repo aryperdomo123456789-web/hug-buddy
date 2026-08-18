@@ -17,7 +17,8 @@ import {
   X as CloseIcon,
   Download,
   Upload,
-  Tv
+  Tv,
+  Tag
 } from "lucide-react";
 import { getOdinConfig } from "@/lib/odin";
 import { useOdinData, useHydrated } from "@/hooks/use-odin";
@@ -32,7 +33,9 @@ import { ResellerModal } from "@/components/dashboard/ResellerModal";
 import { ConfigPanel } from "@/components/dashboard/ConfigPanel";
 import { SaasUserList } from "@/components/dashboard/SaasUserList";
 import { NavItem } from "@/components/dashboard/NavItem";
-import { User, Reseller, Profile } from "@/types/odin";
+import { PlanList } from "@/components/dashboard/PlanList";
+import { PlanModal } from "@/components/dashboard/PlanModal";
+import { User, Reseller, Profile, Plan } from "@/types/odin";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -70,6 +73,8 @@ function DashboardPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showResellerModal, setShowResellerModal] = useState(false);
   const [editingReseller, setEditingReseller] = useState<Reseller | null>(null);
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
 
   const { 
     loading, 
@@ -78,6 +83,8 @@ function DashboardPage() {
     servers, 
     bouquets,
     resellers,
+    plans,
+    settings,
     stats, 
     fetchAll,
     actions 
@@ -143,6 +150,7 @@ function DashboardPage() {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'customers', label: 'Clientes', icon: Users },
+    { id: 'plans', label: 'Planos', icon: Tag },
     { id: 'streams', label: 'Streams', icon: Monitor },
     { id: 'servers', label: 'Servidores', icon: ServerIcon },
     { id: 'resellers', label: 'Revendedores', icon: UserCheck, adminOnly: true },
@@ -322,6 +330,8 @@ function DashboardPage() {
               <CustomerList 
                 customers={customers}
                 resellers={resellers}
+                plans={plans}
+                settings={settings}
                 loading={loading}
                 onRefresh={() => fetchAll(false)}
                 onAdd={() => { setEditingUser(null); setShowUserModal(true); }}
@@ -369,6 +379,22 @@ function DashboardPage() {
                 onDelete={async (r) => {
                   if (window.confirm("Apagar revenda?")) {
                     await actions.deleteReseller({ data: { id: r.id! } });
+                    fetchAll(false);
+                  }
+                }}
+              />
+            )}
+
+            {activeTab === 'plans' && (
+              <PlanList 
+                plans={plans}
+                loading={loading}
+                onRefresh={() => fetchAll(false)}
+                onAdd={() => { setEditingPlan(null); setShowPlanModal(true); }}
+                onEdit={(plan) => { setEditingPlan(plan); setShowPlanModal(true); }}
+                onDelete={async (plan) => {
+                  if (window.confirm(`Excluir plano "${plan.name}"?`)) {
+                    await actions.deletePlan({ data: { id: plan.id } });
                     fetchAll(false);
                   }
                 }}
@@ -426,6 +452,23 @@ function DashboardPage() {
           resellers={resellers}
           onClose={() => { setShowUserModal(false); setEditingUser(null); }}
           onSave={handleSaveUser}
+          loading={loading}
+        />
+      )}
+
+      {showPlanModal && (
+        <PlanModal 
+          plan={editingPlan}
+          onClose={() => { setShowPlanModal(false); setEditingPlan(null); }}
+          onSave={async (planData) => {
+            const res = await actions.savePlan({ data: planData as any });
+            if (res.success) {
+              setShowPlanModal(false);
+              setEditingPlan(null);
+              fetchAll(false);
+              toast.success("Plano salvo com sucesso!");
+            }
+          }}
           loading={loading}
         />
       )}
