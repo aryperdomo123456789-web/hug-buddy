@@ -290,7 +290,7 @@ export const getOdinFullData = createServerFn({ method: "GET" })
           owner_id: Number(owner_id || 1),
           package_name: package_name || undefined,
         }, id);
-      }).filter((x): x is (User & { M_ID: number; m_id: number }) => !!x && typeof x.id === 'number');
+      }).filter((x): x is any => !!x && typeof (x as any).id === 'number');
 
       const streams = (stRaw || "").trim().split("\n").filter(Boolean).map(line => {
         const [id, name, cat, icon, source] = line.split("\t");
@@ -364,7 +364,7 @@ export const getOdinFullData = createServerFn({ method: "GET" })
           last_login: last_login === "NULL" ? 0 : Number(last_login || 0),
           user_count: Number(user_count || 0)
         }, id);
-      }).filter((x): x is (Reseller & { M_ID: number; m_id: number }) => !!x && typeof x.id === 'number');
+      }).filter((x): x is any => !!x && typeof (x as any).id === 'number');
 
       const scopedCustomers = filterCustomersForContext(customers as any[], context as PanelContext);
       const scopedResellers = filterResellersForContext(resellers as any[], context as PanelContext);
