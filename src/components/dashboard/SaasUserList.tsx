@@ -302,12 +302,14 @@ export function SaasUserList({ resellers = [] }: { resellers?: Reseller[] }) {
               <button
                 onClick={async () => {
                   try {
-                    const { data, error } = await supabase
+                    const updateData: any = {
+                      odin_reseller_id: editingProfile.odin_reseller_id,
+                      permissions: editingProfile.permissions
+                    };
+
+                    const { error } = await supabase
                       .from('profiles')
-                      .update({
-                        odin_reseller_id: editingProfile.odin_reseller_id,
-                        permissions: editingProfile.permissions as any
-                      })
+                      .update(updateData)
                       .eq('id', editingProfile.id);
                     
                     if (error) throw error;
