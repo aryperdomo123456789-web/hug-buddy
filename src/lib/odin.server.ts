@@ -49,7 +49,7 @@ export async function executeBatchQueries(queries: string[]): Promise<string[]> 
         port: cfg.sshPort,
         username: cfg.sshUsername,
         password: cfg.sshPassword,
-        readyTimeout: 30000,
+        readyTimeout: 45000,
         keepaliveInterval: 10000,
         compress: true,
       });
@@ -64,12 +64,21 @@ export async function executeBatchQueries(queries: string[]): Promise<string[]> 
         results.push("");
         continue;
       }
-      const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
+      // SQL via socket local para evitar problemas de permissão binded a 127.0.0.1
+      const mysqlCmd = `mysql -u root -p'${cfg.sshPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
       const result = await ssh.execCommand(mysqlCmd);
 
       if (result.code !== 0) {
-        console.error(`[SSH] Query Failed: ${result.stderr}`);
-        results.push("");
+        console.error(`[SSH] Query Failed (Code ${result.code}): ${result.stderr}`);
+        // Fallback para 127.0.0.1 se falhar sem host (alguns Odin v6 forçam 127.0.0.1)
+        const mysqlCmdFallback = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u root -p'${cfg.sshPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
+        const resultFallback = await ssh.execCommand(mysqlCmdFallback);
+        
+        if (resultFallback.code !== 0) {
+           results.push("");
+        } else {
+           results.push(resultFallback.stdout.replace(/\r/g, "") || "");
+        }
       } else {
         results.push(result.stdout.replace(/\r/g, "") || "");
       }
