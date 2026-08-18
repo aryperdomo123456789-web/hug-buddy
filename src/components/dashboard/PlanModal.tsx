@@ -48,6 +48,20 @@ export function PlanModal({ plan, onClose, onSave, loading, odinPackages = [], b
     }
   };
 
+  const toggleBouquet = (id: number) => {
+    const current = data.bouquets || [];
+    if (current.includes(id)) {
+      setData({ ...data, bouquets: current.filter(bId => bId !== id) });
+    } else {
+      setData({ ...data, bouquets: [...current, id] });
+    }
+  };
+
+  const filteredBouquets = bouquets.filter(b => 
+    b.name.toLowerCase().includes(bouquetSearch.toLowerCase()) ||
+    String(b.id).includes(bouquetSearch)
+  );
+
   return (
     <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
       <div className="bg-[#0f0f12] w-full max-w-3xl rounded-3xl border border-zinc-800 shadow-2xl flex flex-col max-h-[90vh]">
@@ -72,6 +86,7 @@ export function PlanModal({ plan, onClose, onSave, loading, odinPackages = [], b
             { id: 'details', label: 'Detalhes', icon: Settings2 },
             { id: 'advanced', label: 'Avançado', icon: Monitor },
             { id: 'restrictions', label: 'Restrições', icon: ShieldCheck },
+            { id: 'bouquets', label: 'Bouquets', icon: Database },
             { id: 'template', label: 'Template', icon: PlayCircle },
           ].map(tab => (
             <button
