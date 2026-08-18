@@ -50,7 +50,7 @@ export const getOdinFullData = createServerFn({ method: "GET" })
 
 export const quickCreateTestUser = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
-  .validator((d: any) => z.object({ planId: z.string() }).parse(d))
+  .validator((d: any) => z.object({ planId: z.string(), overrideOwnerId: z.number().optional() }).parse(d))
   .handler(async ({ data, context }) => {
     const { getPlans } = await import("./plans.functions");
     const plans = await getPlans();
@@ -73,8 +73,9 @@ export const quickCreateTestUser = createServerFn({ method: "POST" })
     else if (plan.duration_unit === 'months') expDate += plan.duration * 86400 * 30;
     else if (plan.duration_unit === 'years') expDate += plan.duration * 86400 * 365;
 
+    const ownerId = data.overrideOwnerId || 1;
     const sql = `INSERT INTO users (username, password, created_by, max_connections, enabled, is_trial, exp_date, bouquet) 
-                 VALUES ('${escapeSql(username)}', '${escapeSql(password)}', 1, ${plan.connections}, 1, ${plan.is_trial ? 1 : 0}, ${expDate}, '${JSON.stringify(plan.bouquets)}')`;
+                 VALUES ('${escapeSql(username)}', '${escapeSql(password)}', ${ownerId}, ${plan.connections}, 1, ${plan.is_trial ? 1 : 0}, ${expDate}, '${JSON.stringify(plan.bouquets)}')`;
     
     await executeQuery(sql);
     

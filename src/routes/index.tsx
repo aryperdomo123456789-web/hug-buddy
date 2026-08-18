@@ -137,6 +137,9 @@ function DashboardPage() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [isResellerDrawerOpen, setIsResellerDrawerOpen] = useState(false);
+  const [resellerSearch, setResellerSearch] = useState("");
+  const [selectedResellerId, setSelectedResellerId] = useState<number | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showResellerModal, setShowResellerModal] = useState(false);
@@ -260,7 +263,7 @@ function DashboardPage() {
 
       const res = editingUser?.id
         ? await actions.updateUser({ data: { ...data, id: editingUser.id } as any })
-        : await actions.createUser({ data: data as any });
+        : await actions.createUser({ data: { ...data, owner_id: selectedResellerId || (profile?.odin_reseller_id ?? 1) } as any });
 
       if (res.success) {
         toast.success(editingUser ? "Atualizado!" : "Criado!");
@@ -315,8 +318,116 @@ function DashboardPage() {
 
   const visibleNavItems = navItems.filter((item) => !item.adminOnly || profile?.role === "admin");
 
+  const filteredResellers = resellers.filter(r => 
+    r.username.toLowerCase().includes(resellerSearch.toLowerCase()) ||
+    r.id?.toString().includes(resellerSearch)
+  );
+
+  const activeReseller = resellers.find(r => r.id === selectedResellerId);
+
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-4 md:p-10 font-sans selection:bg-blue-500/30 overflow-x-hidden" id="odin-app-root">
+      {/* Botão Flutuante da Gaveta de Revendedores (Apenas Admin) */}
+      {profile?.role === "admin" && (
+        <div className="fixed top-6 right-6 z-[60]">
+          <button
+            onClick={() => setIsResellerDrawerOpen(true)}
+            className={`flex items-center gap-3 px-4 py-2 rounded-2xl border transition-all shadow-2xl ${
+              selectedResellerId 
+                ? "bg-blue-600 border-blue-400 text-white" 
+                : "bg-zinc-900/90 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+            }`}
+          >
+            <UserCheck size={18} />
+            <div className="text-left hidden sm:block">
+              <div className="text-[9px] font-black uppercase tracking-widest leading-none opacity-70">Contexto Odin</div>
+              <div className="text-xs font-bold truncate max-w-[120px]">
+                {activeReseller ? activeReseller.username : "Global / Admin"}
+              </div>
+            </div>
+            <ChevronRight size={16} className={`transition-transform ${isResellerDrawerOpen ? "rotate-90" : ""}`} />
+          </button>
+        </div>
+      )}
+
+      {/* Gaveta de Revendedores */}
+      {isResellerDrawerOpen && (
+        <div className="fixed inset-0 z-[100] flex justify-end">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsResellerDrawerOpen(false)} />
+          <aside className="relative w-80 max-w-[90vw] h-full bg-[#0f0f12] border-l border-zinc-800 shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
+            <div className="p-6 border-b border-zinc-900 bg-zinc-950/50">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-black uppercase tracking-tighter text-zinc-100">Filtro de Revenda</h3>
+                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Selecionar proprietário das ações</p>
+                </div>
+                <button onClick={() => setIsResellerDrawerOpen(false)} className="text-zinc-500 hover:text-white p-2" type="button">
+                  <CloseIcon size={20} />
+                </button>
+              </div>
+
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Pesquisar revendedor..."
+                  value={resellerSearch}
+                  onChange={(e) => setResellerSearch(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 pl-10 text-sm focus:border-blue-500 outline-none transition-all"
+                />
+                <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" size={16} />
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-1">
+              <button
+                onClick={() => {
+                  setSelectedResellerId(null);
+                  setIsResellerDrawerOpen(false);
+                }}
+                className={`w-full text-left p-4 rounded-xl border transition-all flex items-center justify-between group ${
+                  selectedResellerId === null 
+                    ? "bg-blue-600/10 border-blue-500/30 text-blue-400" 
+                    : "bg-transparent border-transparent text-zinc-500 hover:bg-zinc-900"
+                }`}
+              >
+                <div>
+                  <div className="text-sm font-bold">Admin Global</div>
+                  <div className="text-[10px] uppercase font-medium opacity-60">Ações como Dono do Servidor</div>
+                </div>
+                {selectedResellerId === null && <ShieldAlert size={14} />}
+              </button>
+
+              <div className="my-4 px-4 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600">Revendedores Disponíveis ({filteredResellers.length})</div>
+
+              {filteredResellers.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() => {
+                    setSelectedResellerId(r.id!);
+                    setIsResellerDrawerOpen(false);
+                  }}
+                  className={`w-full text-left p-4 rounded-xl border transition-all flex items-center justify-between group ${
+                    selectedResellerId === r.id 
+                      ? "bg-blue-600/10 border-blue-500/30 text-blue-400" 
+                      : "bg-transparent border-transparent text-zinc-400 hover:bg-zinc-900"
+                  }`}
+                >
+                  <div className="truncate">
+                    <div className="text-sm font-bold truncate">{r.username}</div>
+                    <div className="text-[10px] uppercase font-medium opacity-60 truncate">Créditos: {r.credits} • ID: #{r.id}</div>
+                  </div>
+                  {selectedResellerId === r.id && <UserCheck size={14} />}
+                </button>
+              ))}
+            </div>
+
+            <div className="p-6 border-t border-zinc-900 bg-zinc-950/50 text-[10px] text-zinc-500 font-medium leading-relaxed">
+              Ao selecionar um revendedor, as novas contas, testes e planos serão automaticamente atribuídos a este ID no Odin.
+            </div>
+          </aside>
+        </div>
+      )}
+
       <div className="md:hidden flex items-center justify-between mb-6 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800">
         <div className="text-xl font-black text-blue-500 tracking-tighter flex items-center gap-2">
           <ShieldAlert size={24} /> MAGO PANEL
@@ -447,7 +558,7 @@ function DashboardPage() {
                   onClick={async () => {
                     const tid = toast.loading(`Gerando teste para ${plan.name}...`);
                     try {
-                      const res = await quickCreateTestUser({ data: { planId: plan.id! } });
+                      const res = await quickCreateTestUser({ data: { planId: plan.id!, overrideOwnerId: selectedResellerId || undefined } });
                       if (res.success) {
                         const m3u = await generateM3ULink({ data: { username: res.data!.username, password: res.data!.password } });
                         navigator.clipboard.writeText(m3u);
@@ -590,7 +701,7 @@ function DashboardPage() {
               />
             )}
 
-            {activeTab === "saas_users" && <SaasUserList />}
+            {activeTab === "saas_users" && <SaasUserList resellers={resellers} />}
 
             {activeTab === "dns" && <DnsPanel />}
 

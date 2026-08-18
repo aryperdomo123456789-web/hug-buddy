@@ -167,7 +167,7 @@ export function UserModal({ user, bouquets, resellers, canChangeOwner, plans = [
                   />
                 </Field>
                 {canChangeOwner ? (
-                  <Field label="Dono / Revendedor">
+                  <Field label="Dono / Revendedor (Odin)">
                     <select
                       value={formData.owner_id}
                       onChange={e => updateField('owner_id', Number(e.target.value))}
