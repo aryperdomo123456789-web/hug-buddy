@@ -9,32 +9,39 @@ const getOdinServer = async () => import("./odin.server");
 export const getOdinFullData = createServerFn({ method: "GET" })
   .middleware([requirePanelAuth])
   .handler(async ({ context }) => {
-    const { executeBatchQueries, parseOdinData } = await getOdinServer();
-    const queries = [
-      "SELECT id, username, password, IFNULL(exp_date, 0), enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, reseller_notes, allowed_ips, allowed_ua, forced_country, created_by, (SELECT package_name FROM packages WHERE id = users.package_id LIMIT 1) as package_name FROM users ORDER BY id DESC",
-      "SELECT id, stream_display_name, category_id, stream_icon, stream_source FROM streams ORDER BY id DESC",
-      "SELECT id, bouquet_name FROM bouquets ORDER BY id DESC",
-      "SELECT id, server_name, status, last_check_ago as last_check, server_hardware, total_clients, http_broadcast_port FROM streaming_servers ORDER BY id ASC",
-      "SELECT id, username, password, email, owner_id, credits, status, member_group_id, IFNULL(last_login, 0), (SELECT count(*) FROM users WHERE created_by = reg_users.id) as user_count FROM reg_users ORDER BY id ASC",
-      "SELECT user_id, COUNT(*) as cons FROM user_activity_now GROUP BY user_id",
-      "SELECT server_id, COUNT(*) as conns, COUNT(DISTINCT user_id) as users, COUNT(DISTINCT stream_id) as streams FROM user_activity_now GROUP BY server_id",
-      "SELECT stream_id, MAX(stream_status) as stream_status, SUM(bitrate) as bitrate_sum FROM streams_sys GROUP BY stream_id",
-      "SELECT server_id, COUNT(*) as total_streams, SUM(stream_status = 1) as live_streams, SUM(stream_status = 0) as offline_streams, SUM(bitrate) as bitrate_sum, AVG(bitrate) as avg_bitrate FROM streams_sys GROUP BY server_id"
-    ];
+    console.log("[RPC] Starting getOdinFullData...");
+    try {
+      const { executeBatchQueries, parseOdinData } = await getOdinServer();
+      const queries = [
+        "SELECT id, username, password, IFNULL(exp_date, 0), enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, reseller_notes, allowed_ips, allowed_ua, forced_country, created_by, (SELECT package_name FROM packages WHERE id = users.package_id LIMIT 1) as package_name FROM users ORDER BY id DESC",
+        "SELECT id, stream_display_name, category_id, stream_icon, stream_source FROM streams ORDER BY id DESC",
+        "SELECT id, bouquet_name FROM bouquets ORDER BY id DESC",
+        "SELECT id, server_name, status, last_check_ago as last_check, server_hardware, total_clients, http_broadcast_port FROM streaming_servers ORDER BY id ASC",
+        "SELECT id, username, password, email, owner_id, credits, status, member_group_id, IFNULL(last_login, 0), (SELECT count(*) FROM users WHERE created_by = reg_users.id) as user_count FROM reg_users ORDER BY id ASC",
+        "SELECT user_id, COUNT(*) as cons FROM user_activity_now GROUP BY user_id",
+        "SELECT server_id, COUNT(*) as conns, COUNT(DISTINCT user_id) as users, COUNT(DISTINCT stream_id) as streams FROM user_activity_now GROUP BY server_id",
+        "SELECT stream_id, MAX(stream_status) as stream_status, SUM(bitrate) as bitrate_sum FROM streams_sys GROUP BY stream_id",
+        "SELECT server_id, COUNT(*) as total_streams, SUM(stream_status = 1) as live_streams, SUM(stream_status = 0) as offline_streams, SUM(bitrate) as bitrate_sum, AVG(bitrate) as avg_bitrate FROM streams_sys GROUP BY server_id"
+      ];
 
-    const results = await executeBatchQueries(queries);
-    console.log("[RPC] Queries executed. Results count:", results.length);
-    if (!results || results.length < 5 || !results[0]) {
-      console.error("[RPC] Results[0] is empty or incomplete results");
-      throw new Error("Resposta do Odin incompleta ou vazia.");
+      const results = await executeBatchQueries(queries);
+      console.log("[RPC] Queries executed. Results[0] sample:", (results[0] || "").substring(0, 50));
+      
+      if (!results || results.length < 5 || (!results[0] && !results[4])) {
+        console.error("[RPC] No data found in key tables.");
+        return { success: false, error: "Nenhum dado encontrado no servidor." };
+      }
+      
+      const snapshot = parseOdinData(
+        results[0] || "", results[1] || "", results[2] || "", results[3] || "", 
+        results[4] || "", results[5] || "", results[6] || "", results[8] || ""
+      );
+      
+      return { success: true, data: snapshot };
+    } catch (err: any) {
+      console.error("[RPC] getOdinFullData critical error:", err);
+      return { success: false, error: err.message };
     }
-    
-    const snapshot = parseOdinData(
-      results[0] || "", results[1] || "", results[2] || "", results[3] || "", 
-      results[4] || "", results[5] || "", results[6] || "", results[8] || ""
-    );
-    
-    return { success: true, data: snapshot }; 
   });
 
 export const createUser = createServerFn({ method: "POST" })
