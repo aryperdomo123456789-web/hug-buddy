@@ -118,13 +118,29 @@ export const saveAppSettings = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const supabase = await getDb();
     
-    for (const [key, value] of Object.entries(data)) {
-      const { error } = await supabase
-        .from('app_settings')
-        .upsert({ key, value: value as any });
-      
-      if (error) throw error;
-    }
+    const upsertData = Object.entries(data).map(([key, value]) => ({
+      key,
+      value: value as any
+    }));
+
+    const { error } = await supabase
+      .from('app_settings')
+      .upsert(upsertData, { onConflict: 'key' });
     
+    if (error) throw error;
+    return { success: true };
+  });
+
+// Keep legacy export for compatibility during migration
+export const saveAppSetting = createServerFn({ method: "POST" })
+  .middleware([requirePanelAuth])
+  .validator((d) => z.object({ key: z.string(), value: z.any() }).parse(d))
+  .handler(async ({ data }) => {
+    const supabase = await getDb();
+    const { error } = await supabase
+      .from('app_settings')
+      .upsert({ key: data.key, value: data.value as any }, { onConflict: 'key' });
+
+    if (error) throw error;
     return { success: true };
   });
