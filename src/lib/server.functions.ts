@@ -160,8 +160,8 @@ async function executeBatchQueries(queries: string[]) {
       port: cfg.sshPort,
       username: cfg.sshUsername,
       password: cfg.sshPassword,
-      readyTimeout: 30000,
-      keepaliveInterval: 5000,
+      readyTimeout: 60000,
+      keepaliveInterval: 10000,
       compress: true,
     });
     
@@ -421,8 +421,8 @@ export const testOdinConnection = createServerFn({ method: "GET" })
         port: cfg.sshPort,
         username: cfg.sshUsername,
         password: cfg.sshPassword,
-        readyTimeout: 20000,
-        keepaliveInterval: 5000,
+        readyTimeout: 60000,
+        keepaliveInterval: 10000,
         compress: true,
       });
 
