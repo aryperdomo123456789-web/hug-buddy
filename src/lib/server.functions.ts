@@ -75,8 +75,8 @@ export const quickCreateTestUser = createServerFn({ method: "POST" })
     const ownerId = data.overrideOwnerId || 1;
     const isRestreamer = plan.is_restream ? 1 : 0;
     
-    const sql = `INSERT INTO users (username, password, created_by, max_connections, enabled, is_trial, exp_date, bouquet, is_restreamer) 
-                 VALUES ('${escapeSql(username)}', '${escapeSql(password)}', ${ownerId}, ${plan.connections}, 1, ${plan.is_trial ? 1 : 0}, ${expDate}, '${JSON.stringify(plan.bouquets)}', ${isRestreamer})`;
+    const sql = `INSERT INTO users (username, password, created_by, max_connections, enabled, is_trial, exp_date, bouquet, is_restreamer, created_at) 
+                 VALUES ('${escapeSql(username)}', '${escapeSql(password)}', ${ownerId}, ${plan.connections}, 1, ${plan.is_trial ? 1 : 0}, ${expDate}, '${JSON.stringify(plan.bouquets)}', ${isRestreamer}, ${now})`;
     
     await executeQuery(sql);
     
