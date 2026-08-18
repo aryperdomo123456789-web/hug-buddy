@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { NodeSSH } from "node-ssh";
+
 import { escapeSql, getOdinConfig } from "./odin";
 import { requirePanelAuth } from "./panel-auth.server";
 export { getPlans, savePlan, deletePlan, getAppSettings, saveAppSetting } from "./plans.functions";
@@ -150,12 +150,11 @@ function assertAdminOnly(context: PanelContext): void {
  * Optimized for serverless environments with aggressive timeouts
  */
 async function executeBatchQueries(queries: string[]) {
+  const mod = await import("node-ssh");
+  const ssh = new mod.NodeSSH();
   const cfg = await getConfig();
-  const ssh = new NodeSSH();
   
   try {
-    console.log(`[SSH] Connecting to ${cfg.sshHost}...`);
-    
     await ssh.connect({
       host: cfg.sshHost,
       port: cfg.sshPort,
@@ -413,7 +412,8 @@ export const testOdinConnection = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     assertAdminOnly(context as PanelContext);
     const cfg = await getConfig();
-    const ssh = new NodeSSH();
+    const mod = await import("node-ssh");
+    const ssh = new mod.NodeSSH();
 
     try {
       await ssh.connect({

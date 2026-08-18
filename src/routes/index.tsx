@@ -148,7 +148,7 @@ function DashboardPage() {
   const router = useRouter();
   const data = Route.useLoaderData();
   const odin = data?.odin || {};
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState("customers");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -312,9 +312,7 @@ function DashboardPage() {
   };
 
   const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: Activity },
     { id: "customers", label: "Clientes", icon: Users },
-    { id: "streams", label: "Gestão de Canais", icon: Database },
     { id: "resellers", label: "Revendedores", icon: UserCheck, adminOnly: true },
     { id: "plans", label: "Planos de Venda", icon: Tag, adminOnly: true },
     { id: "saas_users", label: "Usuários SaaS", icon: Users, adminOnly: true },
