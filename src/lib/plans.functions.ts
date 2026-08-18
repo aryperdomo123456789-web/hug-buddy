@@ -50,13 +50,11 @@ export const getPlans = createServerFn({ method: "GET" })
 
 export const savePlan = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
-  .validator((d) => PlanValidator.parse(d))
+  .validator((d: any) => PlanValidator.parse(d))
   .handler(async ({ data }) => {
     const supabase = await getDb();
     const { id, ...saveData } = data;
     
-    console.log("[savePlan] Data received:", { id, ...saveData });
-
     const sanitizedData: any = { ...saveData };
     Object.keys(sanitizedData).forEach((key) => {
       if (sanitizedData[key] === undefined) {
@@ -82,7 +80,7 @@ export const savePlan = createServerFn({ method: "POST" })
 
 export const deletePlan = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
-  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: any) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
     const supabase = await getDb();
     const { error } = await supabase
@@ -114,32 +112,32 @@ export const getAppSettings = createServerFn({ method: "GET" })
 
 export const saveAppSettings = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
-  .validator((d) => z.record(z.any()).parse(d))
+  .validator((d: any) => z.record(z.any()).parse(d))
   .handler(async ({ data }) => {
     const supabase = await getDb();
     
-    const upsertData = Object.entries(data).map(([key, value]) => ({
-      key,
-      value: value as any
-    }));
-
-    const { error } = await supabase
-      .from('app_settings')
-      .upsert(upsertData, { onConflict: 'key' });
+    for (const [key, value] of Object.entries(data)) {
+      // Use delete + insert as a manual upsert if upsert types are broken
+      await supabase.from('app_settings').delete().eq('key', key);
+      const { error } = await supabase
+        .from('app_settings')
+        .insert({ key, value: value as any });
+      
+      if (error) throw error;
+    }
     
-    if (error) throw error;
     return { success: true };
   });
 
-// Keep legacy export for compatibility during migration
 export const saveAppSetting = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
-  .validator((d) => z.object({ key: z.string(), value: z.any() }).parse(d))
+  .validator((d: any) => z.object({ key: z.string(), value: z.any() }).parse(d))
   .handler(async ({ data }) => {
     const supabase = await getDb();
+    await supabase.from('app_settings').delete().eq('key', data.key);
     const { error } = await supabase
       .from('app_settings')
-      .upsert({ key: data.key, value: data.value as any }, { onConflict: 'key' });
+      .insert({ key: data.key, value: data.value as any });
 
     if (error) throw error;
     return { success: true };
