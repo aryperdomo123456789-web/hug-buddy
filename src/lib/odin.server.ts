@@ -25,7 +25,7 @@ export async function executeBatchQueries(queries: string[]): Promise<string[]> 
         port: cfg.sshPort,
         username: cfg.sshUsername,
         password: cfg.sshPassword,
-        readyTimeout: 30000,
+        readyTimeout: 60000,
         keepaliveInterval: 10000,
         compress: true,
       });
@@ -79,6 +79,7 @@ export function parseOdinData(uRaw: string, stRaw: string, bRaw: string, svRaw: 
 
   const customers: User[] = (uRaw || "").trim().split("\n").filter(Boolean).map(line => {
     const parts = line.split("\t");
+    // Odin v6 users table has many columns. We ensure we have enough to map.
     if (parts.length < 17) return null;
     
     const [
@@ -87,6 +88,9 @@ export function parseOdinData(uRaw: string, stRaw: string, bRaw: string, svRaw: 
       bouquet, admin_notes, reseller_notes, allowed_ips, 
       allowed_ua, forced_country, owner_id
     ] = parts;
+
+    // Helper to find package name by bouquet or notes (Odin often stores it in notes or we infer it)
+    // For now, we'll use a placeholder or logic if available in the DB
     
     return {
       id: Number(id),
@@ -106,7 +110,8 @@ export function parseOdinData(uRaw: string, stRaw: string, bRaw: string, svRaw: 
       allowed_ua: allowed_ua || "",
       forced_country: forced_country || "Off",
       active_cons: activityMap[Number(id)] || 0,
-      owner_id: Number(owner_id || 1)
+      owner_id: Number(owner_id || 1),
+      package_name: admin_notes?.split('|')[0] || "" // Common pattern or empty
     } as User;
   }).filter((x): x is User => x !== null);
 

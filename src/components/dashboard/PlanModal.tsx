@@ -79,12 +79,20 @@ export function PlanModal({ plan, onClose, onSave, loading }: PlanModalProps) {
             </select>
           </div>
 
-          <textarea 
-            placeholder="Template de Mensagem (Deixe em branco para usar o padrão)"
-            value={data.template || ""}
-            onChange={e => setData({...data, template: e.target.value || null})}
-            className="w-full h-32 bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-xs font-mono text-zinc-300"
-          />
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest ml-1">
+              Template Personalizado (Opcional)
+            </label>
+            <textarea 
+              placeholder="Deixe em branco para usar o template padrão das configurações"
+              value={data.template || ""}
+              onChange={e => setData({...data, template: e.target.value || null})}
+              className="w-full h-32 bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-xs font-mono text-zinc-300 focus:border-blue-500 transition-all"
+            />
+            <p className="text-[9px] text-zinc-600 italic ml-1">
+              Se preenchido, este plano ignorará o template global ao copiar a mensagem.
+            </p>
+          </div>
         </div>
 
         <div className="flex justify-end gap-3 mt-8">

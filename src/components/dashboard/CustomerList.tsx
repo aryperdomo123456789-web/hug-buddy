@@ -70,21 +70,29 @@ export function CustomerList({
   
   const copySalesMessage = (u: User) => {
     try {
-      const template = settings?.['default_message_template']?.template || "";
+      // 1. Get plan-specific template or fallback to global template
+      const userPlan = plans.find(p => p.name === u.package_name);
+      const globalTemplate = settings?.['default_message_template']?.template || "";
+      const template = userPlan?.template || globalTemplate;
+
       if (!template) {
         toast.error("Template de mensagem não configurado");
         return;
       }
 
-      // Simplistic placeholder replacement
+      // 2. Fetch DNS config for links
+      const dns = settings?.['dns_config']?.host || window.location.hostname;
+
+      // 3. Simple placeholder replacement
       let msg = template
         .replace(/{username}/g, u.username)
         .replace(/{password}/g, u.password)
         .replace(/{connections}/g, String(u.max_connections))
+        .replace(/{package}/g, u.package_name || userPlan?.name || 'N/A')
+        .replace(/{plan_price}/g, userPlan?.price ? `R$ ${Number(userPlan.price).toFixed(2)}` : 'N/A')
+        .replace(/{dns}/g, dns)
+        .replace(/{dns_host}/g, dns.replace(/^https?:\/\//, ''))
         .replace(/{expires_at}/g, u.exp_date ? new Date(u.exp_date * 1000).toLocaleDateString() : 'Ilimitado');
-      
-      // Attempt to find a plan for price/name if possible
-      // This is dynamic, but for now we just copy the raw if not found
       
       navigator.clipboard.writeText(msg);
       toast.success("Mensagem de venda copiada!");
