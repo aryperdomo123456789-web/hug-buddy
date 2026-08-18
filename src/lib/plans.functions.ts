@@ -15,7 +15,7 @@ const db = async () => {
 };
 
 const PlanValidator = z.object({
-  id: z.string().uuid().optional(),
+  id: z.string().uuid().or(z.literal("")).optional(),
   name: z.string(),
   odin_server_id: z.string().nullable().optional(),
   odin_package_id: z.number().nullable().optional(),
@@ -32,6 +32,14 @@ const PlanValidator = z.object({
   plan_price: z.number().nullable().optional(),
   pay_url: z.string().nullable().optional(),
   dns_host: z.string().nullable().optional(),
+  // Novas colunas Odin
+  can_gen_mag: z.boolean().default(true),
+  can_gen_enigma: z.boolean().default(true),
+  only_mag: z.boolean().default(false),
+  only_enigma: z.boolean().default(false),
+  lock_stb: z.boolean().default(false),
+  is_restream: z.boolean().default(false),
+  output_formats: z.array(z.string()).default(["m3u8", "ts"]),
 });
 
 export const getPlans = createServerFn({ method: "GET" })
@@ -61,7 +69,7 @@ export const savePlan = createServerFn({ method: "POST" })
       }
     });
 
-    if (id) {
+    if (id && id !== "") {
       const { error } = await supabase
         .from('plans')
         .update(sanitizedData)
