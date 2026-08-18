@@ -50,6 +50,8 @@ function formatStableTime(value: number): string {
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
     // Bypass de autenticação para ambiente de laboratório
+    // No ambiente de laboratório, não temos uma sessão Supabase real no navegador,
+    // então retornamos um perfil administrativo estático.
     return { auth: { userId: 'lab-user', role: 'admin', email: 'mago@dono.com', full_name: 'Mago Lab', odin_reseller_id: null } };
   },
   component: DashboardPage,
