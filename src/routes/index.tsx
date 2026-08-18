@@ -28,7 +28,6 @@ import { SaasUserList } from "@/components/dashboard/SaasUserList";
 import { PlanList } from "@/components/dashboard/PlanList";
 import { PlanModal } from "@/components/dashboard/PlanModal";
 import { NavItem } from "@/components/dashboard/NavItem";
-import { StatCard } from "@/components/dashboard/StatCard";
 import { ServerList } from "@/components/dashboard/ServerList";
 import { User, Reseller, Profile, Plan, Server } from "@/types/odin";
 import { getOdinFullData, generateM3ULink } from "@/lib/server.functions";
@@ -169,6 +168,7 @@ function DashboardPage() {
     lastSyncAt,
     fetchAll,
     actions,
+    stats,
   } = useOdinData(data?.initialSnapshot ?? null, data?.initialSyncedAt ?? null);
 
   const lastSyncLabel = lastSyncAt
@@ -473,44 +473,11 @@ function DashboardPage() {
           >
             <div key={activeTab} className="animate-in fade-in zoom-in-95 duration-300 fill-mode-both">
             {activeTab === "dashboard" && (
-              <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <StatCard 
-                    label="Utilizadores Online" 
-                    value={loading ? "..." : (customers.filter(c => c.active_cons > 0).length)} 
-                    icon={Users} 
-                    color="blue"
-                    secondaryLabel="usuários em tempo real"
-                  />
-                  <StatCard 
-                    label="Conexões Abertas" 
-                    value={loading ? "..." : (servers.reduce((acc, s) => acc + (s.live_connections || 0), 0))} 
-                    icon={Activity} 
-                    color="green"
-                    secondaryLabel="sessões em tempo real"
-                  />
-                  <StatCard 
-                    label="Total Input" 
-                    value={loading ? "..." : (servers.reduce((acc, s) => acc + (s.input_mbps || 0), 0)).toFixed(2)} 
-                    icon={Database} 
-                    color="pink"
-                    secondaryLabel="Mbps recebidos"
-                  />
-                  <StatCard 
-                    label="Total Output" 
-                    value={loading ? "..." : (servers.reduce((acc, s) => acc + (s.output_mbps || 0), 0)).toFixed(2)} 
-                    icon={Globe} 
-                    color="gray"
-                    secondaryLabel={`${customers.length} clientes no ecossistema`}
-                  />
-                </div>
-                
-                <ServerList 
-                  servers={servers}
-                  loading={loading}
-                  onRefresh={() => fetchAll(false)}
-                />
-              </div>
+              <ServerList 
+                servers={servers}
+                loading={loading}
+                onRefresh={() => fetchAll(false)}
+              />
             )}
             {activeTab === "customers" && (
               <CustomerList
