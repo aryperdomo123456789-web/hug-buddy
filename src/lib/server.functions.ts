@@ -48,7 +48,41 @@ export const getOdinFullData = createServerFn({ method: "GET" })
     }
   });
 
+export const quickCreateTestUser = createServerFn({ method: "POST" })
+  .middleware([requirePanelAuth])
+  .validator((d: any) => z.object({ planId: z.string() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { getPlans } = await import("./plans.functions");
+    const plans = await getPlans();
+    const plan = plans.find(p => p.id === data.planId);
+    if (!plan) throw new Error("Plano não encontrado");
+
+    const { executeQuery } = await getOdinServer();
+    
+    // Generate random credentials
+    const randomStr = Math.random().toString(36).substring(2, 8);
+    const username = `test_${randomStr}`;
+    const password = Math.random().toString(36).substring(2, 10);
+    
+    // Duration calculation
+    const now = Math.floor(Date.now() / 1000);
+    let expDate = now;
+    if (plan.duration_unit === 'minutes') expDate += plan.duration * 60;
+    else if (plan.duration_unit === 'hours') expDate += plan.duration * 3600;
+    else if (plan.duration_unit === 'days') expDate += plan.duration * 86400;
+    else if (plan.duration_unit === 'months') expDate += plan.duration * 86400 * 30;
+    else if (plan.duration_unit === 'years') expDate += plan.duration * 86400 * 365;
+
+    const sql = `INSERT INTO users (username, password, created_by, max_connections, enabled, is_trial, exp_date, bouquet) 
+                 VALUES ('${escapeSql(username)}', '${escapeSql(password)}', 1, ${plan.connections}, 1, ${plan.is_trial ? 1 : 0}, ${expDate}, '${JSON.stringify(plan.bouquets)}')`;
+    
+    await executeQuery(sql);
+    
+    return { success: true, data: { username, password } };
+  });
+
 export const createUser = createServerFn({ method: "POST" })
+
   .middleware([requirePanelAuth])
   .validator((d: unknown) => UserSchema.parse(d))
   .handler(async ({ data, context }) => {
