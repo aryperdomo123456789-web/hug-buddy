@@ -15,6 +15,9 @@ export interface Plan {
   status: 'active' | 'inactive';
   sort_order: number;
   template?: string | null;
+  plan_price?: number | null;
+  pay_url?: string | null;
+  dns_host?: string | null;
   created_at?: string;
   // Odin parity fields
   can_gen_mag?: boolean;

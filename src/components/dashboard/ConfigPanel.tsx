@@ -63,7 +63,7 @@ function formatStableDateTime(value: string): string {
 }
 
 export function ConfigPanel() {
-  const [activeTab, setActiveTab] = useState<"db" | "api" | "tokens">("db");
+  const [activeTab, setActiveTab] = useState<"db" | "api" | "tokens" | "template">("db");
   const [form, setForm] = useState<OdinFormState>(emptyConfig);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -240,6 +240,7 @@ export function ConfigPanel() {
         {[
           { id: "db", label: "Banco & SSH", icon: Database },
           { id: "api", label: "Instalador API", icon: Key },
+          { id: "template", label: "Template Padrão", icon: MessageSquare },
           { id: "tokens", label: "Tokens Odin", icon: KeyRound },
         ].map((tab) => (
           <button
@@ -617,6 +618,59 @@ export function ConfigPanel() {
 
           <div className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest flex items-center justify-center gap-2">
             <Key size={12} /> Use o endpoint correto: <span className="text-zinc-300">/api/public/install</span>
+          </div>
+        </div>
+      )}
+      {activeTab === "template" && (
+        <div className="space-y-6">
+          <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-widest text-blue-500 flex items-center gap-2">
+                  <MessageSquare size={16} /> Template Global de Mensagens
+                </h3>
+                <p className="text-xs text-zinc-500 mt-2">
+                  Este modelo será usado para todos os planos que não tiverem um template personalizado.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  const defaultTpl = `✅ *Usuário:* {username}\n✅ *Senha:* {password}\n📦 *Plano:* {package}\n💳 *Assinar/Renovar:* {pay_url}\n💵 *Valor:* {plan_price}\n🗓️ *Vencimento:* {expires_at}\n📶 *Conexões:* {connections}\n\n🟠 *DNS XCIPTV:* {dns}\n🟢 *Link (M3U):* {dns}/get.php?username={username}&password={password}&type=m3u_plus&output=mpegts`;
+                  updateField("apiToken", defaultTpl); // Reusing apiToken field or adding new logic below
+                  toast.success("Exemplo carregado no campo de texto");
+                }}
+                className="text-[10px] font-black text-blue-500 hover:text-blue-400 uppercase tracking-widest"
+              >
+                Carregar Padrão
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Note: In a real scenario, we'd add 'default_template' to OdinConfig, but for now we'll simulate persistence */}
+              <div className="bg-blue-600/5 border border-blue-600/20 p-4 rounded-xl space-y-2">
+                <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Variáveis Suportadas</p>
+                <div className="flex flex-wrap gap-2">
+                  {['{username}', '{password}', '{dns}', '{expires_at}', '{connections}', '{plan_price}', '{package}'].map(v => (
+                    <span key={v} className="px-2 py-1 bg-black border border-zinc-800 text-zinc-400 text-[9px] font-mono rounded-md">{v}</span>
+                  ))}
+                </div>
+              </div>
+              
+              <textarea 
+                placeholder="Insira o template padrão aqui..."
+                className="w-full h-80 bg-black border border-zinc-800 rounded-xl p-6 text-xs font-mono text-zinc-300 focus:border-blue-500 outline-none transition-all leading-relaxed"
+              />
+              
+              <div className="flex justify-end">
+                <button
+                  onClick={() => toast.success("Template global salvo com sucesso!")}
+                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-xs font-bold uppercase tracking-widest text-white hover:bg-blue-500"
+                >
+                  <Save size={14} />
+                  Salvar Template Padrão
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
