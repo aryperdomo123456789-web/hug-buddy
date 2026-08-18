@@ -509,6 +509,7 @@ function DashboardPage() {
                 loading={loading}
                 onRefresh={() => fetchAll(false)}
               />
+            )}
 
             {activeTab === "plans" && (
               <PlanList 
