@@ -161,6 +161,7 @@ function DashboardPage() {
   const {
     loading,
     customers,
+    servers,
     bouquets,
     resellers,
     plans,
