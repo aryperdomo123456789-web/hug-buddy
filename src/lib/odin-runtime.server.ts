@@ -8,9 +8,10 @@ import {
   type OdinConfig,
 } from "./odin";
 
-const ODIN_CONFIG_PATH = process.env.NODE_ENV === 'production' 
+const ODIN_CONFIG_PATH = process.env['NODE_ENV'] === 'production' 
   ? "/www/wwwroot/gerar.suafontee.com/hug-buddy/.odin-config.json"
   : ".odin-config.json";
+
 
 function readPersistedOdinConfig(): Partial<OdinConfig> {
   try {
