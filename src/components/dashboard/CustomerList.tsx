@@ -20,6 +20,15 @@ import { toast } from "sonner";
 import { generateM3ULink } from "@/lib/server.functions";
 import { Plan } from "@/types/odin";
 
+function formatStableDate(value: number): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(value * 1000));
+}
+
 interface CustomerListProps {
   customers: User[];
   resellers: any[];
@@ -39,8 +48,7 @@ export function CustomerList({
   resellers,
   plans,
   settings,
-  loading, 
-
+  loading,
 
   onRefresh, 
   onDelete, 
@@ -54,20 +62,6 @@ export function CustomerList({
   const [perPage, setPerPage] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
 
-  const copyM3ULink = async (u: User) => {
-    try {
-      const url = await generateM3ULink({ data: { username: u.username, password: u.password } });
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(url);
-        toast.success("Link M3U copiado!");
-      } else {
-        window.alert(`Link M3U:\n${url}`);
-      }
-    } catch (e) {
-      toast.error("Erro ao gerar link M3U");
-    }
-  };
-  
   const copySalesMessage = (u: User) => {
     try {
       // 1. Get plan-specific template or fallback to global template
@@ -141,11 +135,11 @@ export function CustomerList({
 
   return (
     <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800 shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="p-4 md:p-6 border-b border-zinc-900 bg-zinc-950/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex gap-2 w-full sm:w-auto">
+      <div className="p-6 border-b border-zinc-900 bg-zinc-950/30 flex justify-between items-center">
+        <div className="flex gap-4">
           <button 
             onClick={() => onRefresh()} 
-            className="bg-zinc-900 hover:bg-zinc-800 text-zinc-400 p-3 md:p-2 rounded-lg border border-zinc-800 transition-all flex items-center justify-center gap-2 min-w-[44px] min-h-[44px]"
+            className="bg-zinc-900 hover:bg-zinc-800 text-zinc-400 p-2 rounded-lg border border-zinc-800 transition-all flex items-center gap-2"
             title="Sincronizar Lista"
             disabled={loading}
           >
@@ -153,12 +147,12 @@ export function CustomerList({
           </button>
           <button 
             onClick={onAdd} 
-            className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2 rounded-lg font-bold transition-all flex items-center justify-center gap-2 text-sm min-h-[44px]"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2 rounded-lg font-bold transition-all flex items-center gap-2 text-sm"
           >
-            <PlusCircle size={18} /> <span className="hidden xs:inline">Adicionar um Utilizador</span><span className="xs:hidden">Novo</span>
+            <PlusCircle size={18} /> Adicionar um Utilizador
           </button>
         </div>
-        <div className="flex items-center gap-2 md:gap-4 flex-wrap w-full sm:w-auto">
+        <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <Filter size={14} className="text-zinc-500" />
             <select 
@@ -191,16 +185,16 @@ export function CustomerList({
             </select>
           </div>
 
-          <div className="relative w-full md:w-auto">
+          <div className="relative">
             <input 
               type="text" 
-              placeholder="Pesquisar..." 
+              placeholder="Pesquisar Utilizadores..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-zinc-900 border border-zinc-800 rounded-lg py-2.5 px-4 text-xs text-zinc-300 w-full md:w-64 focus:outline-none focus:border-blue-500 transition-all min-h-[44px]"
+              className="bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-4 text-xs text-zinc-300 w-64 focus:outline-none focus:border-blue-500 transition-all"
             />
           </div>
-          <div className="text-[10px] font-black uppercase tracking-widest text-zinc-600 hidden xs:block">
+          <div className="text-[10px] font-black uppercase tracking-widest text-zinc-600">
             {filteredCustomers.length} Total
           </div>
         </div>
@@ -210,16 +204,16 @@ export function CustomerList({
         <table className="w-full">
           <thead>
             <tr className="bg-zinc-950/50 text-zinc-500 text-[10px] uppercase tracking-widest text-left border-b border-zinc-900">
-              <th className="py-4 px-6 font-black whitespace-nowrap">ID</th>
-              <th className="py-4 px-6 font-black whitespace-nowrap">Utilizador</th>
-              <th className="py-4 px-6 font-black whitespace-nowrap">Dono</th>
-              <th className="py-4 px-6 font-black whitespace-nowrap">Senha</th>
-              <th className="py-4 px-6 font-black text-center whitespace-nowrap">Estado</th>
-              <th className="py-4 px-6 font-black text-center whitespace-nowrap">Teste</th>
-              <th className="py-4 px-6 font-black whitespace-nowrap">Expiração</th>
-              <th className="py-4 px-6 font-black text-center whitespace-nowrap">Conns.</th>
-              <th className="py-4 px-6 font-black whitespace-nowrap">Bouquets</th>
-              <th className="py-4 px-6 font-black text-right whitespace-nowrap">Ações</th>
+              <th className="py-4 px-6 font-black">ID</th>
+              <th className="py-4 px-6 font-black">Utilizador</th>
+              <th className="py-4 px-6 font-black">Dono</th>
+              <th className="py-4 px-6 font-black">Senha</th>
+              <th className="py-4 px-6 font-black text-center">Estado</th>
+              <th className="py-4 px-6 font-black text-center">Teste</th>
+              <th className="py-4 px-6 font-black">Expiração</th>
+              <th className="py-4 px-6 font-black text-center">Conns.</th>
+              <th className="py-4 px-6 font-black">Bouquets</th>
+              <th className="py-4 px-6 font-black text-right">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-900/50">
@@ -247,7 +241,7 @@ export function CustomerList({
                     </span>
                   </td>
                   <td className="py-4 px-6 font-mono text-zinc-400">
-                    {u.exp_date ? new Date(u.exp_date * 1000).toLocaleDateString() : 'Unlimited'}
+                    {u.exp_date ? formatStableDate(u.exp_date) : "Unlimited"}
                   </td>
                   <td className="py-4 px-6 text-center font-mono">
                     <div className="flex items-center justify-center gap-2">
@@ -275,7 +269,19 @@ export function CustomerList({
                   <td className="py-4 px-6 text-right">
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button 
-                        onClick={() => copyM3ULink(u)} 
+                        onClick={async () => {
+                          try {
+                            const url = await generateM3ULink({ data: { username: u.username, password: u.password } });
+                            if (navigator.clipboard) {
+                              navigator.clipboard.writeText(url);
+                              toast.success("Link M3U copiado!");
+                            } else {
+                              window.alert(`Link M3U:\n${url}`);
+                            }
+                          } catch (e) {
+                            toast.error("Erro ao gerar link M3U");
+                          }
+                        }}
                         className="p-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-emerald-500 rounded-lg border border-zinc-800 transition-all"
                         title="Download Playlist / Copiar Link"
                       >

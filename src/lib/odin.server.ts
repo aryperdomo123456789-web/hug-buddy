@@ -1,22 +1,46 @@
 import { NodeSSH } from "node-ssh";
-import { getOdinConfig } from "./odin";
+import { getOdinRuntimeConfig } from "./odin-runtime.server";
 import { User, Reseller, Stream, Server, Bouquet } from "@/types/odin";
 
-const getConfig = () => getOdinConfig();
+const getConfig = () => getOdinRuntimeConfig();
 
 let cachedSsh: NodeSSH | null = null;
 let lastSshUsage = 0;
 
-/**
- * Executes a batch of MySQL queries via a persistent SSH connection.
- */
+function toFiniteNumber(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const normalized = value.replace(/\s+/g, "").replace(/,/g, ".").replace(/[^0-9.+-]/g, "");
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+}
+
+function safeParseJson(value: unknown): Record<string, any> {
+  if (typeof value !== "string" || !value.trim()) return {};
+  try {
+    return JSON.parse(value.trim()) as Record<string, any>;
+  } catch {
+    try {
+      return JSON.parse(value.replace(/\r/g, "").replace(/\n/g, "")) as Record<string, any>;
+    } catch {
+      return {};
+    }
+  }
+}
+
 export async function executeBatchQueries(queries: string[]): Promise<string[]> {
   const cfg = getConfig();
-  
+
   try {
-    if (!cachedSsh || !cachedSsh.isConnected() || (Date.now() - lastSshUsage > 60000)) {
+    if (!cachedSsh || !cachedSsh.isConnected() || Date.now() - lastSshUsage > 60000) {
       if (cachedSsh) {
-        try { cachedSsh.dispose(); } catch(e) { console.error("[SSH] Dispose error", e); }
+        try {
+          cachedSsh.dispose();
+        } catch (e) {
+          console.error("[SSH] Dispose error", e);
+        }
       }
       cachedSsh = new NodeSSH();
       console.log(`[SSH] Connecting to ${cfg.sshHost}...`);
@@ -25,15 +49,15 @@ export async function executeBatchQueries(queries: string[]): Promise<string[]> 
         port: cfg.sshPort,
         username: cfg.sshUsername,
         password: cfg.sshPassword,
-        readyTimeout: 60000,
+        readyTimeout: 30000,
         keepaliveInterval: 10000,
         compress: true,
       });
     }
-    
+
     lastSshUsage = Date.now();
     const ssh = cachedSsh;
-    
+
     const results: string[] = [];
     for (const sql of queries) {
       if (!sql) {
@@ -42,20 +66,22 @@ export async function executeBatchQueries(queries: string[]): Promise<string[]> 
       }
       const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
       const result = await ssh.execCommand(mysqlCmd);
-      
+
       if (result.code !== 0) {
         console.error(`[SSH] Query Failed: ${result.stderr}`);
-        results.push(""); 
+        results.push("");
       } else {
         results.push(result.stdout.replace(/\r/g, "") || "");
       }
     }
-    
+
     return results;
   } catch (error: any) {
-    console.error(`[SSH] Batch Critical Failure:`, error.message);
+    console.error("[SSH] Batch Critical Failure:", error.message);
     if (cachedSsh && cachedSsh.isConnected()) {
-      try { cachedSsh.dispose(); } catch (e) {}
+      try {
+        cachedSsh.dispose();
+      } catch (e) {}
     }
     cachedSsh = null;
     return queries.map(() => "");
@@ -67,31 +93,56 @@ export async function executeQuery(sql: string): Promise<string> {
   return results[0] || "";
 }
 
-/**
- * Parses raw MySQL output separated by tabs and newlines.
- */
-export function parseOdinData(uRaw: string, stRaw: string, bRaw: string, svRaw: string, rRaw: string, actRaw: string) {
+export function parseOdinData(
+  uRaw: string,
+  stRaw: string,
+  bRaw: string,
+  svRaw: string,
+  rRaw: string,
+  actRaw: string,
+  srvActRaw = "",
+  streamStateRaw = "",
+) {
   const activityMap: Record<number, number> = {};
   (actRaw || "").trim().split("\n").filter(Boolean).forEach(line => {
     const [uid, count] = line.split("\t");
     if (uid) activityMap[Number(uid)] = Number(count || 0);
   });
 
+  const serverActivityMap: Record<number, { conns: number; users: number; streams: number }> = {};
+  (srvActRaw || "").trim().split("\n").filter(Boolean).forEach((line) => {
+    const [serverId, conns, users, streams] = line.split("\t");
+    if (!serverId) return;
+    serverActivityMap[Number(serverId)] = {
+      conns: Number(conns || 0),
+      users: Number(users || 0),
+      streams: Number(streams || 0),
+    };
+  });
+
+  const streamStateMap: Record<number, { total: number; live: number; offline: number; bitrate: number; avgBitrate: number }> = {};
+  (streamStateRaw || "").trim().split("\n").filter(Boolean).forEach((line) => {
+    const [serverId, total, live, offline, bitrateSum, avgBitrate] = line.split("\t");
+    if (!serverId) return;
+    streamStateMap[Number(serverId)] = {
+      total: Number(total || 0),
+      live: Number(live || 0),
+      offline: Number(offline || 0),
+      bitrate: Number(bitrateSum || 0),
+      avgBitrate: Number(avgBitrate || 0),
+    };
+  });
+
   const customers: User[] = (uRaw || "").trim().split("\n").filter(Boolean).map(line => {
     const parts = line.split("\t");
-    // Odin v6 users table has many columns. We ensure we have enough to map.
     if (parts.length < 17) return null;
-    
     const [
-      id, username, password, exp_date, enabled, admin_enabled, 
-      is_trial, is_restreamer, is_isplock, max_connections, 
-      bouquet, admin_notes, reseller_notes, allowed_ips, 
-      allowed_ua, forced_country, owner_id
+      id, username, password, exp_date, enabled, admin_enabled,
+      is_trial, is_restreamer, is_isplock, max_connections,
+      bouquet, admin_notes, reseller_notes, allowed_ips,
+      allowed_ua, forced_country, owner_id, package_name
     ] = parts;
 
-    // Helper to find package name by bouquet or notes (Odin often stores it in notes or we infer it)
-    // For now, we'll use a placeholder or logic if available in the DB
-    
     return {
       id: Number(id),
       username: username || "",
@@ -111,19 +162,19 @@ export function parseOdinData(uRaw: string, stRaw: string, bRaw: string, svRaw: 
       forced_country: forced_country || "Off",
       active_cons: activityMap[Number(id)] || 0,
       owner_id: Number(owner_id || 1),
-      package_name: admin_notes?.split('|')[0] || "" // Common pattern or empty
+      package_name: package_name || undefined,
     } as User;
   }).filter((x): x is User => x !== null);
 
   const streams: Stream[] = (stRaw || "").trim().split("\n").filter(Boolean).map(line => {
     const [id, name, cat, icon, source, status] = line.split("\t");
-    return { 
-      id: Number(id), 
-      name: name || "Stream", 
-      category_id: Number(cat || 0), 
-      icon: icon || "", 
-      source: source || "", 
-      status: Number(status || 0) 
+    return {
+      id: Number(id),
+      name: name || "Stream",
+      category_id: Number(cat || 0),
+      icon: icon || "",
+      source: source || "",
+      status: Number(status || 0)
     };
   });
 
@@ -134,22 +185,34 @@ export function parseOdinData(uRaw: string, stRaw: string, bRaw: string, svRaw: 
 
   const servers: Server[] = (svRaw || "").trim().split("\n").filter(Boolean).map(line => {
     const [id, name, status, last, hardware, clients, port] = line.split("\t");
-    let hwData = {};
-    try { 
-      const sanitizedHw = hardware ? hardware.replace(/\\n/g, "").replace(/\\/g, "") : "{}";
-      hwData = JSON.parse(sanitizedHw); 
-    } catch(err) {
-      console.error("[OdinParser] Hardware Parse Error", name);
-    }
-    
-    return { 
-      id: id || "0", 
-      name: name || "Server", 
-      status: Number(status || 0), 
+    const hwData = safeParseJson(hardware);
+    const serverId = Number(id || 0);
+    const activity = serverActivityMap[serverId] || { conns: 0, users: 0, streams: 0 };
+    const streamState = streamStateMap[serverId] || { total: 0, live: 0, offline: 0, bitrate: 0, avgBitrate: 0 };
+    const bytesSent = toFiniteNumber(hwData["bytes_sent"]);
+    const bytesReceived = toFiniteNumber(hwData["bytes_received"]);
+    const avgBitrate = toFiniteNumber(streamState.avgBitrate);
+    const serverName = name || "Server";
+    const isMainServer = serverId === 1 || /main/i.test(serverName);
+
+    return {
+      id: id || "0",
+      name: serverName,
+      status: Number(status || 0),
       last_check: Number(last || 0),
       hardware: hwData,
       total_clients: Number(clients || 0),
-      port: port || "80"
+      port: port || "80",
+      live_connections: activity.conns,
+      live_users: activity.users,
+      live_streams: streamState.live || activity.streams,
+      offline_streams: streamState.offline,
+      input_mbps: isMainServer ? avgBitrate : 0,
+      output_mbps: avgBitrate,
+      avg_bitrate_mbps: avgBitrate,
+      bytes_sent: bytesSent,
+      bytes_received: bytesReceived,
+      network_speed: hwData["network_speed"] ?? hwData["network"] ?? ""
     };
   });
 
@@ -172,7 +235,5 @@ export function parseOdinData(uRaw: string, stRaw: string, bRaw: string, svRaw: 
     } as Reseller;
   }).filter((x): x is Reseller => x !== null);
 
-  const totalConns = Object.values(activityMap).reduce((a, b) => a + b, 0);
-  
-  return { customers, streams, bouquets, servers, resellers, totalConns };
+  return { customers, streams, bouquets, servers, resellers };
 }
