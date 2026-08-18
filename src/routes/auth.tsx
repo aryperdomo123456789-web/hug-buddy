@@ -1,8 +1,8 @@
 import { createFileRoute, useRouter, useRouterState } from '@tanstack/react-router';
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { ShieldAlert, Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { loginPanel, getCurrentPanelSession } from '@/lib/panel-auth.functions';
 
 export const Route = createFileRoute('/auth')({
   component: AuthPage,
@@ -14,13 +14,16 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLogin, setIsLogin] = useState(true);
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        router.navigate({ to: (search.redirect || '/') as any });
+      try {
+        const session = await getCurrentPanelSession();
+        if (session) {
+          router.navigate({ to: (search.redirect || '/') as any });
+        }
+      } catch (error) {
+        // Ignora erro de sessão inicial
       }
     };
     checkSession();
@@ -31,24 +34,13 @@ function AuthPage() {
     setLoading(true);
 
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
+      const result = await loginPanel({ data: { email, password } });
+      if (result.success) {
         toast.success('Bem-vindo ao Mago Panel!');
         router.navigate({ to: (search.redirect || '/') as any });
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-        if (error) throw error;
-        toast.success('Conta criada! Verifique seu e-mail.');
       }
     } catch (error: any) {
-      toast.error(error.message || 'Erro na autenticação');
+      toast.error(error.message || 'E-mail ou senha incorretos');
     } finally {
       setLoading(false);
     }
@@ -106,21 +98,12 @@ function AuthPage() {
                 <Loader2 className="animate-spin" size={20} />
               ) : (
                 <>
-                  {isLogin ? 'ENTRAR AGORA' : 'CRIAR ACESSO'}
+                  ENTRAR AGORA
                   <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </>
               )}
             </button>
           </form>
-
-          <div className="mt-8 pt-6 border-t border-zinc-800 text-center">
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-[10px] text-zinc-500 hover:text-blue-500 font-black uppercase tracking-widest transition-colors"
-            >
-              {isLogin ? 'AINDA NÃO TEM ACESSO? SOLICITAR' : 'JÁ TEM CONTA? FAZER LOGIN'}
-            </button>
-          </div>
         </div>
 
         <div className="mt-8 text-center text-[10px] text-zinc-600 font-bold uppercase tracking-widest">
