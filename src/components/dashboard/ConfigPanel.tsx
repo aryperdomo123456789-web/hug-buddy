@@ -135,7 +135,7 @@ export function ConfigPanel() {
       const loadTemplate = async () => {
         try {
           const settings = await getAppSettings();
-          setGlobalTemplate(settings.global_template || "");
+          setGlobalTemplate(settings['global_template'] || "");
         } catch (e) {
           console.error("Erro ao carregar template global", e);
         }
