@@ -11,8 +11,9 @@ interface PlanModalProps {
   bouquets?: Bouquet[]; // List of available bouquets from Odin
 }
 
-export function PlanModal({ plan, onClose, onSave, loading, odinPackages = [] }: PlanModalProps) {
-  const [activeTab, setActiveTab] = useState<'details' | 'advanced' | 'restrictions' | 'template'>('details');
+export function PlanModal({ plan, onClose, onSave, loading, odinPackages = [], bouquets = [] }: PlanModalProps) {
+  const [activeTab, setActiveTab] = useState<'details' | 'advanced' | 'restrictions' | 'bouquets' | 'template'>('details');
+  const [bouquetSearch, setBouquetSearch] = useState("");
   
   const [data, setData] = useState<Plan>(plan || { 
     id: "",
