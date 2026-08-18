@@ -326,9 +326,9 @@ export function SaasUserList({ resellers = [] }: { resellers?: Reseller[] }) {
           </div>
         </div>
       )}
-          </table>
-        </div>
-      </div>
+    </div>
+  );
+}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-zinc-900/30 border border-zinc-800 rounded-2xl p-6">
