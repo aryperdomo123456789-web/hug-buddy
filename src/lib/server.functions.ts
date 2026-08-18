@@ -13,7 +13,7 @@ export const getOdinFullData = createServerFn({ method: "GET" })
     try {
       const { executeBatchQueries, parseOdinData } = await getOdinServer();
       const queries = [
-        "SELECT id, username, password, IFNULL(exp_date, 0), enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, reseller_notes, allowed_ips, allowed_ua, forced_country, created_by, (SELECT package_name FROM packages WHERE id = users.package_id LIMIT 1) as package_name FROM users ORDER BY id DESC",
+        "SELECT id, username, password, IFNULL(exp_date, 0), enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, reseller_notes, allowed_ips, allowed_ua, forced_country, created_by, '' as package_name FROM users ORDER BY id DESC",
         "SELECT id, stream_display_name, category_id, stream_icon, stream_source FROM streams ORDER BY id DESC",
         "SELECT id, bouquet_name FROM bouquets ORDER BY id DESC",
         "SELECT id, server_name, status, last_check_ago as last_check, server_hardware, total_clients, http_broadcast_port FROM streaming_servers ORDER BY id ASC",
