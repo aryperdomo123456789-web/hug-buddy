@@ -186,9 +186,15 @@ export function useOdinData(initialData: OdinSnapshot | null = null, initialSync
 
     try {
       const response = await getOdinFullData().catch(e => {
+        if (isBenignAbortError(e)) return null;
         console.error("[useOdinData] Critical RPC error:", e);
         return { success: false, error: e.message };
       });
+
+      if (!response) {
+        isFetching.current = false;
+        return;
+      }
 
       if (response && (response as any).success && (response as any).data) {
         const rawData = (response as any).data;
