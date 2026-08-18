@@ -51,16 +51,13 @@ function formatStableTime(value: number): string {
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
     // Bypass de autenticação para ambiente de laboratório
-    // No ambiente de laboratório, não temos uma sessão Supabase real no navegador,
-    // então retornamos um perfil administrativo estático.
     return { auth: { userId: 'lab-user', role: 'admin', email: 'mago@dono.com', full_name: 'Mago Lab', odin_reseller_id: null } };
   },
   component: DashboardPage,
   loader: async () => {
+    const { getOdinConfig } = await import("@/lib/odin");
     const cfg = getOdinConfig();
 
-    // Não bloqueamos o SSR com o SSH (lento) — isso derrubava o socket ("Error: aborted")
-    // e gerava tela branca. Os dados do Odin são buscados no cliente pelo useOdinData.
     return {
       odin: {
         sshHost: cfg.sshHost,

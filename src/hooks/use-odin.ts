@@ -155,6 +155,25 @@ export function useOdinData(initialData: OdinSnapshot | null = null, initialSync
     }
   };
 
+  const isBenignAbortError = (error: unknown): boolean => {
+    const message = (
+      error instanceof Error ? `${error.name}: ${error.message}` : String(error ?? "")
+    ).toLowerCase();
+    const stack = error instanceof Error ? (error.stack || "").toLowerCase() : "";
+
+    return (
+      message === "error: aborted" ||
+      message.trim() === "aborted" ||
+      message.includes("aborterror") ||
+      message.includes("the operation was aborted") ||
+      message.includes("the user aborted a request") ||
+      message.includes("request aborted") ||
+      stack.includes("abortincoming") ||
+      stack.includes("socketonclose") ||
+      stack.includes("node:_http_server")
+    );
+  };
+
   const isTransportError = (error: unknown) => {
     if (!(error instanceof Error)) return false;
     const signature = `${error.name}: ${error.message}`.toLowerCase();
@@ -186,9 +205,15 @@ export function useOdinData(initialData: OdinSnapshot | null = null, initialSync
 
     try {
       const response = await getOdinFullData().catch(e => {
+        if (isBenignAbortError(e)) return null;
         console.error("[useOdinData] Critical RPC error:", e);
         return { success: false, error: e.message };
       });
+
+      if (!response) {
+        isFetching.current = false;
+        return;
+      }
 
       if (response && (response as any).success && (response as any).data) {
         const rawData = (response as any).data;

@@ -191,8 +191,10 @@ function isBenignAbortError(error: unknown): boolean {
     message.includes("aborterror") ||
     message.includes("the operation was aborted") ||
     message.includes("the user aborted a request") ||
+    message.includes("request aborted") ||
     stack.includes("abortincoming") ||
-    stack.includes("socketonclose")
+    stack.includes("socketonclose") ||
+    stack.includes("node:_http_server")
   );
 }
 
