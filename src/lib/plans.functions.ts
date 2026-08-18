@@ -121,7 +121,7 @@ export const saveAppSettings = createServerFn({ method: "POST" })
     for (const [key, value] of Object.entries(data)) {
       const { error } = await supabase
         .from('app_settings')
-        .upsert({ key, value }, { onConflict: 'key' });
+        .upsert({ key, value: value as any });
       
       if (error) throw error;
     }

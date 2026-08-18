@@ -207,4 +207,4 @@ export const generateBashScript = createServerFn({ method: "POST" })
     return `#!/bin/bash\necho "Mago Panel API Active"`;
   });
 
-export { getPlans, savePlan, deletePlan, getAppSettings, saveAppSetting } from "./plans.functions";
+export { getPlans, savePlan, deletePlan, getAppSettings, saveAppSettings } from "./plans.functions";
