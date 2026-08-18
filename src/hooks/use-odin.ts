@@ -305,6 +305,11 @@ export function useOdinData(initialData: OdinSnapshot | null = null, initialSync
         });
       }
     } catch (e: any) {
+      if (isBenignAbortError(e)) {
+        isFetching.current = false;
+        setLoading(false);
+        return;
+      }
       consecutiveFailures.current += 1;
       const transient = isTransportError(e);
       const contextDetails = [
