@@ -4,13 +4,12 @@ import { UserSchema, ResellerSchema } from "@/types/odin";
 import { requirePanelAuth } from "./panel-auth.server";
 import { escapeSql } from "./odin";
 
-// Dynamic import for server-only logic to avoid client leaks
 const getOdinServer = async () => import("./odin.server");
 
 export const getOdinFullData = createServerFn({ method: "GET" })
   .middleware([requirePanelAuth])
   .handler(async ({ context }) => {
-    const { executeBatchQueries } = await getOdinServer();
+    const { executeBatchQueries, parseOdinData } = await getOdinServer();
     const queries = [
       "SELECT id, username, password, IFNULL(exp_date, 0), enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, reseller_notes, allowed_ips, allowed_ua, forced_country, created_by, (SELECT package_name FROM packages WHERE id = users.package_id LIMIT 1) as package_name FROM users ORDER BY id DESC",
       "SELECT id, stream_display_name, category_id, stream_icon, stream_source FROM streams ORDER BY id DESC",
@@ -24,8 +23,12 @@ export const getOdinFullData = createServerFn({ method: "GET" })
     ];
 
     const results = await executeBatchQueries(queries);
-    // Process results... (simplified for now to solve the leak)
-    return { success: true, data: results }; 
+    const snapshot = parseOdinData(
+      results[0], results[1], results[2], results[3], 
+      results[4], results[5], results[6], results[8]
+    );
+    
+    return { success: true, data: snapshot }; 
   });
 
 export const createUser = createServerFn({ method: "POST" })
@@ -143,9 +146,14 @@ export const testOdinConnection = createServerFn({ method: "GET" })
 export const generateM3ULink = createServerFn({ method: "POST" })
   .validator((d: any) => z.object({ username: z.string(), password: z.string() }).parse(d))
   .handler(async ({ data }) => {
-     // No context needed for this simple pure link generator
      const origin = "http://localhost:8080";
      return `${origin}/get.php?username=${data.username}&password=${data.password}&type=m3u_plus&output=mpegts`;
+  });
+
+export const generateBashScript = createServerFn({ method: "POST" })
+  .middleware([requirePanelAuth])
+  .handler(async () => {
+    return `#!/bin/bash\necho "Mago Panel API Active"`;
   });
 
 export { getPlans, savePlan, deletePlan, getAppSettings, saveAppSetting } from "./plans.functions";
