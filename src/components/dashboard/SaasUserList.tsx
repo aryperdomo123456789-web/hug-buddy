@@ -4,6 +4,7 @@ import { getSaasProfiles, changePassword } from "@/lib/saas.functions";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Reseller } from "@/types/odin";
+import { supabase } from "@/integrations/supabase/client";
 
 export function SaasUserList({ resellers = [] }: { resellers?: Reseller[] }) {
   const [searchTerm, setSearchTerm] = React.useState("");
