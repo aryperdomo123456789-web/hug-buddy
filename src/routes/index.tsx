@@ -137,6 +137,9 @@ function DashboardPage() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [isResellerDrawerOpen, setIsResellerDrawerOpen] = useState(false);
+  const [resellerSearch, setResellerSearch] = useState("");
+  const [selectedResellerId, setSelectedResellerId] = useState<number | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showResellerModal, setShowResellerModal] = useState(false);
