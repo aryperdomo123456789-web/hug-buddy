@@ -163,6 +163,7 @@ function DashboardPage() {
     loading,
     customers,
     servers,
+    streams,
     bouquets,
     resellers,
     plans,
