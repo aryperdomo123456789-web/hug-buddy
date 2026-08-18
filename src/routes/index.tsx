@@ -45,11 +45,8 @@ function formatStableTime(value: number): string {
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
-    const session = await getCurrentPanelSession();
-    if (!session) {
-      throw redirect({ to: "/auth" as any });
-    }
-    return { auth: session };
+    // Bypass de autenticação para ambiente de laboratório
+    return { auth: { userId: 'lab-user', role: 'admin', email: 'mago@dono.com', full_name: 'Mago Lab', odin_reseller_id: null } };
   },
   component: DashboardPage,
   loader: async () => {
