@@ -163,8 +163,8 @@ async function executeBatchQueries(queries: string[]) {
       port: cfg.sshPort,
       username: cfg.sshUsername,
       password: cfg.sshPassword,
-      readyTimeout: 45000,
-      keepaliveInterval: 10000,
+      readyTimeout: 60000,
+      keepaliveInterval: 5000,
     });
     
     console.log(`[SSH] Executando ${queries.length} queries via canal oficial...`);
