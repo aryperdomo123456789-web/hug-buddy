@@ -1,38 +1,27 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-
+import { db } from "./supabase";
 import { requirePanelAuth } from "./panel-auth.middleware";
 import { Plan } from "@/types/odin";
 
-/**
- * Planos e configurações do painel usam a autenticação local do Mago Panel
- * (não a sessão Supabase do navegador), por isso o acesso ao banco é feito
- * com o cliente privilegiado carregado dinamicamente dentro do handler.
- */
-const db = async () => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  return supabaseAdmin;
-};
-
-const PlanValidator = z.object({
-  id: z.string().uuid().or(z.literal("")).optional(),
-  name: z.string(),
+export const PlanValidator = z.object({
+  id: z.string().optional().or(z.literal("")),
+  name: z.string().min(1, "Nome é obrigatório"),
   odin_server_id: z.string().nullable().optional(),
   odin_package_id: z.number().nullable().optional(),
   bouquets: z.array(z.number()).default([]),
-  connections: z.number().int().min(1).default(1),
-  duration: z.number().int().min(1).default(1),
+  connections: z.number().min(1).default(1),
+  duration: z.number().min(1).default(1),
   duration_unit: z.enum(['minutes', 'hours', 'days', 'months', 'years']).default('months'),
-  price: z.number().min(0).default(0),
+  price: z.number().default(0),
   is_trial: z.boolean().default(false),
   has_adult_content: z.boolean().default(false),
   status: z.enum(['active', 'inactive']).default('active'),
-  sort_order: z.number().int().default(0),
+  sort_order: z.number().default(0),
   template: z.string().nullable().optional(),
   plan_price: z.number().nullable().optional(),
   pay_url: z.string().nullable().optional(),
   dns_host: z.string().nullable().optional(),
-  // Novas colunas Odin
   can_gen_mag: z.boolean().default(true),
   can_gen_enigma: z.boolean().default(true),
   only_mag: z.boolean().default(false),
@@ -110,24 +99,28 @@ export const getAppSettings = createServerFn({ method: "GET" })
       .select('*');
 
     if (error) throw error;
-
+    
     const settings: Record<string, any> = {};
-    data?.forEach((s: any) => {
-      settings[s.key] = s.value;
+    (data || []).forEach(item => {
+      settings[item.key] = item.value;
     });
-
+    
     return settings;
   });
 
-export const saveAppSetting = createServerFn({ method: "POST" })
+export const saveAppSettings = createServerFn({ method: "POST" })
   .middleware([requirePanelAuth])
-  .validator((d) => z.object({ key: z.string(), value: z.any() }).parse(d))
+  .validator((d) => z.record(z.any()).parse(d))
   .handler(async ({ data }) => {
     const supabase = await db();
-    const { error } = await supabase
-      .from('app_settings')
-      .upsert({ key: data.key, value: data.value });
-
-    if (error) throw error;
+    
+    for (const [key, value] of Object.entries(data)) {
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({ key, value }, { onConflict: 'key' });
+      
+      if (error) throw error;
+    }
+    
     return { success: true };
   });
