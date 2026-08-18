@@ -21,8 +21,10 @@ export const getOdinFullData = createServerFn({ method: "GET" })
         "SELECT user_id, COUNT(*) as cons FROM user_activity_now GROUP BY user_id",
         "SELECT server_id, COUNT(*) as conns, COUNT(DISTINCT user_id) as users, COUNT(DISTINCT stream_id) as streams FROM user_activity_now GROUP BY server_id",
         "SELECT stream_id, MAX(stream_status) as stream_status, SUM(bitrate) as bitrate_sum FROM streams_sys GROUP BY stream_id",
-        "SELECT server_id, COUNT(*) as total_streams, SUM(stream_status = 1) as live_streams, SUM(stream_status = 0) as offline_streams, SUM(bitrate) as bitrate_sum, AVG(bitrate) as avg_bitrate FROM streams_sys GROUP BY server_id"
+        "SELECT server_id, COUNT(*) as total_streams, SUM(stream_status = 1) as live_streams, SUM(stream_status = 0) as offline_streams, SUM(bitrate) as bitrate_sum, AVG(bitrate) as avg_bitrate FROM streams_sys GROUP BY server_id",
+        "SELECT * FROM packages"
       ];
+
 
       const results = await executeBatchQueries(queries);
       console.log("[RPC] Queries executed. Results[0] sample:", (results[0] || "").substring(0, 50));
@@ -34,8 +36,10 @@ export const getOdinFullData = createServerFn({ method: "GET" })
       
       const snapshot = parseOdinData(
         results[0] || "", results[1] || "", results[2] || "", results[3] || "", 
-        results[4] || "", results[5] || "", results[6] || "", results[8] || ""
+        results[4] || "", results[5] || "", results[6] || "", results[8] || "",
+        results[9] || ""
       );
+
       
       return { success: true, data: snapshot };
     } catch (err: any) {

@@ -112,7 +112,9 @@ export function parseOdinData(
   actRaw: string,
   srvActRaw = "",
   streamStateRaw = "",
+  packagesRaw = "",
 ): any {
+
   const activityMap: Record<number, number> = {};
   (actRaw || "").trim().split("\n").filter(Boolean).forEach(line => {
     const [uid, count] = line.split("\t");
@@ -247,5 +249,24 @@ export function parseOdinData(
     } as Reseller;
   }).filter((x): x is Reseller => x !== null);
 
-  return { customers, streams, bouquets, servers, resellers };
+  const packages = (packagesRaw || "").trim().split("\n").filter(Boolean).map(line => {
+    const parts = line.split("\t");
+    // Mapeamento simples de pacotes Odin
+    return {
+      id: Number(parts[0]),
+      name: parts[1] || "Package",
+      is_trial: Number(parts[2] || 0),
+      max_connections: Number(parts[3] || 1),
+      official_duration: Number(parts[4] || 0),
+      official_duration_in: parts[5] || "months",
+      trial_duration: Number(parts[6] || 0),
+      trial_duration_in: parts[7] || "hours",
+      groups: parts[8] || "[]",
+      bouquets: parts[9] || "[]",
+      raw: parts
+    };
+  });
+
+  return { customers, streams, bouquets, servers, resellers, packages };
 }
+

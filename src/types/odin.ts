@@ -112,7 +112,9 @@ export interface OdinSnapshot {
   bouquets: Bouquet[];
   servers: Server[];
   resellers: Reseller[];
+  packages: any[];
 }
+
 
 export interface DashboardStats {
   totalUsers: number;
