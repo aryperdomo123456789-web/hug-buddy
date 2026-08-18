@@ -145,12 +145,16 @@ export function parseOdinData(
   const customers: User[] = (uRaw || "").trim().split("\n").filter(Boolean).map(line => {
     const parts = line.split("\t");
     if (parts.length < 17) return null;
-    const [
-      id, username, password, exp_date, enabled, admin_enabled,
-      is_trial, is_restreamer, is_isplock, max_connections,
-      bouquet, admin_notes, reseller_notes, allowed_ips,
-      allowed_ua, forced_country, owner_id, package_name
-    ] = parts;
+      const parts = line.split("\t");
+      if (parts.length < 16) return null;
+      const [
+        id, username, password, exp_date, enabled, admin_enabled,
+        is_trial, is_restreamer, is_isplock, max_connections,
+        bouquet, admin_notes, reseller_notes, allowed_ips,
+        allowed_ua, forced_country, owner_id
+      ] = parts;
+
+      const p_name = parts[17] || undefined;
 
     return {
       id: Number(id),
@@ -171,7 +175,7 @@ export function parseOdinData(
       forced_country: forced_country || "Off",
       active_cons: activityMap[Number(id)] || 0,
       owner_id: Number(owner_id || 1),
-      package_name: package_name || undefined,
+      package_name: p_name,
     } as User;
   }).filter((x): x is User => x !== null);
 

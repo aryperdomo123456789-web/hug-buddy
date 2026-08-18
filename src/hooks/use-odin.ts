@@ -145,7 +145,7 @@ export function useOdinData(initialData: OdinSnapshot | null = null, initialSync
   const retryTimeout = useRef<any>(null);
   const consecutiveFailures = useRef(0);
   const trafficSnapshot = useRef<Record<string, { ts: number; sent: number; received: number }>>(loadTrafficSnapshot());
-  const pollIntervalMs = 45000;
+  const pollIntervalMs = 20000;
   const maxQuietRetries = 3;
 
   const clearRetryTimeout = () => {
