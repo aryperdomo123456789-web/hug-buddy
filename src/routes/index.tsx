@@ -225,6 +225,57 @@ function DashboardPage() {
     router.navigate({ to: "/auth" as any });
   };
 
+  const handleQuickTest = async (plan: Plan) => {
+    if (!plan.id) return;
+    toast.loading("Gerando teste rápido...");
+    try {
+      const res = await quickCreateTestUser({ 
+        data: { 
+          planId: plan.id,
+          overrideOwnerId: selectedResellerId || (profile?.odin_reseller_id ?? 1)
+        } 
+      });
+      
+      if (res.success && res.data) {
+        toast.dismiss();
+        toast.success("Teste gerado com sucesso!");
+        
+        // Sincronizar dados para mostrar o novo cliente na lista
+        fetchAll(false);
+
+        // Processar template para cópia
+        const username = res.data.username;
+        const password = res.data.password;
+        
+        // Pegar DNS padrão ou dns_host do plano
+        const dns = (settings as any)['dns'] || window.location.origin;
+        const dnsHost = plan.dns_host || dns.replace(/^https?:\/\//, '');
+        
+        const template = plan.template || (settings as any)['global_template'] || "";
+        
+        const processed = template
+          .replace(/{username}/g, username)
+          .replace(/{password}/g, password)
+          .replace(/{package}/g, plan.name)
+          .replace(/{pay_url}/g, plan.pay_url || "")
+          .replace(/{plan_price}/g, plan.price?.toString() || "0")
+          .replace(/{expires_at}/g, "Teste Rápido")
+          .replace(/{connections}/g, plan.connections.toString())
+          .replace(/{dns}/g, dns)
+          .replace(/{dns_host}/g, dnsHost);
+
+        await navigator.clipboard.writeText(processed);
+        toast.info("Credenciais copiadas para a área de transferência!");
+      } else {
+        toast.dismiss();
+        toast.error("Erro ao gerar teste");
+      }
+    } catch (e) {
+      toast.dismiss();
+      toast.error("Falha na comunicação com o servidor");
+    }
+  };
+
   const handleDeleteUser = async (user: User) => {
     if (!user.id) return;
     if (!window.confirm(`TEM CERTEZA? Deseja realmente EXCLUIR o utilizador "${user.username}"? Esta ação não pode ser desfeita.`)) {
@@ -676,6 +727,7 @@ function DashboardPage() {
                     fetchAll(false);
                   }
                 }}
+                onQuickTest={handleQuickTest}
               />
             )}
 

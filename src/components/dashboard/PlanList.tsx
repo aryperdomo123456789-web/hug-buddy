@@ -10,9 +10,10 @@ interface PlanListProps {
   onAdd: () => void;
   onEdit: (plan: Plan) => void;
   onDelete: (plan: Plan) => void;
+  onQuickTest?: (plan: Plan) => void;
 }
 
-export function PlanList({ plans, loading, onRefresh, onAdd, onEdit, onDelete }: PlanListProps) {
+export function PlanList({ plans, loading, onRefresh, onAdd, onEdit, onDelete, onQuickTest }: PlanListProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800">
@@ -41,15 +42,23 @@ export function PlanList({ plans, loading, onRefresh, onAdd, onEdit, onDelete }:
               </div>
             )}
             
-            <div className="flex justify-between items-start mb-6">
+            <div className="flex justify-between items-start mb-4">
               <div>
                 <h3 className="text-lg font-bold text-zinc-100 uppercase tracking-tight group-hover:text-blue-400 transition-colors">
                   {plan.name}
                 </h3>
-                <div className="flex items-center gap-2 mt-2 text-blue-500">
+                <div className="flex items-center gap-2 mt-1 text-blue-500">
                   <span className="text-2xl font-black">R$ {Number(plan.price).toFixed(2)}</span>
                 </div>
               </div>
+              {plan.is_trial && onQuickTest && (
+                <button
+                  onClick={() => onQuickTest(plan)}
+                  className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20"
+                >
+                  Gerar Teste
+                </button>
+              )}
             </div>
 
             <div className="space-y-3 mb-8">

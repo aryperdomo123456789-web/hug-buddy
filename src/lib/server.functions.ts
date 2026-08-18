@@ -59,10 +59,9 @@ export const quickCreateTestUser = createServerFn({ method: "POST" })
 
     const { executeQuery } = await getOdinServer();
     
-    // Generate random credentials
-    const randomStr = Math.random().toString(36).substring(2, 8);
-    const username = `test_${randomStr}`;
-    const password = Math.random().toString(36).substring(2, 10);
+    // Generate random 6-digit numeric credentials
+    const username = Math.floor(100000 + Math.random() * 900000).toString();
+    const password = Math.floor(100000 + Math.random() * 900000).toString();
     
     // Duration calculation
     const now = Math.floor(Date.now() / 1000);
