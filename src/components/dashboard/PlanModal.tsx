@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Plan } from "@/types/odin";
-import { X, Save, Settings2, Monitor, ShieldCheck, PlayCircle } from "lucide-react";
+import { Plan, Bouquet } from "@/types/odin";
+import { X, Save, Settings2, Monitor, ShieldCheck, PlayCircle, Database, Check } from "lucide-react";
 
 interface PlanModalProps {
   plan: Plan | null;
@@ -8,10 +8,12 @@ interface PlanModalProps {
   onSave: (data: Plan) => Promise<void>;
   loading?: boolean;
   odinPackages?: any[]; // Passed from parent if needed to link
+  bouquets?: Bouquet[]; // List of available bouquets from Odin
 }
 
-export function PlanModal({ plan, onClose, onSave, loading, odinPackages = [] }: PlanModalProps) {
-  const [activeTab, setActiveTab] = useState<'details' | 'advanced' | 'restrictions' | 'template'>('details');
+export function PlanModal({ plan, onClose, onSave, loading, odinPackages = [], bouquets = [] }: PlanModalProps) {
+  const [activeTab, setActiveTab] = useState<'details' | 'advanced' | 'restrictions' | 'bouquets' | 'template'>('details');
+  const [bouquetSearch, setBouquetSearch] = useState("");
   
   const [data, setData] = useState<Plan>(plan || { 
     id: "",
@@ -46,6 +48,20 @@ export function PlanModal({ plan, onClose, onSave, loading, odinPackages = [] }:
     }
   };
 
+  const toggleBouquet = (id: number) => {
+    const current = data.bouquets || [];
+    if (current.includes(id)) {
+      setData({ ...data, bouquets: current.filter(bId => bId !== id) });
+    } else {
+      setData({ ...data, bouquets: [...current, id] });
+    }
+  };
+
+  const filteredBouquets = bouquets.filter(b => 
+    b.name.toLowerCase().includes(bouquetSearch.toLowerCase()) ||
+    String(b.id).includes(bouquetSearch)
+  );
+
   return (
     <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
       <div className="bg-[#0f0f12] w-full max-w-3xl rounded-3xl border border-zinc-800 shadow-2xl flex flex-col max-h-[90vh]">
@@ -70,6 +86,7 @@ export function PlanModal({ plan, onClose, onSave, loading, odinPackages = [] }:
             { id: 'details', label: 'Detalhes', icon: Settings2 },
             { id: 'advanced', label: 'Avançado', icon: Monitor },
             { id: 'restrictions', label: 'Restrições', icon: ShieldCheck },
+            { id: 'bouquets', label: 'Bouquets', icon: Database },
             { id: 'template', label: 'Template', icon: PlayCircle },
           ].map(tab => (
             <button
@@ -245,6 +262,58 @@ export function PlanModal({ plan, onClose, onSave, loading, odinPackages = [] }:
                     <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'bouquets' && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 h-full flex flex-col">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <h3 className="text-xs font-black text-white uppercase tracking-widest">Seleção de Conteúdo</h3>
+                  <p className="text-[9px] text-zinc-500 uppercase font-bold tracking-widest mt-0.5">Defina quais bouquets este plano terá acesso</p>
+                </div>
+                <div className="text-[10px] font-black text-blue-500 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
+                  {data.bouquets?.length || 0} SELECIONADOS
+                </div>
+              </div>
+
+              <div className="relative">
+                <input 
+                  type="text"
+                  placeholder="Pesquisar Bouquet por nome ou ID..."
+                  value={bouquetSearch}
+                  onChange={e => setBouquetSearch(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-zinc-300 focus:border-blue-500 outline-none mb-4"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 overflow-y-auto pr-2 custom-scrollbar max-h-[400px]">
+                {filteredBouquets.map(bouquet => {
+                  const isSelected = data.bouquets?.includes(bouquet.id);
+                  return (
+                    <button
+                      key={bouquet.id}
+                      onClick={() => toggleBouquet(bouquet.id)}
+                      className={`flex items-center justify-between p-3 rounded-xl border transition-all text-left ${
+                        isSelected 
+                          ? "bg-blue-600/10 border-blue-500/50 text-blue-400" 
+                          : "bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
+                      }`}
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black uppercase truncate max-w-[180px]">{bouquet.name}</span>
+                        <span className="text-[8px] font-mono opacity-50">ID: {bouquet.id}</span>
+                      </div>
+                      {isSelected && <Check size={14} className="shrink-0" />}
+                    </button>
+                  );
+                })}
+                {filteredBouquets.length === 0 && (
+                  <div className="col-span-full py-10 text-center text-zinc-600 uppercase text-[10px] font-black tracking-widest border-2 border-dashed border-zinc-900 rounded-2xl">
+                    Nenhum bouquet encontrado
+                  </div>
+                )}
               </div>
             </div>
           )}
