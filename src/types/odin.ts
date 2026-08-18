@@ -16,6 +16,14 @@ export interface Plan {
   sort_order: number;
   template?: string | null;
   created_at?: string;
+  // Odin parity fields
+  can_gen_mag?: boolean;
+  can_gen_enigma?: boolean;
+  only_mag?: boolean;
+  only_enigma?: boolean;
+  lock_stb?: boolean;
+  is_restream?: boolean;
+  output_formats?: string[];
 }
 
 export const UserSchema = z.object({
