@@ -59,6 +59,7 @@ export function CustomerList({
 }: CustomerListProps) {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("all");
+  const [resellerFilter, setResellerFilter] = React.useState("all");
   const [perPage, setPerPage] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
 
@@ -120,8 +121,13 @@ export function CustomerList({
       }
     }
 
+    // Reseller filter
+    if (resellerFilter !== "all") {
+      result = result.filter(c => c.owner_id === Number(resellerFilter));
+    }
+
     return result;
-  }, [customers, searchTerm, statusFilter]);
+  }, [customers, searchTerm, statusFilter, resellerFilter]);
 
   const totalPages = Math.ceil(filteredCustomers.length / perPage);
   const paginatedCustomers = React.useMemo(() => {
@@ -132,7 +138,7 @@ export function CustomerList({
   // Reset page when filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, perPage]);
+  }, [searchTerm, statusFilter, resellerFilter, perPage]);
 
   return (
     <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800 shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -167,6 +173,20 @@ export function CustomerList({
               <option value="trial">Teste</option>
               <option value="official">Official</option>
               <option value="expired">Expirado</option>
+            </select>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <UserPlus size={14} className="text-zinc-500" />
+            <select 
+              value={resellerFilter}
+              onChange={(e) => setResellerFilter(e.target.value)}
+              className="bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-zinc-300 focus:outline-none focus:border-blue-500 transition-all cursor-pointer min-w-[140px]"
+            >
+              <option value="all">Todos os Revendedores</option>
+              {resellers.map(r => (
+                <option key={r.id} value={r.id}>{r.username}</option>
+              ))}
             </select>
           </div>
 
