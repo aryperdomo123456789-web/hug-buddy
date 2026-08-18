@@ -13,14 +13,18 @@ import {
   Download,
   Filter,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  MessageSquare
 } from "lucide-react";
 import { toast } from "sonner";
 import { generateM3ULink } from "@/lib/server.functions";
+import { Plan } from "@/types/odin";
 
 interface CustomerListProps {
   customers: User[];
   resellers: any[];
+  plans: Plan[];
+  settings: Record<string, any>;
   loading: boolean;
   onRefresh: () => void;
   onDelete: (user: User) => Promise<void>;
@@ -33,7 +37,10 @@ interface CustomerListProps {
 export function CustomerList({ 
   customers, 
   resellers,
+  plans,
+  settings,
   loading, 
+
 
   onRefresh, 
   onDelete, 
@@ -58,6 +65,31 @@ export function CustomerList({
       }
     } catch (e) {
       toast.error("Erro ao gerar link M3U");
+    }
+  };
+  
+  const copySalesMessage = (u: User) => {
+    try {
+      const template = settings?.default_message_template?.template || "";
+      if (!template) {
+        toast.error("Template de mensagem não configurado");
+        return;
+      }
+
+      // Simplistic placeholder replacement
+      let msg = template
+        .replace(/{username}/g, u.username)
+        .replace(/{password}/g, u.password)
+        .replace(/{connections}/g, String(u.max_connections))
+        .replace(/{expires_at}/g, u.exp_date ? new Date(u.exp_date * 1000).toLocaleDateString() : 'Ilimitado');
+      
+      // Attempt to find a plan for price/name if possible
+      // This is dynamic, but for now we just copy the raw if not found
+      
+      navigator.clipboard.writeText(msg);
+      toast.success("Mensagem de venda copiada!");
+    } catch (e) {
+      toast.error("Erro ao gerar mensagem");
     }
   };
 
@@ -240,6 +272,13 @@ export function CustomerList({
                         title="Download Playlist / Copiar Link"
                       >
                         <Download size={14} />
+                      </button>
+                      <button 
+                        onClick={() => copySalesMessage(u)} 
+                        className="p-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-blue-500 rounded-lg border border-zinc-800 transition-all"
+                        title="Copiar Dados de Acesso"
+                      >
+                        <MessageSquare size={14} />
                       </button>
                       <button onClick={() => onEdit(u)} className="p-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-blue-500 rounded-lg border border-zinc-800 transition-all">
                         <Settings size={14} />
