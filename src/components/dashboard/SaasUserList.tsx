@@ -177,12 +177,27 @@ export function SaasUserList({ resellers = [] }: { resellers?: Reseller[] }) {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-zinc-400 font-mono">
-                      {profile.odin_reseller_id ? `#${profile.odin_reseller_id}` : "Global (Admin)"}
+                    <div className="space-y-1">
+                      <div className="text-sm text-zinc-300 font-mono">
+                        {profile.odin_reseller_id ? `#${profile.odin_reseller_id}` : "Global (Admin)"}
+                      </div>
+                      {profile.permissions && (
+                        <div className="flex gap-2">
+                           {profile.permissions.can_create_customers && <span className="text-[8px] bg-blue-500/10 text-blue-400 px-1 rounded border border-blue-500/20">CLIENTES</span>}
+                           {profile.permissions.can_create_resellers && <span className="text-[8px] bg-purple-500/10 text-purple-400 px-1 rounded border border-purple-500/20">REVENDAS</span>}
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => setEditingProfile(profile)}
+                        className="p-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white rounded-lg border border-zinc-700 transition-all"
+                        type="button"
+                      >
+                        <Settings size={16} />
+                      </button>
                       {profile.role !== "admin" && (
                         <button
                           className="p-2 bg-zinc-800 hover:bg-red-500/20 text-zinc-400 hover:text-red-500 rounded-lg border border-zinc-700 transition-all"
@@ -191,14 +206,126 @@ export function SaasUserList({ resellers = [] }: { resellers?: Reseller[] }) {
                           <Trash2 size={16} />
                         </button>
                       )}
-                      {profile.role === "admin" && (
-                        <span className="text-[9px] text-zinc-600 font-bold uppercase py-2">IMUTÁVEL</span>
-                      )}
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Modal de Edição de Permissões SaaS */}
+      {editingProfile && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setEditingProfile(null)} />
+          <div className="relative w-full max-w-lg bg-[#0f0f12] border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-zinc-900 bg-zinc-950/50 flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-black uppercase tracking-tighter text-zinc-100">Permissões SaaS</h3>
+                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Vincular Usuário ao Odin</p>
+              </div>
+              <button onClick={() => setEditingProfile(null)} className="p-2 text-zinc-500 hover:text-zinc-300">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-8 space-y-8">
+              <div className="flex items-center gap-4 p-4 bg-zinc-900/50 rounded-2xl border border-zinc-800">
+                <div className="w-12 h-12 bg-blue-600/10 rounded-full flex items-center justify-center text-blue-500 border border-blue-500/20">
+                  <User size={24} />
+                </div>
+                <div>
+                  <div className="font-bold text-zinc-200">{editingProfile.full_name || "Sem Nome"}</div>
+                  <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">{editingProfile.role}</div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-black">Vínculo Revenda Odin</label>
+                  <select
+                    value={editingProfile.odin_reseller_id || ""}
+                    onChange={(e) => {
+                      const val = e.target.value ? Number(e.target.value) : null;
+                      setEditingProfile({ ...editingProfile, odin_reseller_id: val });
+                    }}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none transition-all"
+                  >
+                    <option value="">Acesso Global (Admin)</option>
+                    {resellers.map((r) => (
+                      <option key={r.id} value={r.id}>{r.username} (ID: #{r.id})</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-black">Autorizações Específicas</div>
+                  
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={editingProfile.permissions?.can_create_customers !== false}
+                      onChange={(e) => {
+                        const permissions = { ...(editingProfile.permissions || {}), can_create_customers: e.target.checked };
+                        setEditingProfile({ ...editingProfile, permissions });
+                      }}
+                      className="w-5 h-5 rounded border-zinc-800 text-blue-600 bg-zinc-900"
+                    />
+                    <span className="text-xs font-bold uppercase tracking-widest text-zinc-400 group-hover:text-zinc-200 transition-colors">Permitir Criar Clientes</span>
+                  </label>
+
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={editingProfile.permissions?.can_create_resellers === true}
+                      onChange={(e) => {
+                        const permissions = { ...(editingProfile.permissions || {}), can_create_resellers: e.target.checked };
+                        setEditingProfile({ ...editingProfile, permissions });
+                      }}
+                      className="w-5 h-5 rounded border-zinc-800 text-blue-600 bg-zinc-900"
+                    />
+                    <span className="text-xs font-bold uppercase tracking-widest text-zinc-400 group-hover:text-zinc-200 transition-colors">Permitir Criar Sub-Revendas</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-zinc-900 bg-zinc-950/50 flex justify-end gap-4">
+               <button
+                onClick={() => setEditingProfile(null)}
+                className="px-6 py-3 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-300 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    const { data, error } = await supabase
+                      .from('profiles')
+                      .update({
+                        odin_reseller_id: editingProfile.odin_reseller_id,
+                        permissions: editingProfile.permissions
+                      })
+                      .eq('id', editingProfile.id);
+                    
+                    if (error) throw error;
+                    
+                    toast.success("Permissões atualizadas!");
+                    queryClient.invalidateQueries({ queryKey: ["saas-profiles"] });
+                    setEditingProfile(null);
+                  } catch (e: any) {
+                    toast.error("Erro ao salvar: " + e.message);
+                  }
+                }}
+                className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-bold transition-all flex items-center gap-2 text-xs uppercase tracking-widest"
+              >
+                <Save size={16} /> Salvar Vínculo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
           </table>
         </div>
       </div>
