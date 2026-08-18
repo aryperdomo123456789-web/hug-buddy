@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Database, Key, Server, Layout, ExternalLink, Terminal, Tag, MessageSquare } from "lucide-react";
+import { Database, Key, Server, Layout, ExternalLink, Terminal, Tag, MessageSquare, Save } from "lucide-react";
 import { toast } from "sonner";
 import { getOdinConfig } from "@/lib/odin";
 import { useOdinData, useHydrated } from "@/hooks/use-odin";
@@ -10,10 +10,11 @@ export function ConfigPanel() {
   const { settings, actions } = useOdinData();
   const [activeTab, setActiveTab] = useState("db");
   const [defaultTemplate, setDefaultTemplate] = useState("");
+  const templateKey = 'default_message_template';
 
   React.useEffect(() => {
-    if (settings?.default_message_template?.template) {
-      setDefaultTemplate(settings.default_message_template.template);
+    if (settings?.[templateKey]?.template) {
+      setDefaultTemplate(settings[templateKey].template);
     }
   }, [settings]);
 
