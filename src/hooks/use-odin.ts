@@ -177,13 +177,13 @@ export function useOdinData(initialData: OdinSnapshot | null = null, initialSync
     try {
       const response = await getOdinFullData();
 
-      if (response && 'success' in response && response.success && 'data' in response && response.data) {
+      if (response && (response as any).success && (response as any).data) {
         console.log("[useOdinData] Data received:", {
-          customers: response.data.customers?.length,
-          servers: response.data.servers?.length,
-          streams: response.data.streams?.length
+          customers: (response as any).data.customers?.length,
+          servers: (response as any).data.servers?.length,
+          streams: (response as any).data.streams?.length
         });
-        const { customers, streams, bouquets, servers, resellers } = response.data;
+        const { customers, streams, bouquets, servers, resellers } = (response as any).data;
         const now = Date.now();
         const normalizedCustomers = (customers || [])
           .map((customer: any) => normalizeCustomerRecord(customer))
@@ -257,9 +257,9 @@ export function useOdinData(initialData: OdinSnapshot | null = null, initialSync
           console.error("[useOdinData] Supabase fetch error:", err);
         }
       } else if (!quiet) {
-        const message = (response && 'error' in response ? response.error : null) || "Falha ao carregar dados do Odin.";
+        const message = (response as any)?.error || "Falha ao carregar dados do Odin.";
         console.error("[useOdinData] Response failure:", message);
-        publishRuntimeError(new Error(message), {
+        publishRuntimeError(new Error(String(message)), {
           source: "manual",
           phase: "effect",
           route: typeof window !== "undefined" ? window.location.pathname : "/",

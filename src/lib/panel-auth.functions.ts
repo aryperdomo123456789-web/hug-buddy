@@ -59,7 +59,7 @@ export const upsertPanelUser = createServerFn({ method: "POST" })
       role: data.role,
       full_name: data.full_name ?? null,
       odin_reseller_id: data.odin_reseller_id ?? null,
-      password: data.password,
+      password: data.password ?? "",
     });
 
     if (data.password) {

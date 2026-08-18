@@ -374,10 +374,10 @@ export const getOdinFullData = createServerFn({ method: "GET" })
       return {
         success: true,
         data: { customers: scopedCustomers, streams, bouquets, servers, resellers: scopedResellers }
-      } as const;
+      } as { success: true; data: any };
 
     } catch (error: any) {
-      return { success: false, error: error.message } as const;
+      return { success: false, error: error.message } as { success: false; error: string };
     }
   });
 
@@ -395,7 +395,7 @@ export const saveOdinConfig = createServerFn({ method: "POST" })
     assertAdminOnly(context as PanelContext);
     const { saveOdinRuntimeConfig } = await import("./odin-runtime.server");
     const saved = saveOdinRuntimeConfig(data ?? {});
-    return { success: true, data: saved } as const;
+    return { success: true, data: saved } as { success: true; data: any };
   });
 
 export const seedActiveOdinConfig = createServerFn({ method: "POST" })
@@ -405,7 +405,7 @@ export const seedActiveOdinConfig = createServerFn({ method: "POST" })
     const current = getOdinConfig();
     const { saveOdinRuntimeConfig } = await import("./odin-runtime.server");
     const saved = saveOdinRuntimeConfig(current);
-    return { success: true, data: saved } as const;
+    return { success: true, data: saved } as { success: true; data: any };
   });
 
 export const testOdinConnection = createServerFn({ method: "GET" })
@@ -436,7 +436,7 @@ export const testOdinConnection = createServerFn({ method: "GET" })
         return {
           success: false,
           error: (result.stderr || "MySQL query failed") as string,
-        } as const;
+        } as { success: false; error: string };
       }
 
       return {
@@ -447,10 +447,10 @@ export const testOdinConnection = createServerFn({ method: "GET" })
           dbHost: cfg.dbHost,
           dbName: cfg.dbName,
         },
-      } as const;
+      } as { success: true; data: any };
     } catch (error: any) {
       try { if (ssh.isConnected()) ssh.dispose(); } catch {}
-      return { success: false, error: (error?.message || String(error)) as string } as const;
+      return { success: false, error: (error?.message || String(error)) as string } as { success: false; error: string };
     }
   });
 

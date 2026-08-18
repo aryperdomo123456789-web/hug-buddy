@@ -28,7 +28,7 @@ export const createOdinProvisionToken = createServerFn({ method: "POST" })
       scope: data.scope,
       note: data.note || "",
       createdBy: context.userId,
-      expiresInDays: data.expiresInDays,
+      expiresInDays: data.expiresInDays ?? null,
     });
 
     return {

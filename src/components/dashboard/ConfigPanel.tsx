@@ -134,7 +134,7 @@ export function ConfigPanel() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await saveOdinConfig(form);
+      const res = await saveOdinConfig(form) as any;
       if (!res?.success) {
         throw new Error(res?.error || "Falha ao salvar cadastro Odin");
       }
@@ -150,7 +150,7 @@ export function ConfigPanel() {
   const handleSeedActive = async () => {
     setSaving(true);
     try {
-      const res = await seedActiveOdinConfig();
+      const res = await seedActiveOdinConfig() as any;
       if (!res?.success) {
         throw new Error(res?.error || "Falha ao aplicar credenciais ativas");
       }
@@ -166,7 +166,7 @@ export function ConfigPanel() {
   const handleTest = async () => {
     setTesting(true);
     try {
-      const res = await testOdinConnection();
+      const res = await testOdinConnection() as any;
       if (!res?.success) {
         throw new Error(res?.error || "Conexão com Odin falhou");
       }
@@ -188,11 +188,13 @@ export function ConfigPanel() {
     try {
       const expiresInDays = Number(tokenExpiresInDays);
       const res = await createOdinProvisionToken({
-        name: tokenName,
-        scope: tokenScope,
-        note: tokenNote,
-        expiresInDays: Number.isFinite(expiresInDays) && expiresInDays > 0 ? expiresInDays : null,
-      });
+        data: {
+          name: tokenName,
+          scope: tokenScope,
+          note: tokenNote,
+          expiresInDays: Number.isFinite(expiresInDays) && expiresInDays > 0 ? expiresInDays : null,
+        }
+      } as any) as any;
 
       if (!res?.success) {
         throw new Error("Falha ao criar token.");
@@ -216,7 +218,7 @@ export function ConfigPanel() {
     if (!window.confirm("Revogar este token? Ele deixará de funcionar imediatamente.")) return;
 
     try {
-      const res = await revokeOdinProvisionToken({ id });
+      const res = await revokeOdinProvisionToken({ data: { id } } as any) as any;
       if (!res?.success) {
         throw new Error("Falha ao revogar token.");
       }
