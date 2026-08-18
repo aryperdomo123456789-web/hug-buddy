@@ -57,24 +57,11 @@ export const Route = createFileRoute("/")({
   component: DashboardPage,
   loader: async () => {
     const cfg = getOdinConfig();
-    let initialSnapshot = null;
-    let initialLoadError: { message: string; details?: string } | null = null;
+  loader: async () => {
+    const cfg = getOdinConfig();
 
-    try {
-      const snapshot = await getOdinFullData();
-      initialSnapshot = snapshot?.success ? snapshot.data : null;
-      if (!snapshot?.success) {
-        initialLoadError = {
-          message: "Falha ao carregar dados do Odin.",
-        };
-      }
-    } catch (error: any) {
-      initialLoadError = {
-        message: error?.message || "Falha ao carregar dados do Odin.",
-        details: error?.stack,
-      };
-    }
-
+    // Não bloqueamos o SSR com o SSH (lento) — isso derrubava o socket ("Error: aborted")
+    // e gerava tela branca. Os dados do Odin são buscados no cliente pelo useOdinData.
     return {
       odin: {
         sshHost: cfg.sshHost,
@@ -83,9 +70,9 @@ export const Route = createFileRoute("/")({
         dbName: cfg.dbName,
         dbUsername: cfg.dbUsername,
       },
-      initialSnapshot,
-      initialSyncedAt: initialSnapshot ? Date.now() : null,
-      initialLoadError,
+      initialSnapshot: null,
+      initialSyncedAt: null,
+      initialLoadError: null as { message: string; details?: string } | null,
     };
   },
 });
