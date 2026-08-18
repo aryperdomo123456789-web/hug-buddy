@@ -155,42 +155,35 @@ async function executeBatchQueries(queries: string[]) {
   const cfg = await getConfig();
   
   try {
+    console.log(`[SSH] Tentando conectar em ${cfg.sshHost}:${cfg.sshPort}...`);
     await ssh.connect({
       host: cfg.sshHost,
       port: cfg.sshPort,
       username: cfg.sshUsername,
       password: cfg.sshPassword,
-      readyTimeout: 30000,
-      keepaliveInterval: 5000,
-      compress: true,
+      readyTimeout: 20000,
     });
     
+    console.log(`[SSH] Conectado. Executando ${queries.length} queries...`);
     const results: string[] = [];
-    for (let i = 0; i < queries.length; i++) {
-      const sql = queries[i] || "";
+    
+    // Execução sequencial para evitar sobrecarga no MySQL remoto via tunnel
+    for (const sql of queries) {
       if (!sql) {
         results.push("");
         continue;
       }
       const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
-      
       const result = await ssh.execCommand(mysqlCmd);
-      console.log(`[SSH] Executed query ${i} (length: ${result.stdout.length})`);
-      
-      if (result.code !== 0) {
-        console.error(`[SSH] Query ${i} Failed: ${result.stderr}`);
-        results.push(""); 
-      } else {
-        results.push(result.stdout.replace(/\r/g, "") || "");
-      }
+      results.push(result.stdout.trim() || "");
     }
     
     ssh.dispose();
     return results;
   } catch (error: any) {
-    console.error(`[SSH] Batch Critical Failure:`, error.message);
-    try { if (ssh.isConnected()) ssh.dispose(); } catch (e) {}
-    return queries.map(() => "");
+    console.error(`[SSH] Falha crítica:`, error.message);
+    if (ssh.isConnected()) ssh.dispose();
+    throw error; // Lança para que o try/catch do handler capture
   }
 }
 
@@ -379,6 +372,7 @@ export const getOdinFullData = createServerFn({ method: "GET" })
       } as { success: true; data: any };
 
     } catch (error: any) {
+      console.error("[RPC getOdinFullData] Erro:", error.message);
       return { success: false, error: error.message } as { success: false; error: string };
     }
   });
