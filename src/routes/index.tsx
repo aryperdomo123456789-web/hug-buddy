@@ -162,6 +162,8 @@ function DashboardPage() {
     stats,
   } = useOdinData(data?.initialSnapshot ?? null, data?.initialSyncedAt ?? null);
 
+  const [isSavingPlan, setIsSavingPlan] = useState(false);
+
   const lastSyncLabel = lastSyncAt
     ? formatStableTime(lastSyncAt)
     : "aguardando primeiro sync";
@@ -803,7 +805,7 @@ function DashboardPage() {
       {showPlanModal && (
         <PlanModal
           plan={editingPlan}
-          loading={loading}
+          loading={isSavingPlan}
           bouquets={bouquets}
           onClose={() => {
             setShowPlanModal(false);
@@ -811,12 +813,18 @@ function DashboardPage() {
           }}
           onSave={async (data) => {
             try {
+              setIsSavingPlan(true);
               await savePlan({ data });
               setShowPlanModal(false);
-              fetchAll(false);
+              setEditingPlan(null);
+              // Recarregar apenas os planos de forma silenciosa para não travar a UI
+              await fetchAll(true);
               toast.success("Plano salvo!");
-            } catch (e) {
-              toast.error("Erro ao salvar plano");
+            } catch (e: any) {
+              console.error("[savePlan] Error:", e);
+              toast.error(e.message || "Erro ao salvar plano");
+            } finally {
+              setIsSavingPlan(false);
             }
           }}
         />
