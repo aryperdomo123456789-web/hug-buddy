@@ -14,6 +14,7 @@ import {
   getOdinProvisionTokens,
   revokeOdinProvisionToken,
 } from "@/lib/odin-token.functions";
+import { getAppSettings, saveAppSetting } from "@/lib/plans.functions";
 
 type OdinFormState = OdinConfig;
 
@@ -76,6 +77,8 @@ export function ConfigPanel() {
   const [tokenExpiresInDays, setTokenExpiresInDays] = useState("30");
   const [creatingToken, setCreatingToken] = useState(false);
   const [createdToken, setCreatedToken] = useState("");
+  const [globalTemplate, setGlobalTemplate] = useState("");
+  const [templateSaving, setTemplateSaving] = useState(false);
 
   const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:8080";
   const installCmd = `bash <(curl -sSL ${origin}/api/public/install)`;
@@ -124,6 +127,20 @@ export function ConfigPanel() {
   useEffect(() => {
     if (activeTab === "tokens") {
       void loadTokens();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === "template") {
+      const loadTemplate = async () => {
+        try {
+          const settings = await getAppSettings();
+          setGlobalTemplate(settings.global_template || "");
+        } catch (e) {
+          console.error("Erro ao carregar template global", e);
+        }
+      };
+      loadTemplate();
     }
   }, [activeTab]);
 
