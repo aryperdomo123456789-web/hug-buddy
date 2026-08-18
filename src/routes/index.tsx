@@ -213,13 +213,16 @@ function DashboardPage() {
   }, [data?.initialLoadError]);
 
   useEffect(() => {
+    let timeoutId: number | undefined;
     if (data?.initialSnapshot) {
       fetchAll(true);
-      const quickRefresh = window.setTimeout(() => fetchAll(true), 3000);
-      return () => window.clearTimeout(quickRefresh);
+      timeoutId = window.setTimeout(() => fetchAll(true), 3000);
+    } else {
+      fetchAll();
     }
-
-    fetchAll();
+    return () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+    };
   }, [data?.initialSnapshot, fetchAll]);
 
   const handleLogout = async () => {
@@ -467,7 +470,7 @@ function DashboardPage() {
                 source: "boundary",
                 phase: "render",
                 route: window.location.pathname,
-                componentStack: info.componentStack || undefined,
+                componentStack: info.componentStack || "",
               });
             }}
           >
