@@ -290,7 +290,7 @@ export const getOdinFullData = createServerFn({ method: "GET" })
           owner_id: Number(owner_id || 1),
           package_name: package_name || undefined,
         }, id);
-      }).filter((x): x is (User & { M_ID: number; m_id: number }) => x !== null);
+      }).filter((x): x is (User & { M_ID: number; m_id: number }) => x !== null && typeof x.id === 'number');
 
       const streams = (stRaw || "").trim().split("\n").filter(Boolean).map(line => {
         const [id, name, cat, icon, source] = line.split("\t");
@@ -364,7 +364,7 @@ export const getOdinFullData = createServerFn({ method: "GET" })
           last_login: last_login === "NULL" ? 0 : Number(last_login || 0),
           user_count: Number(user_count || 0)
         }, id);
-      }).filter((x): x is (Reseller & { M_ID: number; m_id: number }) => x !== null);
+      }).filter((x): x is (Reseller & { M_ID: number; m_id: number }) => x !== null && typeof x.id === 'number');
 
       const scopedCustomers = filterCustomersForContext(customers, context as PanelContext);
       const scopedResellers = filterResellersForContext(resellers, context as PanelContext);
@@ -389,9 +389,9 @@ export const getOdinConfigSnapshot = createServerFn({ method: "GET" })
   });
 
 export const saveOdinConfig = createServerFn({ method: "POST" })
-  .validator((d: any) => d)
+  .validator((d: any) => ({ data: d }))
   .middleware([requirePanelAuth])
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data: { data }, context }) => {
     assertAdminOnly(context as PanelContext);
     const { saveOdinRuntimeConfig } = await import("./odin-runtime.server");
     const saved = saveOdinRuntimeConfig(data ?? {});
@@ -588,6 +588,7 @@ export const killUserConnections = createServerFn({ method: "POST" })
 
 export const getInstallScript = createServerFn({ method: "GET" })
   .handler(async () => {
+    const { getOdinRuntimeConfig } = await import("./odin-runtime.server");
     const cfg = getOdinRuntimeConfig();
     return generateBashScript(cfg.apiToken, cfg.sshHost);
   });
