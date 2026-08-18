@@ -11,12 +11,9 @@ import {
   updateReseller,
   deleteReseller
 } from "@/lib/server.functions";
-import { User, Server, Stream, Bouquet, Reseller, DashboardStats } from "@/types/odin";
+import { getPlans, savePlan, deletePlan, getAppSettings, saveAppSetting } from "@/lib/plans.functions";
+import { User, Server, Stream, Bouquet, Reseller, DashboardStats, Plan } from "@/types/odin";
 
-/**
- * Hook central para gerenciamento de dados do Odin.
- * Implementa carga progressiva e tratamento de erros.
- */
 export function useOdinData() {
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState<User[]>([]);
@@ -24,6 +21,8 @@ export function useOdinData() {
   const [streams, setStreams] = useState<Stream[]>([]);
   const [bouquets, setBouquets] = useState<Bouquet[]>([]);
   const [resellers, setResellers] = useState<Reseller[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [settings, setSettings] = useState<Record<string, any>>({});
   
   const [totalConns, setTotalConns] = useState(0);
   const isFetching = useRef(false);
@@ -36,7 +35,11 @@ export function useOdinData() {
     if (!quiet) setLoading(true);
 
     try {
-      const response = await getOdinFullData();
+      const [response, plansData, settingsData] = await Promise.all([
+        getOdinFullData(),
+        getPlans(),
+        getAppSettings()
+      ]);
       
       if (response?.success && response.data) {
         const { customers, streams, bouquets, servers, resellers, totalConns } = response.data as any;
@@ -50,9 +53,12 @@ export function useOdinData() {
       } else if (!quiet) {
         if (response?.error !== 'Unauthorized') {
           console.error("[useOdinData] Response failure:", response?.error);
-          toast.error("Falha ao carregar dados do servidor.");
         }
       }
+
+      setPlans(plansData || []);
+      setSettings(settingsData || {});
+      
     } catch (e: any) {
       if (!quiet) {
         toast.error("Erro na comunicação com o backend.");
@@ -96,6 +102,8 @@ export function useOdinData() {
     streams,
     bouquets,
     resellers,
+    plans,
+    settings,
     stats,
     fetchAll,
     actions: {
@@ -106,7 +114,10 @@ export function useOdinData() {
       toggleStatus: toggleUserStatus,
       createReseller,
       updateReseller,
-      deleteReseller
+      deleteReseller,
+      savePlan,
+      deletePlan,
+      saveAppSetting
     }
   };
 }
