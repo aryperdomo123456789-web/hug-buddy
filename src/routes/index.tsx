@@ -215,7 +215,7 @@ function DashboardPage() {
     let timeoutId: number | undefined;
     if (data?.initialSnapshot) {
       fetchAll(true);
-      timeoutId = window.setTimeout(() => fetchAll(true), 3000);
+      timeoutId = window.setTimeout(() => fetchAll(true), 10000);
     } else {
       fetchAll();
     }
