@@ -265,14 +265,16 @@ export const getOdinFullData = createServerFn({ method: "GET" })
 
       const customers = (uRaw || "").trim().split("\n").filter(Boolean).map(line => {
         const parts = line.split("\t");
-        if (parts.length < 17) return null;
+        if (parts.length < 16) return null;
         
         const [
           id, username, password, exp_date, enabled, admin_enabled, 
           is_trial, is_restreamer, is_isplock, max_connections, 
           bouquet, admin_notes, reseller_notes, allowed_ips, 
-          allowed_ua, forced_country, owner_id, package_name
+          allowed_ua, forced_country, owner_id
         ] = parts;
+        
+        const package_name = parts[17] || undefined;
         
         return normalizeLegacyId({
           id: Number(id),
