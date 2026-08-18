@@ -61,6 +61,8 @@ export const savePlan = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const supabase = await db();
     const { id, ...saveData } = data;
+    
+    console.log("[savePlan] Data received:", { id, ...saveData });
 
     const sanitizedData: any = { ...saveData };
     Object.keys(sanitizedData).forEach((key) => {

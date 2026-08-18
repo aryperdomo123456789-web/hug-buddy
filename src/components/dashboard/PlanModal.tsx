@@ -16,7 +16,6 @@ export function PlanModal({ plan, onClose, onSave, loading, odinPackages = [], b
   const [bouquetSearch, setBouquetSearch] = useState("");
   
   const [data, setData] = useState<Plan>(plan || { 
-    id: "",
     name: "", 
     connections: 1, 
     duration: 1, 
