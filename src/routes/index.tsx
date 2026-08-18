@@ -641,6 +641,7 @@ function DashboardPage() {
         <PlanModal
           plan={editingPlan}
           loading={loading}
+          bouquets={bouquets}
           onClose={() => {
             setShowPlanModal(false);
             setEditingPlan(null);
