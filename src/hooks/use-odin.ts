@@ -145,7 +145,7 @@ export function useOdinData(initialData: OdinSnapshot | null = null, initialSync
   const retryTimeout = useRef<any>(null);
   const consecutiveFailures = useRef(0);
   const trafficSnapshot = useRef<Record<string, { ts: number; sent: number; received: number }>>(loadTrafficSnapshot());
-  const pollIntervalMs = 15000;
+  const pollIntervalMs = 30000;
   const maxQuietRetries = 3;
 
   const clearRetryTimeout = () => {
@@ -175,7 +175,10 @@ export function useOdinData(initialData: OdinSnapshot | null = null, initialSync
       customers.length > 0 || servers.length > 0 || streams.length > 0 || bouquets.length > 0 || resellers.length > 0;
 
     try {
-      const response = await getOdinFullData();
+      const response = await getOdinFullData().catch(e => {
+        console.error("[useOdinData] Critical RPC error:", e);
+        return { success: false, error: e.message };
+      });
 
       if (response && (response as any).success && (response as any).data) {
         console.log("[useOdinData] Data received:", {
