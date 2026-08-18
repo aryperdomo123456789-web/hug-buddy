@@ -134,7 +134,7 @@ export function ConfigPanel() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await saveOdinConfig(form) as any;
+      const res = await (saveOdinConfig as any)({ data: form });
       if (!res?.success) {
         throw new Error(res?.error || "Falha ao salvar cadastro Odin");
       }

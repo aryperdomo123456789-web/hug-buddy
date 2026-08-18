@@ -220,7 +220,7 @@ function DashboardPage() {
     }
 
     fetchAll();
-  }, [data?.initialSnapshot]);
+  }, [data?.initialSnapshot, fetchAll]);
 
   const handleLogout = async () => {
     if (!window.confirm("Deseja realmente sair do Mago Panel?")) return;
@@ -467,7 +467,7 @@ function DashboardPage() {
                 source: "boundary",
                 phase: "render",
                 route: window.location.pathname,
-                componentStack: info.componentStack,
+                componentStack: info.componentStack || undefined,
               });
             }}
           >
