@@ -37,6 +37,16 @@ import { getCurrentPanelSession, logoutPanel } from "@/lib/panel-auth.functions"
 import { publishRuntimeError } from "@/lib/runtime-error-bus";
 import { toast } from "sonner";
 
+function toFiniteNumber(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const normalized = value.replace(/\s+/g, "").replace(/,/g, ".").replace(/[^0-9.+-]/g, "");
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+}
+
 function formatStableTime(value: number): string {
   return new Intl.DateTimeFormat("pt-BR", {
     timeZone: "America/Sao_Paulo",
@@ -169,6 +179,7 @@ function DashboardPage() {
     lastSyncAt,
     fetchAll,
     actions,
+    stats,
   } = useOdinData(data?.initialSnapshot ?? null, data?.initialSyncedAt ?? null);
 
   const lastSyncLabel = lastSyncAt
@@ -477,31 +488,31 @@ function DashboardPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   <StatCard 
                     label="Utilizadores Online" 
-                    value={loading ? "..." : (customers.filter(c => c.active_cons > 0).length)} 
+                    value={loading ? "..." : stats.onlineUsers} 
                     icon={Users} 
                     color="blue"
                     secondaryLabel="usuários em tempo real"
                   />
                   <StatCard 
                     label="Conexões Abertas" 
-                    value={loading ? "..." : (servers.reduce((acc, s) => acc + (s.live_connections || 0), 0))} 
+                    value={loading ? "..." : stats.openConnections} 
                     icon={Activity} 
                     color="green"
                     secondaryLabel="sessões em tempo real"
                   />
                   <StatCard 
                     label="Total Input" 
-                    value={loading ? "..." : (servers.reduce((acc, s) => acc + (s.input_mbps || 0), 0)).toFixed(2)} 
+                    value={loading ? "..." : (servers.reduce((acc, s) => acc + (toFiniteNumber(s.input_mbps) || 0), 0)).toFixed(2)} 
                     icon={Database} 
                     color="pink"
                     secondaryLabel="Mbps recebidos"
                   />
                   <StatCard 
                     label="Total Output" 
-                    value={loading ? "..." : (servers.reduce((acc, s) => acc + (s.output_mbps || 0), 0)).toFixed(2)} 
+                    value={loading ? "..." : (servers.reduce((acc, s) => acc + (toFiniteNumber(s.output_mbps) || 0), 0)).toFixed(2)} 
                     icon={Globe} 
                     color="gray"
-                    secondaryLabel={`${customers.length} clientes no ecossistema`}
+                    secondaryLabel={`${stats.totalUsers} clientes no ecossistema`}
                   />
                 </div>
                 
