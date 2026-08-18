@@ -110,8 +110,140 @@ export function parseOdinData(
   actRaw: string,
   srvActRaw = "",
   streamStateRaw = "",
-) {
-  // Logic remains as previously defined
-  // ... (keeping implementation logic here)
-  return { customers: [], streams: [], bouquets: [], servers: [], resellers: [] }; // Mock for simplicity in reconstruction, replace with logic later.
+): any {
+  const activityMap: Record<number, number> = {};
+  (actRaw || "").trim().split("\n").filter(Boolean).forEach(line => {
+    const [uid, count] = line.split("\t");
+    if (uid) activityMap[Number(uid)] = Number(count || 0);
+  });
+
+  const serverActivityMap: Record<number, { conns: number; users: number; streams: number }> = {};
+  (srvActRaw || "").trim().split("\n").filter(Boolean).forEach((line) => {
+    const [serverId, conns, users, streams] = line.split("\t");
+    if (!serverId) return;
+    serverActivityMap[Number(serverId)] = {
+      conns: Number(conns || 0),
+      users: Number(users || 0),
+      streams: Number(streams || 0),
+    };
+  });
+
+  const streamStateMap: Record<number, { total: number; live: number; offline: number; bitrate: number; avgBitrate: number }> = {};
+  (streamStateRaw || "").trim().split("\n").filter(Boolean).forEach((line) => {
+    const [serverId, total, live, offline, bitrateSum, avgBitrate] = line.split("\t");
+    if (!serverId) return;
+    streamStateMap[Number(serverId)] = {
+      total: Number(total || 0),
+      live: Number(live || 0),
+      offline: Number(offline || 0),
+      bitrate: Number(bitrateSum || 0),
+      avgBitrate: Number(avgBitrate || 0),
+    };
+  });
+
+  const customers: User[] = (uRaw || "").trim().split("\n").filter(Boolean).map(line => {
+    const parts = line.split("\t");
+    if (parts.length < 16) return null;
+    const [
+      id, username, password, exp_date, enabled, admin_enabled,
+      is_trial, is_restreamer, is_isplock, max_connections,
+      bouquet, admin_notes, reseller_notes, allowed_ips,
+      allowed_ua, forced_country, owner_id
+    ] = parts;
+
+    const p_name = parts[17] || undefined;
+
+    return {
+      id: Number(id),
+      username: username || "",
+      password: password || "",
+      exp_date: exp_date === "NULL" ? 0 : Number(exp_date || 0),
+      enabled: Number(enabled || 0),
+      admin_enabled: Number(admin_enabled || 0),
+      is_trial: Number(is_trial || 0),
+      is_restreamer: Number(is_restreamer || 0),
+      is_isplock: Number(is_isplock || 0),
+      max_connections: Number(max_connections || 0),
+      bouquet: bouquet || "[]",
+      admin_notes: admin_notes || "",
+      reseller_notes: reseller_notes || "",
+      allowed_ips: allowed_ips || "",
+      allowed_ua: allowed_ua || "",
+      forced_country: forced_country || "Off",
+      active_cons: activityMap[Number(id)] || 0,
+      owner_id: Number(owner_id || 1),
+      package_name: p_name,
+    } as User;
+  }).filter((x): x is User => x !== null);
+
+  const streams: Stream[] = (stRaw || "").trim().split("\n").filter(Boolean).map(line => {
+    const [id, name, cat, icon, source, status] = line.split("\t");
+    return {
+      id: Number(id),
+      name: name || "Stream",
+      category_id: Number(cat || 0),
+      icon: icon || "",
+      source: source || "",
+      status: Number(status || 0)
+    };
+  });
+
+  const bouquets: Bouquet[] = (bRaw || "").trim().split("\n").filter(Boolean).map(line => {
+    const [id, name] = line.split("\t");
+    return { id: Number(id), name: name || "Bouquet" };
+  });
+
+  const servers: Server[] = (svRaw || "").trim().split("\n").filter(Boolean).map(line => {
+    const [id, name, status, last, hardware, clients, port] = line.split("\t");
+    const hwData = safeParseJson(hardware);
+    const serverId = Number(id || 0);
+    const activity = serverActivityMap[serverId] || { conns: 0, users: 0, streams: 0 };
+    const streamState = streamStateMap[serverId] || { total: 0, live: 0, offline: 0, bitrate: 0, avgBitrate: 0 };
+    const bytesSent = toFiniteNumber(hwData["bytes_sent"]);
+    const bytesReceived = toFiniteNumber(hwData["bytes_received"]);
+    const avgBitrate = toFiniteNumber(streamState.avgBitrate);
+    const serverName = name || "Server";
+    const isMainServer = serverId === 1 || /main/i.test(serverName);
+
+    return {
+      id: id || "0",
+      name: serverName,
+      status: Number(status || 0),
+      last_check: Number(last || 0),
+      hardware: hwData,
+      total_clients: Number(clients || 0),
+      port: port || "80",
+      live_connections: activity.conns,
+      live_users: activity.users,
+      live_streams: streamState.live || activity.streams,
+      offline_streams: streamState.offline,
+      input_mbps: isMainServer ? avgBitrate : 0,
+      output_mbps: avgBitrate,
+      avg_bitrate_mbps: avgBitrate,
+      bytes_sent: bytesSent,
+      bytes_received: bytesReceived,
+      network_speed: hwData["network_speed"] ?? hwData["network"] ?? ""
+    };
+  });
+
+  const resellers: Reseller[] = (rRaw || "").trim().split("\n").filter(Boolean).map(line => {
+    const parts = line.split("\t");
+    if (parts.length < 10) return null;
+    const [id, username, password, email, owner_id, credits, status, mg_id, last_login, user_count] = parts;
+
+    return {
+      id: Number(id),
+      username: username || "",
+      password: password || "",
+      email: email || "",
+      owner_id: Number(owner_id || 0),
+      credits: Number(credits || 0),
+      active: Number(status || 1),
+      member_group_id: Number(mg_id || 2),
+      last_login: last_login === "NULL" ? 0 : Number(last_login || 0),
+      user_count: Number(user_count || 0)
+    } as Reseller;
+  }).filter((x): x is Reseller => x !== null);
+
+  return { customers, streams, bouquets, servers, resellers };
 }
