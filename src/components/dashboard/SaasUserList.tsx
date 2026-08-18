@@ -1,13 +1,16 @@
 import React, { useState } from "react";
-import { UserPlus, Shield, UserCheck, Search, Trash2, Key, X, Save } from "lucide-react";
+import { UserPlus, Shield, UserCheck, Search, Trash2, Key, X, Save, Settings, User } from "lucide-react";
 import { getSaasProfiles, changePassword } from "@/lib/saas.functions";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Reseller } from "@/types/odin";
 
-export function SaasUserList() {
+export function SaasUserList({ resellers = [] }: { resellers?: Reseller[] }) {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
+  const [editingProfile, setEditingProfile] = useState<any>(null);
+  const queryClient = useQueryClient();
 
   const { data: profiles, isLoading } = useQuery({
     queryKey: ["saas-profiles"],
