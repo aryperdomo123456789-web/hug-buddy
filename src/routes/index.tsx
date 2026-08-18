@@ -217,7 +217,7 @@ function DashboardPage() {
     const triggerInitialFetch = async () => {
       if (data?.initialSnapshot) {
         // Já temos dados do loader, apenas agenda o próximo sync silencioso
-        timeoutId = window.setTimeout(() => fetchAll(true, { trigger: "deferred_sync" }), 5000);
+        timeoutId = window.setTimeout(() => fetchAll(true, { trigger: "deferred_sync" }), 1000);
       } else {
         // Não temos dados, forçar carregamento inicial
         await fetchAll(false, { trigger: "initial_retry" });

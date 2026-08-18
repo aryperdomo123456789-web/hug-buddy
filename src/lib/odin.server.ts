@@ -49,7 +49,7 @@ export async function executeBatchQueries(queries: string[]): Promise<string[]> 
         port: cfg.sshPort,
         username: cfg.sshUsername,
         password: cfg.sshPassword,
-        readyTimeout: 30000,
+        readyTimeout: 45000,
         keepaliveInterval: 10000,
         compress: true,
       });
@@ -64,12 +64,21 @@ export async function executeBatchQueries(queries: string[]): Promise<string[]> 
         results.push("");
         continue;
       }
-      const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
+      // SQL via socket local para evitar problemas de permissão binded a 127.0.0.1
+      const mysqlCmd = `mysql -u root -p'${cfg.sshPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
       const result = await ssh.execCommand(mysqlCmd);
 
       if (result.code !== 0) {
-        console.error(`[SSH] Query Failed: ${result.stderr}`);
-        results.push("");
+        console.error(`[SSH] Query Failed (Code ${result.code}): ${result.stderr}`);
+        // Fallback para 127.0.0.1 se falhar sem host (alguns Odin v6 forçam 127.0.0.1)
+        const mysqlCmdFallback = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u root -p'${cfg.sshPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
+        const resultFallback = await ssh.execCommand(mysqlCmdFallback);
+        
+        if (resultFallback.code !== 0) {
+           results.push("");
+        } else {
+           results.push(resultFallback.stdout.replace(/\r/g, "") || "");
+        }
       } else {
         results.push(result.stdout.replace(/\r/g, "") || "");
       }
@@ -135,13 +144,15 @@ export function parseOdinData(
 
   const customers: User[] = (uRaw || "").trim().split("\n").filter(Boolean).map(line => {
     const parts = line.split("\t");
-    if (parts.length < 17) return null;
+    if (parts.length < 16) return null;
     const [
       id, username, password, exp_date, enabled, admin_enabled,
       is_trial, is_restreamer, is_isplock, max_connections,
       bouquet, admin_notes, reseller_notes, allowed_ips,
-      allowed_ua, forced_country, owner_id, package_name
+      allowed_ua, forced_country, owner_id
     ] = parts;
+
+    const p_name = parts[17] || undefined;
 
     return {
       id: Number(id),
@@ -162,7 +173,7 @@ export function parseOdinData(
       forced_country: forced_country || "Off",
       active_cons: activityMap[Number(id)] || 0,
       owner_id: Number(owner_id || 1),
-      package_name: package_name || undefined,
+      package_name: p_name,
     } as User;
   }).filter((x): x is User => x !== null);
 

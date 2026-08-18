@@ -155,35 +155,45 @@ async function executeBatchQueries(queries: string[]) {
   const cfg = await getConfig();
   
   try {
-    console.log(`[SSH] Tentando conectar em ${cfg.sshHost}:${cfg.sshPort}...`);
+    console.log(`[SSH] Conectando em ${cfg.sshHost}:${cfg.sshPort}...`);
     await ssh.connect({
       host: cfg.sshHost,
       port: cfg.sshPort,
       username: cfg.sshUsername,
       password: cfg.sshPassword,
-      readyTimeout: 20000,
+      readyTimeout: 45000,
+      keepaliveInterval: 10000,
     });
     
-    console.log(`[SSH] Conectado. Executando ${queries.length} queries...`);
+    console.log(`[SSH] Executando ${queries.length} queries via socket local...`);
     const results: string[] = [];
     
-    // Execução sequencial para evitar sobrecarga no MySQL remoto via tunnel
     for (const sql of queries) {
       if (!sql) {
         results.push("");
         continue;
       }
-      const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
+      // Tentativa 1: Socket Local (mais provável para root)
+      const mysqlCmd = `mysql -u root -p'${cfg.sshPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
       const result = await ssh.execCommand(mysqlCmd);
-      results.push(result.stdout.trim() || "");
+      
+      if (result.code !== 0) {
+        console.warn(`[SSH] Query via socket falhou, tentando 127.0.0.1...`);
+        // Tentativa 2: 127.0.0.1 (fallback)
+        const mysqlCmdFallback = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u root -p'${cfg.sshPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
+        const resultFallback = await ssh.execCommand(mysqlCmdFallback);
+        results.push(resultFallback.stdout.trim() || "");
+      } else {
+        results.push(result.stdout.trim() || "");
+      }
     }
     
     ssh.dispose();
     return results;
   } catch (error: any) {
-    console.error(`[SSH] Falha crítica:`, error.message);
+    console.error(`[SSH] Falha crítica no servidor:`, error.message);
     if (ssh.isConnected()) ssh.dispose();
-    throw error; // Lança para que o try/catch do handler capture
+    throw error;
   }
 }
 
@@ -255,14 +265,16 @@ export const getOdinFullData = createServerFn({ method: "GET" })
 
       const customers = (uRaw || "").trim().split("\n").filter(Boolean).map(line => {
         const parts = line.split("\t");
-        if (parts.length < 17) return null;
+        if (parts.length < 16) return null;
         
         const [
           id, username, password, exp_date, enabled, admin_enabled, 
           is_trial, is_restreamer, is_isplock, max_connections, 
           bouquet, admin_notes, reseller_notes, allowed_ips, 
-          allowed_ua, forced_country, owner_id, package_name
+          allowed_ua, forced_country, owner_id
         ] = parts;
+        
+        const package_name = parts[17] || undefined;
         
         return normalizeLegacyId({
           id: Number(id),
