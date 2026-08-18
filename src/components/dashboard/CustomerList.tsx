@@ -70,7 +70,7 @@ export function CustomerList({
   
   const copySalesMessage = (u: User) => {
     try {
-      const template = settings?.default_message_template?.template || "";
+      const template = settings?.['default_message_template']?.template || "";
       if (!template) {
         toast.error("Template de mensagem não configurado");
         return;

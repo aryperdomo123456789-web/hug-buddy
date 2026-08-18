@@ -330,6 +330,8 @@ function DashboardPage() {
               <CustomerList 
                 customers={customers}
                 resellers={resellers}
+                plans={plans}
+                settings={settings}
                 loading={loading}
                 onRefresh={() => fetchAll(false)}
                 onAdd={() => { setEditingUser(null); setShowUserModal(true); }}
