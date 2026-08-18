@@ -248,10 +248,10 @@ function DashboardPage() {
         const password = res.data.password;
         
         // Pegar DNS padrão ou dns_host do plano
-        const dns = settings.dns || window.location.origin;
+        const dns = (settings as any)['dns'] || window.location.origin;
         const dnsHost = plan.dns_host || dns.replace(/^https?:\/\//, '');
         
-        const template = plan.template || settings.global_template || "";
+        const template = plan.template || (settings as any)['global_template'] || "";
         
         const processed = template
           .replace(/{username}/g, username)
@@ -283,7 +283,7 @@ function DashboardPage() {
     }
 
     try {
-      const res = await deleteUser({ data: { id: user.id } });
+      const res = await actions.deleteUser({ data: { id: user.id } });
       if (res.success) {
         toast.success("Usuário removido com sucesso");
         fetchAll(false);
