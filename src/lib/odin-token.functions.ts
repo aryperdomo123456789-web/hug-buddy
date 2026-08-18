@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-
-import { requirePanelAuth } from "./panel-auth.server";
+import { z } from "zod";
+import { requirePanelAuth } from "./panel-auth.middleware";
 import type { OdinProvisionScope } from "@/lib/odin-token.server";
 
 async function assertAdmin(context: any) {
@@ -26,9 +26,9 @@ export const createOdinProvisionToken = createServerFn({ method: "POST" })
     const created = mod.createProvisionToken({
       name: data.name,
       scope: data.scope,
-      note: data.note,
+      note: data.note || "",
       createdBy: context.userId,
-      expiresInDays: data.expiresInDays,
+      expiresInDays: data.expiresInDays ?? null,
     });
 
     return {

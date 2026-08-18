@@ -13,10 +13,12 @@ import {
   Download,
   Filter,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  MessageSquare
 } from "lucide-react";
 import { toast } from "sonner";
 import { generateM3ULink } from "@/lib/server.functions";
+import { Plan } from "@/types/odin";
 
 function formatStableDate(value: number): string {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -30,6 +32,8 @@ function formatStableDate(value: number): string {
 interface CustomerListProps {
   customers: User[];
   resellers: any[];
+  plans: Plan[];
+  settings: Record<string, any>;
   loading: boolean;
   onRefresh: () => void;
   onDelete: (user: User) => Promise<void>;
@@ -42,7 +46,9 @@ interface CustomerListProps {
 export function CustomerList({ 
   customers, 
   resellers,
-  loading, 
+  plans,
+  settings,
+  loading,
 
   onRefresh, 
   onDelete, 
@@ -53,8 +59,43 @@ export function CustomerList({
 }: CustomerListProps) {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("all");
+  const [resellerFilter, setResellerFilter] = React.useState("all");
   const [perPage, setPerPage] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
+
+  const copySalesMessage = (u: User) => {
+    try {
+      // 1. Get plan-specific template or fallback to global template
+      const userPlan = plans.find(p => p.name === u.package_name);
+      const globalTemplate = settings?.['global_template'] || "";
+      const template = userPlan?.template || globalTemplate;
+
+      if (!template) {
+        toast.error("Template de mensagem não configurado (Global ou no Plano)");
+        return;
+      }
+
+      // 2. Fetch DNS config for links
+      const dns = settings?.['dns_config']?.host || window.location.origin;
+
+      // 3. Simple placeholder replacement
+      let msg = template
+        .replace(/{username}/g, u.username)
+        .replace(/{password}/g, u.password)
+        .replace(/{connections}/g, String(u.max_connections))
+        .replace(/{package}/g, u.package_name || userPlan?.name || 'N/A')
+        .replace(/{plan_price}/g, userPlan?.plan_price ? `R$ ${Number(userPlan.plan_price).toFixed(2)}` : (userPlan?.price ? `R$ ${Number(userPlan.price).toFixed(2)}` : 'N/A'))
+        .replace(/{pay_url}/g, userPlan?.pay_url || 'N/A')
+        .replace(/{dns}/g, dns)
+        .replace(/{dns_host}/g, userPlan?.dns_host || dns.replace(/^https?:\/\//, ''))
+        .replace(/{expires_at}/g, u.exp_date ? new Date(u.exp_date * 1000).toLocaleDateString('pt-BR') : 'Ilimitado');
+      
+      navigator.clipboard.writeText(msg);
+      toast.success("Mensagem de venda copiada!");
+    } catch (e) {
+      toast.error("Erro ao gerar mensagem");
+    }
+  };
 
   const filteredCustomers = React.useMemo(() => {
     let result = customers;
@@ -80,8 +121,13 @@ export function CustomerList({
       }
     }
 
+    // Reseller filter
+    if (resellerFilter !== "all") {
+      result = result.filter(c => c.owner_id === Number(resellerFilter));
+    }
+
     return result;
-  }, [customers, searchTerm, statusFilter]);
+  }, [customers, searchTerm, statusFilter, resellerFilter]);
 
   const totalPages = Math.ceil(filteredCustomers.length / perPage);
   const paginatedCustomers = React.useMemo(() => {
@@ -92,7 +138,7 @@ export function CustomerList({
   // Reset page when filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, perPage]);
+  }, [searchTerm, statusFilter, resellerFilter, perPage]);
 
   return (
     <section className="bg-[#0f0f12] rounded-2xl border border-zinc-800 shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -127,6 +173,20 @@ export function CustomerList({
               <option value="trial">Teste</option>
               <option value="official">Official</option>
               <option value="expired">Expirado</option>
+            </select>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <UserPlus size={14} className="text-zinc-500" />
+            <select 
+              value={resellerFilter}
+              onChange={(e) => setResellerFilter(e.target.value)}
+              className="bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-zinc-300 focus:outline-none focus:border-blue-500 transition-all cursor-pointer min-w-[140px]"
+            >
+              <option value="all">Todos os Revendedores</option>
+              {resellers.map(r => (
+                <option key={r.id} value={r.id}>{r.username}</option>
+              ))}
             </select>
           </div>
 
@@ -247,6 +307,13 @@ export function CustomerList({
                         title="Download Playlist / Copiar Link"
                       >
                         <Download size={14} />
+                      </button>
+                      <button 
+                        onClick={() => copySalesMessage(u)} 
+                        className="p-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-blue-500 rounded-lg border border-zinc-800 transition-all"
+                        title="Copiar Dados de Acesso"
+                      >
+                        <MessageSquare size={14} />
                       </button>
                       <button onClick={() => onEdit(u)} className="p-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-blue-500 rounded-lg border border-zinc-800 transition-all">
                         <Settings size={14} />

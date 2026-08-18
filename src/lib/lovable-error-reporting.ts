@@ -1,5 +1,3 @@
-import { publishRuntimeError } from "./runtime-error-bus";
-
 type LovableErrorOptions = {
   mechanism?: "manual" | "onerror" | "unhandledrejection" | "react_error_boundary";
   handled?: boolean;
@@ -27,11 +25,21 @@ declare global {
 
 export function reportLovableError(error: unknown, context: Record<string, unknown> = {}) {
   if (typeof window === "undefined") return;
-  publishRuntimeError(error, {
-    source: "manual",
-    phase: "manual",
-    route: window.location.pathname,
-  });
+  
+  // Ignorar erros de aborto benignos (cancelamento de requisição, refresh, etc.)
+  const messageStr = (error instanceof Error ? error.message : String(error || "")).toLowerCase();
+  const stackStr = (error instanceof Error ? error.stack || "" : "").toLowerCase();
+  if (
+    messageStr === "error: aborted" || 
+    messageStr === "aborted" || 
+    messageStr.includes("aborterror") ||
+    stackStr.includes("abortincoming") ||
+    stackStr.includes("socketonclose") ||
+    stackStr.includes("node:_http_server")
+  ) {
+    return;
+  }
+
   window.__lovableEvents?.captureException?.(
     error,
     {

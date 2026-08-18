@@ -17,13 +17,13 @@ function toFiniteNumber(value: unknown): number {
   return 0;
 }
 
-function safeParseJson(value: unknown): Record<string, unknown> {
+function safeParseJson(value: unknown): Record<string, any> {
   if (typeof value !== "string" || !value.trim()) return {};
   try {
-    return JSON.parse(value.trim()) as Record<string, unknown>;
+    return JSON.parse(value.trim()) as Record<string, any>;
   } catch {
     try {
-      return JSON.parse(value.replace(/\r/g, "").replace(/\n/g, "")) as Record<string, unknown>;
+      return JSON.parse(value.replace(/\r/g, "").replace(/\n/g, "")) as Record<string, any>;
     } catch {
       return {};
     }
@@ -43,16 +43,17 @@ export async function executeBatchQueries(queries: string[]): Promise<string[]> 
         }
       }
       cachedSsh = new NodeSSH();
-      console.log(`[SSH] Connecting to ${cfg.sshHost}...`);
+      console.log(`[SSH] Connecting to ${cfg.sshHost}:${cfg.sshPort} as ${cfg.sshUsername}...`);
       await cachedSsh.connect({
         host: cfg.sshHost,
         port: cfg.sshPort,
         username: cfg.sshUsername,
         password: cfg.sshPassword,
-        readyTimeout: 30000,
-        keepaliveInterval: 10000,
+        readyTimeout: 60000,
+        keepaliveInterval: 5000,
         compress: true,
       });
+      console.log(`[SSH] Connection established.`);
     }
 
     lastSshUsage = Date.now();
@@ -64,12 +65,21 @@ export async function executeBatchQueries(queries: string[]): Promise<string[]> 
         results.push("");
         continue;
       }
-      const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
+      
+      const mysqlCmd = `mysql -h ${cfg.dbHost} -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
+      console.log(`[SSH] Executing SQL on ${cfg.dbName}...`);
       const result = await ssh.execCommand(mysqlCmd);
 
       if (result.code !== 0) {
-        console.error(`[SSH] Query Failed: ${result.stderr}`);
-        results.push("");
+        const mysqlCmdFallback = `mysql -u root -p'${cfg.sshPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
+        const resultFallback = await ssh.execCommand(mysqlCmdFallback);
+        
+        if (resultFallback.code !== 0) {
+           console.error(`[SSH] Fallback root falhou: ${resultFallback.stderr}`);
+           results.push("");
+        } else {
+           results.push(resultFallback.stdout.replace(/\r/g, "") || "");
+        }
       } else {
         results.push(result.stdout.replace(/\r/g, "") || "");
       }
@@ -102,7 +112,9 @@ export function parseOdinData(
   actRaw: string,
   srvActRaw = "",
   streamStateRaw = "",
-) {
+  packagesRaw = "",
+): any {
+
   const activityMap: Record<number, number> = {};
   (actRaw || "").trim().split("\n").filter(Boolean).forEach(line => {
     const [uid, count] = line.split("\t");
@@ -120,26 +132,31 @@ export function parseOdinData(
     };
   });
 
-  const streamStateMap: Record<number, { total: number; live: number; offline: number }> = {};
+  const streamStateMap: Record<number, { total: number; live: number; offline: number; bitrate: number; avgBitrate: number }> = {};
   (streamStateRaw || "").trim().split("\n").filter(Boolean).forEach((line) => {
-    const [serverId, total, live, offline] = line.split("\t");
+    const [serverId, total, live, offline, bitrateSum, avgBitrate] = line.split("\t");
     if (!serverId) return;
     streamStateMap[Number(serverId)] = {
       total: Number(total || 0),
       live: Number(live || 0),
       offline: Number(offline || 0),
+      bitrate: Number(bitrateSum || 0),
+      avgBitrate: Number(avgBitrate || 0),
     };
   });
 
   const customers: User[] = (uRaw || "").trim().split("\n").filter(Boolean).map(line => {
     const parts = line.split("\t");
-    if (parts.length < 17) return null;
+    // Odin v6 users table: [id, username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, reseller_notes, allowed_ips, allowed_ua, forced_country, owner_id, package_name]
+    if (parts.length < 16) return null;
     const [
       id, username, password, exp_date, enabled, admin_enabled,
       is_trial, is_restreamer, is_isplock, max_connections,
       bouquet, admin_notes, reseller_notes, allowed_ips,
       allowed_ua, forced_country, owner_id
     ] = parts;
+
+    const p_name = parts[17] || "";
 
     return {
       id: Number(id),
@@ -159,7 +176,8 @@ export function parseOdinData(
       allowed_ua: allowed_ua || "",
       forced_country: forced_country || "Off",
       active_cons: activityMap[Number(id)] || 0,
-      owner_id: Number(owner_id || 1)
+      owner_id: Number(owner_id || 1),
+      package_name: p_name,
     } as User;
   }).filter((x): x is User => x !== null);
 
@@ -185,9 +203,9 @@ export function parseOdinData(
     const hwData = safeParseJson(hardware);
     const serverId = Number(id || 0);
     const activity = serverActivityMap[serverId] || { conns: 0, users: 0, streams: 0 };
-    const streamState = streamStateMap[serverId] || { total: 0, live: 0, offline: 0, avgBitrate: 0 };
-    const bytesSent = toFiniteNumber(hwData.bytes_sent);
-    const bytesReceived = toFiniteNumber(hwData.bytes_received);
+    const streamState = streamStateMap[serverId] || { total: 0, live: 0, offline: 0, bitrate: 0, avgBitrate: 0 };
+    const bytesSent = toFiniteNumber(hwData["bytes_sent"]);
+    const bytesReceived = toFiniteNumber(hwData["bytes_received"]);
     const avgBitrate = toFiniteNumber(streamState.avgBitrate);
     const serverName = name || "Server";
     const isMainServer = serverId === 1 || /main/i.test(serverName);
@@ -209,7 +227,7 @@ export function parseOdinData(
       avg_bitrate_mbps: avgBitrate,
       bytes_sent: bytesSent,
       bytes_received: bytesReceived,
-      network_speed: hwData.network_speed ?? hwData.network ?? ""
+      network_speed: hwData["network_speed"] ?? hwData["network"] ?? ""
     };
   });
 
@@ -232,5 +250,28 @@ export function parseOdinData(
     } as Reseller;
   }).filter((x): x is Reseller => x !== null);
 
-  return { customers, streams, bouquets, servers, resellers };
+  const packages = (packagesRaw || "").trim().split("\n").filter(Boolean).map(line => {
+    const parts = line.split("\t");
+    const isTrial = Number(parts[14] || 0); // is_trial
+    
+    return {
+      id: Number(parts[0]),
+      name: parts[1] || "Package",
+      is_trial: isTrial === 1,
+      connections: Number(parts[23] || 1),
+      duration: isTrial ? Number(parts[12] || 0) : Number(parts[10] || 0),
+      duration_unit: (isTrial ? (parts[13] || "hours") : (parts[11] || "months")) as any,
+      bouquets: safeParseJson(parts[9] || "[]"),
+      can_gen_mag: Number(parts[17] || 1) === 1,
+      can_gen_enigma: Number(parts[19] || 1) === 1,
+      only_mag: Number(parts[18] || 0) === 1,
+      only_enigma: Number(parts[20] || 0) === 1,
+      lock_stb: Number(parts[21] || 0) === 1,
+      is_restream: Number(parts[22] || 0) === 1
+    };
+  });
+
+  return { customers, streams, bouquets, servers, resellers, packages };
 }
+
+

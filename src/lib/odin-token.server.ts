@@ -280,27 +280,27 @@ export function verifyProvisionToken(plainToken: string): OdinProvisionTokenPubl
 }
 
 async function createResellerWithOdin(payload: Record<string, any>): Promise<number> {
-  const username = String(payload.username || "").trim();
-  const password = String(payload.password || "").trim();
-  const email = String(payload.email || "").trim();
+  const username = String(payload["username"] || "").trim();
+  const password = String(payload["password"] || "").trim();
+  const email = String(payload["email"] || "").trim();
 
   if (!username || !password || !email) {
     throw new Error("Campos obrigatórios para revenda: username, password e email.");
   }
 
-  const sql = `INSERT INTO reg_users (username, password, email, owner_id, credits, status, member_group_id) VALUES ('${escapeSql(username)}', '${escapeSql(password)}', '${escapeSql(email)}', ${parseMaybeNumber(payload.owner_id, 0)}, ${parseMaybeNumber(payload.credits, 0)}, ${parseMaybeNumber(payload.active, 1)}, ${parseMaybeNumber(payload.member_group_id, 2)})`;
+  const sql = `INSERT INTO reg_users (username, password, email, owner_id, credits, status, member_group_id) VALUES ('${escapeSql(username)}', '${escapeSql(password)}', '${escapeSql(email)}', ${parseMaybeNumber(payload["owner_id"], 0)}, ${parseMaybeNumber(payload["credits"], 0)}, ${parseMaybeNumber(payload["active"], 1)}, ${parseMaybeNumber(payload["member_group_id"], 2)})`;
   return execInsertReturningId(sql);
 }
 
 async function createCustomerWithOdin(payload: Record<string, any>): Promise<number> {
-  const username = String(payload.username || "").trim();
-  const password = String(payload.password || "").trim();
+  const username = String(payload["username"] || "").trim();
+  const password = String(payload["password"] || "").trim();
   if (!username || !password) {
     throw new Error("Campos obrigatórios para cliente: username e password.");
   }
 
-  const expDate = parseMaybeNumber(payload.exp_date, Math.floor(Date.now() / 1000) + 86400 * 30);
-  const sql = `INSERT INTO users (username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, allowed_ips, allowed_ua, forced_country, created_by) VALUES ('${escapeSql(username)}', '${escapeSql(password)}', ${expDate}, ${parseMaybeNumber(payload.enabled, 1)}, ${parseMaybeNumber(payload.admin_enabled, 1)}, ${parseMaybeNumber(payload.is_trial, 0)}, ${parseMaybeNumber(payload.is_restreamer, 0)}, ${parseMaybeNumber(payload.is_isplock, 0)}, ${parseMaybeNumber(payload.max_connections, 1)}, '${escapeSql(String(payload.bouquet || "[]"))}', '${escapeSql(String(payload.admin_notes || ""))}', '${escapeSql(String(payload.allowed_ips || ""))}', '${escapeSql(String(payload.allowed_ua || ""))}', '${escapeSql(String(payload.forced_country || "Off"))}', ${parseMaybeNumber(payload.owner_id, 1)})`;
+  const expDate = parseMaybeNumber(payload["exp_date"], Math.floor(Date.now() / 1000) + 86400 * 30);
+  const sql = `INSERT INTO users (username, password, exp_date, enabled, admin_enabled, is_trial, is_restreamer, is_isplock, max_connections, bouquet, admin_notes, allowed_ips, allowed_ua, forced_country, created_by) VALUES ('${escapeSql(username)}', '${escapeSql(password)}', ${expDate}, ${parseMaybeNumber(payload["enabled"], 1)}, ${parseMaybeNumber(payload["admin_enabled"], 1)}, ${parseMaybeNumber(payload["is_trial"], 0)}, ${parseMaybeNumber(payload["is_restreamer"], 0)}, ${parseMaybeNumber(payload["is_isplock"], 0)}, ${parseMaybeNumber(payload["max_connections"], 1)}, '${escapeSql(String(payload["bouquet"] || "[]"))}', '${escapeSql(String(payload["admin_notes"] || ""))}', '${escapeSql(String(payload["allowed_ips"] || ""))}', '${escapeSql(String(payload["allowed_ua"] || ""))}', '${escapeSql(String(payload["forced_country"] || "Off"))}', ${parseMaybeNumber(payload["owner_id"], 1)})`;
   return execInsertReturningId(sql);
 }
 

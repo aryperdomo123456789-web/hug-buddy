@@ -96,8 +96,8 @@ function getServerMetrics(server: Server) {
   const ram = pickMetric(hardware, ["ram_usage", "ram_percent", "memory_usage"], 0);
   const totalRam = pickMetric(hardware, ["total_ram", "ram_total", "memory_total"], 0);
   const usedRam = pickMetric(hardware, ["total_used", "ram_used", "memory_used"], 0);
-  const network = formatSpeed(server.network_speed ?? hardware.network_speed ?? hardware.net_speed ?? hardware.network ?? hardware.speed);
-  const uptime = formatUptime(hardware.uptime ?? hardware.last_check ?? server.last_check);
+  const network = formatSpeed(server.network_speed ?? hardware["network_speed"] ?? hardware["net_speed"] ?? hardware["network"] ?? hardware["speed"]);
+  const uptime = formatUptime(hardware["uptime"] ?? hardware["last_check"] ?? server.last_check);
 
   return {
     connections,
@@ -164,8 +164,8 @@ function ServerCard({ server }: { server: Server }) {
   const online = Number(server.status) === 1;
   const hardware = getHardware(server);
   const cpuName =
-    typeof hardware.cpu_name === "string" && hardware.cpu_name.trim() ? hardware.cpu_name.trim() : "Desconhecido";
-  const kernel = typeof hardware.kernel === "string" && hardware.kernel.trim() ? hardware.kernel.trim() : "N/A";
+    typeof hardware["cpu_name"] === "string" && hardware["cpu_name"].trim() ? hardware["cpu_name"].trim() : "Desconhecido";
+  const kernel = typeof hardware["kernel"] === "string" && hardware["kernel"].trim() ? hardware["kernel"].trim() : "N/A";
 
   return (
     <section

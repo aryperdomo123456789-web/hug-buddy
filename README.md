@@ -12,6 +12,7 @@ O desenho do projeto é de `control plane`:
 
 Toda a inteligência e mapeamento do projeto estão centralizados na pasta `docs/`:
 
+- [**Arquitetura Especialista SaaS**](./docs/odin/ARQUITETURA_ESPECIALISTA.md) - Visão técnica da integração MariaDB + SaaS.
 - [**Guia Especialista Odin**](./docs/odin/GUIA_ESPECIALISTA_ODIN.md) - Manual técnico profundo do sistema de streaming.
 - [**Infraestrutura e Acesso**](./docs/odin/INFRAESTRUTURA.md) - Detalhes de conexão SSH, Banco de Dados e API.
 - [**Dicionário MariaDB**](./docs/odin/MARIA_DB_ODIN) - Mapeamento de tabelas e campos do Odin v6.

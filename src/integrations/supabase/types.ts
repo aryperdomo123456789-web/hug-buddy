@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       dns_configs: {
         Row: {
           created_at: string | null
@@ -35,6 +53,93 @@ export type Database = {
           id?: string
           is_default?: boolean | null
           name?: string
+        }
+        Relationships: []
+      }
+      plans: {
+        Row: {
+          bouquets: Json | null
+          can_gen_enigma: boolean | null
+          can_gen_mag: boolean | null
+          connections: number | null
+          created_at: string | null
+          dns_host: string | null
+          duration: number | null
+          duration_unit: string | null
+          has_adult_content: boolean | null
+          id: string
+          is_restream: boolean | null
+          is_trial: boolean | null
+          lock_stb: boolean | null
+          name: string
+          odin_package_id: number | null
+          odin_server_id: string | null
+          only_enigma: boolean | null
+          only_mag: boolean | null
+          output_formats: Json | null
+          pay_url: string | null
+          plan_price: number | null
+          price: number | null
+          sort_order: number | null
+          status: string | null
+          template: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bouquets?: Json | null
+          can_gen_enigma?: boolean | null
+          can_gen_mag?: boolean | null
+          connections?: number | null
+          created_at?: string | null
+          dns_host?: string | null
+          duration?: number | null
+          duration_unit?: string | null
+          has_adult_content?: boolean | null
+          id?: string
+          is_restream?: boolean | null
+          is_trial?: boolean | null
+          lock_stb?: boolean | null
+          name: string
+          odin_package_id?: number | null
+          odin_server_id?: string | null
+          only_enigma?: boolean | null
+          only_mag?: boolean | null
+          output_formats?: Json | null
+          pay_url?: string | null
+          plan_price?: number | null
+          price?: number | null
+          sort_order?: number | null
+          status?: string | null
+          template?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bouquets?: Json | null
+          can_gen_enigma?: boolean | null
+          can_gen_mag?: boolean | null
+          connections?: number | null
+          created_at?: string | null
+          dns_host?: string | null
+          duration?: number | null
+          duration_unit?: string | null
+          has_adult_content?: boolean | null
+          id?: string
+          is_restream?: boolean | null
+          is_trial?: boolean | null
+          lock_stb?: boolean | null
+          name?: string
+          odin_package_id?: number | null
+          odin_server_id?: string | null
+          only_enigma?: boolean | null
+          only_mag?: boolean | null
+          output_formats?: Json | null
+          pay_url?: string | null
+          plan_price?: number | null
+          price?: number | null
+          sort_order?: number | null
+          status?: string | null
+          template?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }

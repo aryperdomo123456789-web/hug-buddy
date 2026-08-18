@@ -9,7 +9,9 @@ import {
   toggleUserStatus,
   createReseller,
   updateReseller,
-  deleteReseller
+  deleteReseller,
+  getPlans,
+  getAppSettings
 } from "@/lib/server.functions";
 import type { OdinSnapshot } from "@/types/odin";
 import { publishRuntimeError } from "@/lib/runtime-error-bus";
@@ -68,7 +70,7 @@ function normalizeBouquetValue(value: unknown): string {
       .map((item) => {
         if (item && typeof item === "object") {
           const candidate = item as Record<string, unknown>;
-          return toLegacyId(candidate.id ?? candidate.M_ID ?? candidate.m_id);
+          return toLegacyId(candidate["id"] ?? candidate["M_ID"] ?? candidate["m_id"]);
         }
         return toLegacyId(item);
       })
@@ -78,7 +80,7 @@ function normalizeBouquetValue(value: unknown): string {
 
   if (value && typeof value === "object") {
     const candidate = value as Record<string, unknown>;
-    const ids = [candidate.id, candidate.M_ID, candidate.m_id]
+    const ids = [candidate["id"], candidate["M_ID"], candidate["m_id"]]
       .map((item) => toLegacyId(item))
       .filter((id) => id > 0);
     return JSON.stringify(ids);
@@ -118,7 +120,7 @@ function normalizeCustomerRecord(customer: any) {
 }
 
 function normalizeSimpleRecord<T extends Record<string, any>>(record: T, fallbackId: unknown) {
-  const id = toLegacyId(record?.id ?? record?.M_ID ?? record?.m_id ?? fallbackId);
+  const id = toLegacyId(record?.["id"] ?? record?.["M_ID"] ?? record?.["m_id"] ?? fallbackId);
   return {
     ...record,
     id,
@@ -135,13 +137,15 @@ export function useOdinData(initialData: OdinSnapshot | null = null, initialSync
   const [streams, setStreams] = useState<any[]>(initialData?.streams || []);
   const [bouquets, setBouquets] = useState<any[]>(initialData?.bouquets || []);
   const [resellers, setResellers] = useState<any[]>(initialData?.resellers || []);
+  const [plans, setPlans] = useState<any[]>([]);
+  const [settings, setSettings] = useState<Record<string, any>>({});
   const isFetching = useRef(false);
   const lastFetch = useRef(0);
   const pollInterval = useRef<any>(null);
   const retryTimeout = useRef<any>(null);
   const consecutiveFailures = useRef(0);
   const trafficSnapshot = useRef<Record<string, { ts: number; sent: number; received: number }>>(loadTrafficSnapshot());
-  const pollIntervalMs = 15000;
+  const pollIntervalMs = 10000;
   const maxQuietRetries = 3;
 
   const clearRetryTimeout = () => {
@@ -149,6 +153,25 @@ export function useOdinData(initialData: OdinSnapshot | null = null, initialSync
       clearTimeout(retryTimeout.current);
       retryTimeout.current = null;
     }
+  };
+
+  const isBenignAbortError = (error: unknown): boolean => {
+    const message = (
+      error instanceof Error ? `${error.name}: ${error.message}` : String(error ?? "")
+    ).toLowerCase();
+    const stack = error instanceof Error ? (error.stack || "").toLowerCase() : "";
+
+    return (
+      message === "error: aborted" ||
+      message.trim() === "aborted" ||
+      message.includes("aborterror") ||
+      message.includes("the operation was aborted") ||
+      message.includes("the user aborted a request") ||
+      message.includes("request aborted") ||
+      stack.includes("abortincoming") ||
+      stack.includes("socketonclose") ||
+      stack.includes("node:_http_server")
+    );
   };
 
   const isTransportError = (error: unknown) => {
@@ -166,20 +189,40 @@ export function useOdinData(initialData: OdinSnapshot | null = null, initialSync
     if (isFetching.current) return;
 
     isFetching.current = true;
-    if (!quiet) setLoading(true);
+    if (!quiet) {
+      setLoading(true);
+      // Timeout de segurança para resetar o loading caso o RPC trave
+      setTimeout(() => {
+        if (isFetching.current) {
+          console.warn("[useOdinData] RPC timeout detected, resetting loading state.");
+          setLoading(false);
+          isFetching.current = false;
+        }
+      }, 45000); 
+    }
     const hadDataBeforeFetch =
       customers.length > 0 || servers.length > 0 || streams.length > 0 || bouquets.length > 0 || resellers.length > 0;
 
     try {
-      const response = await getOdinFullData();
+      const response = await getOdinFullData().catch(e => {
+        if (isBenignAbortError(e)) return null;
+        console.error("[useOdinData] Critical RPC error:", e);
+        return { success: false, error: e.message };
+      });
 
-      if (response?.success && response.data) {
+      if (!response) {
+        isFetching.current = false;
+        return;
+      }
+
+      if (response && (response as any).success && (response as any).data) {
+        const rawData = (response as any).data;
         console.log("[useOdinData] Data received:", {
-          customers: response.data.customers?.length,
-          servers: response.data.servers?.length,
-          streams: response.data.streams?.length
+          customers: rawData.customers?.length,
+          servers: rawData.servers?.length,
+          streams: rawData.streams?.length
         });
-        const { customers, streams, bouquets, servers, resellers } = response.data;
+        const { customers, streams, bouquets, servers, resellers } = rawData;
         const now = Date.now();
         const normalizedCustomers = (customers || [])
           .map((customer: any) => normalizeCustomerRecord(customer))
@@ -240,16 +283,35 @@ export function useOdinData(initialData: OdinSnapshot | null = null, initialSync
         setLastSyncAt(lastFetch.current);
         consecutiveFailures.current = 0;
         clearRetryTimeout();
+
+        // Fetch local Supabase data (Plans/Settings)
+        try {
+          const [plansData, settingsData] = await Promise.all([
+            getPlans(),
+            getAppSettings()
+          ]);
+          setPlans(plansData);
+          setSettings(settingsData);
+        } catch (err) {
+          console.error("[useOdinData] Supabase fetch error:", err);
+        }
       } else if (!quiet) {
-        const message = response?.error || "Falha ao carregar dados do Odin.";
+        const message = (response as any)?.error || "Falha ao carregar dados do Odin.";
         console.error("[useOdinData] Response failure:", message);
-        publishRuntimeError(new Error(message), {
-          source: "manual",
-          phase: "effect",
-          route: typeof window !== "undefined" ? window.location.pathname : "/",
-        });
+        if (!isBenignAbortError(message)) {
+          publishRuntimeError(new Error(String(message)), {
+            source: "manual",
+            phase: "effect",
+            route: typeof window !== "undefined" ? window.location.pathname : "/",
+          });
+        }
       }
     } catch (e: any) {
+      if (isBenignAbortError(e)) {
+        isFetching.current = false;
+        setLoading(false);
+        return;
+      }
       consecutiveFailures.current += 1;
       const transient = isTransportError(e);
       const contextDetails = [
@@ -359,6 +421,8 @@ export function useOdinData(initialData: OdinSnapshot | null = null, initialSync
     streams,
     bouquets,
     resellers,
+    plans,
+    settings,
     stats,
     fetchAll,
     actions: {

@@ -4,8 +4,6 @@ description: Plano para transformar o Mago Panel em um sistema SaaS com gestão 
 type: feature
 ---
 
-> Regra de arquitetura: o Odin oficial permanece intocado. O Mago Panel é a camada SaaS, de leitura e provisionamento seguro.
-
 # Plano de Implementação SaaS
 
 ## 1. Infraestrutura de Identidade (Supabase)
@@ -16,10 +14,10 @@ type: feature
   - `full_name` (text)
 
 ## 2. Lógica de Acesso e Permissões (RLS)
-- **Admin (Dono)**:
+- **Admin (Dono)**: 
   - Acesso total: vê todos os clientes, todos os revendedores Odin.
   - Pode mover clientes entre revendedores (update `created_by` na tabela `users` do Odin).
-- **Reseller (Comum)**:
+- **Reseller (Comum)**: 
   - Acesso restrito: vinculado a um `odin_reseller_id`.
   - Só vê clientes onde `created_by` == `odin_reseller_id`.
   - Ao criar clientes, `created_by` é forçado para o seu ID.

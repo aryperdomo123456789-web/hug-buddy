@@ -1,0 +1,11 @@
+ALTER TABLE public.plans 
+ADD COLUMN IF NOT EXISTS can_gen_mag BOOLEAN DEFAULT true,
+ADD COLUMN IF NOT EXISTS can_gen_enigma BOOLEAN DEFAULT true,
+ADD COLUMN IF NOT EXISTS only_mag BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS only_enigma BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS lock_stb BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS is_restream BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS output_formats JSONB DEFAULT '["m3u8", "ts"]';
+
+GRANT ALL ON public.plans TO authenticated;
+GRANT ALL ON public.plans TO service_role;

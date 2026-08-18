@@ -1,5 +1,34 @@
 import { z } from "zod";
 
+export interface Plan {
+  id?: string;
+  name: string;
+  odin_server_id?: string | null;
+  odin_package_id?: number | null;
+  bouquets: number[];
+  connections: number;
+  duration: number;
+  duration_unit: 'minutes' | 'hours' | 'days' | 'months' | 'years';
+  price: number;
+  is_trial: boolean;
+  has_adult_content: boolean;
+  status: 'active' | 'inactive';
+  sort_order: number;
+  template?: string | null;
+  plan_price?: number | null;
+  pay_url?: string | null;
+  dns_host?: string | null;
+  created_at?: string;
+  // Odin parity fields
+  can_gen_mag?: boolean;
+  can_gen_enigma?: boolean;
+  only_mag?: boolean;
+  only_enigma?: boolean;
+  lock_stb?: boolean;
+  is_restream?: boolean;
+  output_formats?: string[];
+}
+
 export const UserSchema = z.object({
   id: z.number().optional(),
   username: z.string().default(""),
@@ -23,6 +52,7 @@ export const UserSchema = z.object({
   isp_info: z.string().default(""),
   last_ip: z.string().default(""),
   last_ua: z.string().default(""),
+  package_name: z.string().optional(),
 });
 
 export type User = z.infer<typeof UserSchema>;
@@ -57,7 +87,7 @@ export interface Server {
   name: string;
   status: number;
   last_check: number;
-  hardware: any;
+  hardware: Record<string, any>;
   total_clients: number;
   port: string;
   server_type?: number;
@@ -83,6 +113,11 @@ export interface Profile {
   id: string;
   role: "admin" | "reseller";
   odin_reseller_id: number | null;
+  selected_odin_reseller_id?: number | null; // ID do revendedor Odin atualmente selecionado pelo Admin
+  permissions?: {
+    can_create_resellers: boolean;
+    can_create_customers: boolean;
+  };
   full_name: string | null;
   updated_at?: string | null;
 }
@@ -93,7 +128,9 @@ export interface OdinSnapshot {
   bouquets: Bouquet[];
   servers: Server[];
   resellers: Reseller[];
+  packages: any[];
 }
+
 
 export interface DashboardStats {
   totalUsers: number;

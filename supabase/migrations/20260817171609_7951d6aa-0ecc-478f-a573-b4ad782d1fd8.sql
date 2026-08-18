@@ -5,7 +5,7 @@ create type public.app_role as enum ('admin', 'reseller');
 create table public.profiles (
   id uuid references auth.users on delete cascade primary key,
   role app_role not null default 'reseller',
-  odin_reseller_id integer,
+  odin_reseller_id integer, -- ID do revendedor na tabela reg_users do Odin
   full_name text,
   updated_at timestamp with time zone default now()
 );
@@ -25,7 +25,7 @@ create policy "Usuários podem ver seu próprio perfil"
 create policy "Admins podem ver todos os perfis"
   on public.profiles for select
   to authenticated
-  using (
+  using ( 
     exists (
       select 1 from public.profiles
       where id = auth.uid() and role = 'admin'

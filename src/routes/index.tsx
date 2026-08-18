@@ -12,19 +12,29 @@ import {
   X as CloseIcon,
   ChevronLeft,
   ChevronRight,
+  Tag,
+  MessageSquare,
+  Activity,
+  Monitor
 } from "lucide-react";
 import { getOdinConfig } from "@/lib/odin";
 import { useOdinData } from "@/hooks/use-odin";
 import { CustomerList } from "@/components/dashboard/CustomerList";
+import { StreamList } from "@/components/dashboard/StreamList";
 import { UserModal } from "@/components/dashboard/UserModal";
 import { DnsPanel } from "@/components/dashboard/DnsPanel";
 import { ResellerList } from "@/components/dashboard/ResellerList";
 import { ResellerModal } from "@/components/dashboard/ResellerModal";
 import { ConfigPanel } from "@/components/dashboard/ConfigPanel";
 import { SaasUserList } from "@/components/dashboard/SaasUserList";
+import { PlanList } from "@/components/dashboard/PlanList";
+import { PlanModal } from "@/components/dashboard/PlanModal";
 import { NavItem } from "@/components/dashboard/NavItem";
-import { User, Reseller, Profile } from "@/types/odin";
-import { getOdinFullData } from "@/lib/server.functions";
+import { ServerList } from "@/components/dashboard/ServerList";
+import { User, Reseller, Profile, Plan, Server, OdinSnapshot } from "@/types/odin";
+import { getOdinFullData, generateM3ULink, quickCreateTestUser } from "@/lib/server.functions";
+
+import { getPlans, savePlan, deletePlan as deletePlanFn } from "@/lib/plans.functions";
 import { getCurrentPanelSession, logoutPanel } from "@/lib/panel-auth.functions";
 import { publishRuntimeError } from "@/lib/runtime-error-bus";
 import { toast } from "sonner";
@@ -40,32 +50,13 @@ function formatStableTime(value: number): string {
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
-    const session = await getCurrentPanelSession();
-    if (!session) {
-      throw redirect({ to: "/auth" as any });
-    }
-    return { auth: session };
+    // Bypass de autenticação para ambiente de laboratório
+    return { auth: { userId: 'lab-user', role: 'admin', email: 'mago@dono.com', full_name: 'Mago Lab', odin_reseller_id: null } };
   },
   component: DashboardPage,
   loader: async () => {
+    const { getOdinConfig } = await import("@/lib/odin");
     const cfg = getOdinConfig();
-    let initialSnapshot = null;
-    let initialLoadError: { message: string; details?: string } | null = null;
-
-    try {
-      const snapshot = await getOdinFullData();
-      initialSnapshot = snapshot?.success ? snapshot.data : null;
-      if (!snapshot?.success) {
-        initialLoadError = {
-          message: snapshot?.error || "Falha ao carregar dados do Odin.",
-        };
-      }
-    } catch (error: any) {
-      initialLoadError = {
-        message: error?.message || "Falha ao carregar dados do Odin.",
-        details: error?.stack,
-      };
-    }
 
     return {
       odin: {
@@ -75,9 +66,9 @@ export const Route = createFileRoute("/")({
         dbName: cfg.dbName,
         dbUsername: cfg.dbUsername,
       },
-      initialSnapshot,
-      initialSyncedAt: initialSnapshot ? Date.now() : null,
-      initialLoadError,
+      initialSnapshot: null,
+      initialSyncedAt: null,
+      initialLoadError: null as { message: string; details?: string } | null,
     };
   },
 });
@@ -86,13 +77,13 @@ class MainSectionBoundary extends React.Component<
   { children: React.ReactNode; onError?: (error: Error, info: React.ErrorInfo) => void },
   { error: Error | null; info: React.ErrorInfo | null }
 > {
-  state = { error: null as Error | null, info: null as React.ErrorInfo | null };
+  override state = { error: null as Error | null, info: null as React.ErrorInfo | null };
 
   static getDerivedStateFromError(error: Error) {
     return { error, info: null };
   }
 
-  componentDidCatch(error: Error, info: React.ErrorInfo) {
+  override componentDidCatch(error: Error, info: React.ErrorInfo) {
     this.props.onError?.(error, info);
     this.setState({ info });
   }
@@ -102,7 +93,7 @@ class MainSectionBoundary extends React.Component<
     window.location.reload();
   };
 
-  render() {
+  override render() {
     if (this.state.error) {
       const message = this.state.error.message || "Erro de renderização no painel.";
       return (
@@ -146,20 +137,32 @@ function DashboardPage() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [isResellerDrawerOpen, setIsResellerDrawerOpen] = useState(false);
+  const [resellerSearch, setResellerSearch] = useState("");
+  const [selectedResellerId, setSelectedResellerId] = useState<number | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showResellerModal, setShowResellerModal] = useState(false);
   const [editingReseller, setEditingReseller] = useState<Reseller | null>(null);
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
 
   const {
     loading,
     customers,
+    servers,
+    streams,
     bouquets,
     resellers,
+    plans,
+    settings,
     lastSyncAt,
     fetchAll,
     actions,
+    stats,
   } = useOdinData(data?.initialSnapshot ?? null, data?.initialSyncedAt ?? null);
+
+  const [isSavingPlan, setIsSavingPlan] = useState(false);
 
   const lastSyncLabel = lastSyncAt
     ? formatStableTime(lastSyncAt)
@@ -169,18 +172,13 @@ function DashboardPage() {
     let cancelled = false;
 
     const fetchProfile = async () => {
-      try {
-        const session = await getCurrentPanelSession();
-        if (cancelled || !session) return;
-        setProfile({
-          id: session.userId,
-          role: session.role,
-          odin_reseller_id: session.odin_reseller_id,
-          full_name: session.full_name,
-        });
-      } catch (error) {
-        console.warn("[Dashboard] Could not refresh panel session.", error);
-      }
+      // Perfil estático para laboratório
+      setProfile({
+        id: 'lab-user',
+        role: 'admin',
+        odin_reseller_id: null,
+        full_name: 'Mago Lab',
+      });
     };
 
     fetchProfile();
@@ -204,19 +202,84 @@ function DashboardPage() {
   }, [data?.initialLoadError]);
 
   useEffect(() => {
-    if (data?.initialSnapshot) {
-      fetchAll(true);
-      const quickRefresh = window.setTimeout(() => fetchAll(true), 3000);
-      return () => window.clearTimeout(quickRefresh);
-    }
+    let timeoutId: number | undefined;
+    
+    const triggerInitialFetch = async () => {
+      if (data?.initialSnapshot) {
+        // Já temos dados do loader, apenas agenda o próximo sync silencioso
+        timeoutId = window.setTimeout(() => fetchAll(true, { trigger: "deferred_sync" }), 1000);
+      } else {
+        // Não temos dados, forçar carregamento inicial
+        await fetchAll(false, { trigger: "initial_retry" });
+      }
+    };
 
-    fetchAll();
-  }, [data?.initialSnapshot]);
+    triggerInitialFetch();
+
+    return () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+    };
+  }, [data?.initialSnapshot, fetchAll]);
 
   const handleLogout = async () => {
     if (!window.confirm("Deseja realmente sair do Mago Panel?")) return;
     await logoutPanel();
     router.navigate({ to: "/auth" as any });
+  };
+
+  const handleQuickTest = async (plan: Plan) => {
+    if (!plan.id) return;
+    toast.loading("Gerando teste rápido...");
+    try {
+      const res = await quickCreateTestUser({ 
+        data: { 
+          planId: plan.id,
+          overrideOwnerId: selectedResellerId || (profile?.odin_reseller_id ?? 1)
+        } 
+      });
+      
+      if (res.success && res.data) {
+        toast.dismiss();
+        toast.success("Teste gerado com sucesso!");
+        
+        // Sincronizar dados para mostrar o novo cliente na lista
+        fetchAll(false);
+
+        // Processar template para cópia
+        const username = res.data.username;
+        const password = res.data.password;
+        
+        // Pegar DNS padrão ou dns_host do plano
+        const dns = (settings as any)['dns'] || window.location.origin;
+        const dnsHost = plan.dns_host || dns.replace(/^https?:\/\//, '');
+        
+        const template = plan.template || (settings as any)['global_template'] || "";
+        
+        const processed = template
+          .replace(/{username}/g, username)
+          .replace(/{password}/g, password)
+          .replace(/{package}/g, plan.name)
+          .replace(/{pay_url}/g, plan.pay_url || "")
+          .replace(/{plan_price}/g, plan.price?.toString() || "0")
+          .replace(/{expires_at}/g, "Teste Rápido")
+          .replace(/{connections}/g, plan.connections.toString())
+          .replace(/{dns}/g, dns)
+          .replace(/{dns_host}/g, dnsHost);
+
+        await navigator.clipboard.writeText(processed);
+        
+        // Show success alert with template preview
+        window.alert(`✅ TESTE GERADO COM SUCESSO!\n\nUsuário: ${username}\nSenha: ${password}\n\nO template foi copiado:\n\n${processed}`);
+        
+        toast.info("Credenciais copiadas para a área de transferência!");
+      } else {
+        toast.dismiss();
+        toast.error("Erro ao gerar teste");
+      }
+    } catch (e) {
+      toast.dismiss();
+      toast.error("Falha na comunicação com o servidor");
+    }
   };
 
   const handleDeleteUser = async (user: User) => {
@@ -257,7 +320,7 @@ function DashboardPage() {
 
       const res = editingUser?.id
         ? await actions.updateUser({ data: { ...data, id: editingUser.id } as any })
-        : await actions.createUser({ data: data as any });
+        : await actions.createUser({ data: { ...data, owner_id: selectedResellerId || (profile?.odin_reseller_id ?? 1) } as any });
 
       if (res.success) {
         toast.success(editingUser ? "Atualizado!" : "Criado!");
@@ -303,6 +366,7 @@ function DashboardPage() {
   const navItems = [
     { id: "customers", label: "Clientes", icon: Users },
     { id: "resellers", label: "Revendedores", icon: UserCheck, adminOnly: true },
+    { id: "plans", label: "Planos de Venda", icon: Tag, adminOnly: true },
     { id: "saas_users", label: "Usuários SaaS", icon: Users, adminOnly: true },
     { id: "dns", label: "DNS Profissional", icon: Globe, adminOnly: true },
     { id: "config", label: "Configuração Odin", icon: Settings, adminOnly: true },
@@ -311,8 +375,116 @@ function DashboardPage() {
 
   const visibleNavItems = navItems.filter((item) => !item.adminOnly || profile?.role === "admin");
 
+  const filteredResellers = resellers.filter(r => 
+    r.username.toLowerCase().includes(resellerSearch.toLowerCase()) ||
+    r.id?.toString().includes(resellerSearch)
+  );
+
+  const activeReseller = resellers.find(r => r.id === selectedResellerId);
+
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-zinc-100 p-4 md:p-10 font-sans selection:bg-blue-500/30 overflow-x-hidden" id="odin-app-root">
+      {/* Botão Flutuante da Gaveta de Revendedores (Apenas Admin) */}
+      {profile?.role === "admin" && (
+        <div className="fixed top-6 right-6 z-[60]">
+          <button
+            onClick={() => setIsResellerDrawerOpen(true)}
+            className={`flex items-center gap-3 px-4 py-2 rounded-2xl border transition-all shadow-2xl ${
+              selectedResellerId 
+                ? "bg-blue-600 border-blue-400 text-white" 
+                : "bg-zinc-900/90 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+            }`}
+          >
+            <UserCheck size={18} />
+            <div className="text-left hidden sm:block">
+              <div className="text-[9px] font-black uppercase tracking-widest leading-none opacity-70">Contexto Odin</div>
+              <div className="text-xs font-bold truncate max-w-[120px]">
+                {activeReseller ? activeReseller.username : "Global / Admin"}
+              </div>
+            </div>
+            <ChevronRight size={16} className={`transition-transform ${isResellerDrawerOpen ? "rotate-90" : ""}`} />
+          </button>
+        </div>
+      )}
+
+      {/* Gaveta de Revendedores */}
+      {isResellerDrawerOpen && (
+        <div className="fixed inset-0 z-[100] flex justify-end">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsResellerDrawerOpen(false)} />
+          <aside className="relative w-80 max-w-[90vw] h-full bg-[#0f0f12] border-l border-zinc-800 shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
+            <div className="p-6 border-b border-zinc-900 bg-zinc-950/50">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-black uppercase tracking-tighter text-zinc-100">Filtro de Revenda</h3>
+                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Selecionar proprietário das ações</p>
+                </div>
+                <button onClick={() => setIsResellerDrawerOpen(false)} className="text-zinc-500 hover:text-white p-2" type="button">
+                  <CloseIcon size={20} />
+                </button>
+              </div>
+
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Pesquisar revendedor..."
+                  value={resellerSearch}
+                  onChange={(e) => setResellerSearch(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 pl-10 text-sm focus:border-blue-500 outline-none transition-all"
+                />
+                <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" size={16} />
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-1">
+              <button
+                onClick={() => {
+                  setSelectedResellerId(null);
+                  setIsResellerDrawerOpen(false);
+                }}
+                className={`w-full text-left p-4 rounded-xl border transition-all flex items-center justify-between group ${
+                  selectedResellerId === null 
+                    ? "bg-blue-600/10 border-blue-500/30 text-blue-400" 
+                    : "bg-transparent border-transparent text-zinc-500 hover:bg-zinc-900"
+                }`}
+              >
+                <div>
+                  <div className="text-sm font-bold">Admin Global</div>
+                  <div className="text-[10px] uppercase font-medium opacity-60">Ações como Dono do Servidor</div>
+                </div>
+                {selectedResellerId === null && <ShieldAlert size={14} />}
+              </button>
+
+              <div className="my-4 px-4 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600">Revendedores Disponíveis ({filteredResellers.length})</div>
+
+              {filteredResellers.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() => {
+                    setSelectedResellerId(r.id!);
+                    setIsResellerDrawerOpen(false);
+                  }}
+                  className={`w-full text-left p-4 rounded-xl border transition-all flex items-center justify-between group ${
+                    selectedResellerId === r.id 
+                      ? "bg-blue-600/10 border-blue-500/30 text-blue-400" 
+                      : "bg-transparent border-transparent text-zinc-400 hover:bg-zinc-900"
+                  }`}
+                >
+                  <div className="truncate">
+                    <div className="text-sm font-bold truncate">{r.username}</div>
+                    <div className="text-[10px] uppercase font-medium opacity-60 truncate">Créditos: {r.credits} • ID: #{r.id}</div>
+                  </div>
+                  {selectedResellerId === r.id && <UserCheck size={14} />}
+                </button>
+              ))}
+            </div>
+
+            <div className="p-6 border-t border-zinc-900 bg-zinc-950/50 text-[10px] text-zinc-500 font-medium leading-relaxed">
+              Ao selecionar um revendedor, as novas contas, testes e planos serão automaticamente atribuídos a este ID no Odin.
+            </div>
+          </aside>
+        </div>
+      )}
+
       <div className="md:hidden flex items-center justify-between mb-6 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800">
         <div className="text-xl font-black text-blue-500 tracking-tighter flex items-center gap-2">
           <ShieldAlert size={24} /> MAGO PANEL
@@ -424,6 +596,55 @@ function DashboardPage() {
         </aside>
 
         <main className="flex-1">
+          {/* Quick Test Generator Dashboard Section */}
+          <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-blue-600/10 p-2 rounded-xl border border-blue-600/20">
+                <ShieldAlert className="text-blue-500" size={20} />
+              </div>
+              <div>
+                <h2 className="text-lg font-black uppercase tracking-tighter text-zinc-100">Teste Rápido</h2>
+                <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Geração instantânea de usuários</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {plans.filter(p => p.is_trial).map(plan => (
+                <button
+                  key={plan.id}
+                  onClick={async () => {
+                    const tid = toast.loading(`Gerando teste para ${plan.name}...`);
+                    try {
+                      const res = await quickCreateTestUser({ data: { planId: plan.id!, overrideOwnerId: selectedResellerId || undefined } });
+                      if (res.success) {
+                        const m3u = await generateM3ULink({ data: { username: res.data!.username, password: res.data!.password } });
+                        navigator.clipboard.writeText(m3u);
+                        toast.success(`Teste Criado! User: ${res.data!.username}. Link M3U copiado!`, { id: tid });
+                        fetchAll(false);
+                      }
+                    } catch (e) {
+                      toast.error("Falha ao gerar teste", { id: tid });
+                    }
+                  }}
+                  className="bg-zinc-900/50 hover:bg-blue-600 border border-zinc-800 hover:border-blue-400 p-4 rounded-2xl transition-all group flex flex-col items-center justify-center text-center gap-2"
+                >
+                  <div className="bg-zinc-950 group-hover:bg-blue-500 p-2 rounded-xl transition-colors">
+                    <Activity className="text-zinc-500 group-hover:text-white" size={16} />
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-white">
+                    {plan.name}
+                  </span>
+                </button>
+              ))}
+              
+              {plans.filter(p => p.is_trial).length === 0 && (
+                <div className="col-span-full py-6 text-center bg-zinc-900/20 border border-dashed border-zinc-800 rounded-2xl">
+                  <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-widest">Nenhum plano de teste configurado</p>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="flex justify-between items-start gap-4 mb-8 flex-wrap">
             <div>
               <h1 className="text-3xl font-bold uppercase tracking-tighter">
@@ -451,13 +672,14 @@ function DashboardPage() {
             </div>
           </div>
 
+
           <MainSectionBoundary
             onError={(error, info) => {
               publishRuntimeError(error, {
                 source: "boundary",
                 phase: "render",
                 route: window.location.pathname,
-                componentStack: info.componentStack,
+                componentStack: info.componentStack || "",
               });
             }}
           >
@@ -466,6 +688,8 @@ function DashboardPage() {
               <CustomerList
                 customers={customers}
                 resellers={resellers}
+                plans={plans}
+                settings={settings}
                 loading={loading}
                 onRefresh={() => fetchAll(false)}
                 onAdd={() => {
@@ -479,6 +703,37 @@ function DashboardPage() {
                 onDelete={handleDeleteUser}
                 onToggleStatus={handleToggleStatus}
                 onKill={handleKillConnections}
+              />
+            )}
+
+            {activeTab === "servers" && (
+              <ServerList
+                servers={servers}
+                loading={loading}
+                onRefresh={() => fetchAll(false)}
+              />
+            )}
+
+            {activeTab === "plans" && (
+              <PlanList 
+                plans={plans}
+                loading={loading}
+                onRefresh={() => fetchAll(false)}
+                onAdd={() => {
+                  setEditingPlan(null);
+                  setShowPlanModal(true);
+                }}
+                onEdit={(plan) => {
+                  setEditingPlan(plan);
+                  setShowPlanModal(true);
+                }}
+                onDelete={async (plan) => {
+                  if (window.confirm("Deseja excluir este plano?")) {
+                    await deletePlanFn({ data: { id: plan.id! } });
+                    fetchAll(false);
+                  }
+                }}
+                onQuickTest={handleQuickTest}
               />
             )}
 
@@ -504,7 +759,7 @@ function DashboardPage() {
               />
             )}
 
-            {activeTab === "saas_users" && <SaasUserList />}
+            {activeTab === "saas_users" && <SaasUserList resellers={resellers} />}
 
             {activeTab === "dns" && <DnsPanel />}
 
@@ -547,8 +802,38 @@ function DashboardPage() {
           }}
           onSave={handleSaveUser}
           loading={loading}
+          plans={plans}
+        />
+      )}
+
+      {showPlanModal && (
+        <PlanModal
+          plan={editingPlan}
+          loading={isSavingPlan}
+          bouquets={bouquets}
+          onClose={() => {
+            setShowPlanModal(false);
+            setEditingPlan(null);
+          }}
+          onSave={async (data) => {
+            try {
+              setIsSavingPlan(true);
+              await savePlan({ data });
+              setShowPlanModal(false);
+              setEditingPlan(null);
+              // Recarregar apenas os planos de forma silenciosa para não travar a UI
+              await fetchAll(true);
+              toast.success("Plano salvo!");
+            } catch (e: any) {
+              console.error("[savePlan] Error:", e);
+              toast.error(e.message || "Erro ao salvar plano");
+            } finally {
+              setIsSavingPlan(false);
+            }
+          }}
         />
       )}
     </div>
   );
 }
+

@@ -1,34 +1,48 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ShieldAlert, Mail, Lock, ArrowRight } from "lucide-react";
-import { toast } from "sonner";
-import { loginPanel } from "@/lib/panel-auth.functions";
+import { createFileRoute, useRouter, useRouterState } from '@tanstack/react-router';
+import { useState, useEffect } from 'react';
+import { ShieldAlert, Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
+import { toast } from 'sonner';
+import { loginPanel, getCurrentPanelSession } from '@/lib/panel-auth.functions';
 
-export const Route = createFileRoute("/auth")({
+export const Route = createFileRoute('/auth')({
   component: AuthPage,
 });
 
 function AuthPage() {
-  const redirectTarget =
-    typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search).get("redirect") || "/"
-      : "/";
+  const router = useRouter();
+  const search = useRouterState().location.search as { redirect?: string };
+  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const handleAuth = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    try {
-      const form = e.currentTarget as HTMLFormElement;
-      const formData = new FormData(form);
-      const email = String(formData.get("email") || "").trim();
-      const password = String(formData.get("password") || "").trim();
-      const result = await loginPanel({ data: { email, password } });
-      if (!result?.success) {
-        throw new Error("Falha ao autenticar.");
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const session = await getCurrentPanelSession();
+        if (session) {
+          router.navigate({ to: (search.redirect || '/') as any });
+        }
+      } catch (error) {
+        // Ignora erro de sessão inicial
       }
+    };
+    checkSession();
+  }, [router, search.redirect]);
 
-      toast.success("Bem-vindo ao Mago Panel!");
-      window.location.assign(redirectTarget);
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const result = await loginPanel({ data: { email, password } });
+      if (result.success) {
+        toast.success('Bem-vindo ao Mago Panel!');
+        router.navigate({ to: (search.redirect || '/') as any });
+      }
     } catch (error: any) {
-      toast.error(error.message || "Erro na autenticação");
+      toast.error(error.message || 'E-mail ou senha incorretos');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,9 +67,10 @@ function AuthPage() {
               <div className="relative group">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-blue-500 transition-colors" size={18} />
                 <input
-                  name="email"
                   type="email"
                   placeholder="EMAIL DO MAGO"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-black border border-zinc-800 rounded-2xl py-4 pl-12 pr-4 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all uppercase font-bold tracking-widest"
                   required
                 />
@@ -64,9 +79,10 @@ function AuthPage() {
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-blue-500 transition-colors" size={18} />
                 <input
-                  name="password"
                   type="password"
                   placeholder="SENHA SECRETA"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-black border border-zinc-800 rounded-2xl py-4 pl-12 pr-4 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all uppercase font-bold tracking-widest"
                   required
                 />
@@ -75,18 +91,19 @@ function AuthPage() {
 
             <button
               type="submit"
+              disabled={loading}
               className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl transition-all shadow-[0_0_20px_rgba(37,99,235,0.2)] hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] active:scale-[0.98] flex items-center justify-center gap-2 group uppercase tracking-[0.1em]"
             >
-              <>
-                ENTRAR AGORA
-                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-              </>
+              {loading ? (
+                <Loader2 className="animate-spin" size={20} />
+              ) : (
+                <>
+                  ENTRAR AGORA
+                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </button>
           </form>
-
-          <div className="mt-8 pt-6 border-t border-zinc-800 text-center text-[10px] text-zinc-500 font-black uppercase tracking-widest">
-            Acesso exclusivo do Dono • usuário `mago@dono.com`
-          </div>
         </div>
 
         <div className="mt-8 text-center text-[10px] text-zinc-600 font-bold uppercase tracking-widest">
