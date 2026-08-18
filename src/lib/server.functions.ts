@@ -155,42 +155,35 @@ async function executeBatchQueries(queries: string[]) {
   const cfg = await getConfig();
   
   try {
+    console.log(`[SSH] Tentando conectar em ${cfg.sshHost}:${cfg.sshPort}...`);
     await ssh.connect({
       host: cfg.sshHost,
       port: cfg.sshPort,
       username: cfg.sshUsername,
       password: cfg.sshPassword,
-      readyTimeout: 60000,
-      keepaliveInterval: 10000,
-      compress: true,
+      readyTimeout: 20000,
     });
     
+    console.log(`[SSH] Conectado. Executando ${queries.length} queries...`);
     const results: string[] = [];
-    for (let i = 0; i < queries.length; i++) {
-      const sql = queries[i] || "";
+    
+    // Execução sequencial para evitar sobrecarga no MySQL remoto via tunnel
+    for (const sql of queries) {
       if (!sql) {
         results.push("");
         continue;
       }
       const mysqlCmd = `mysql -h 127.0.0.1 -P ${cfg.dbPort} -u ${cfg.dbUsername} -p'${cfg.dbPassword}' ${cfg.dbName} -N -s -e "${sql}"`;
-      
       const result = await ssh.execCommand(mysqlCmd);
-      console.log(`[SSH] Executed query ${i} (length: ${result.stdout.length})`);
-      
-      if (result.code !== 0) {
-        console.error(`[SSH] Query ${i} Failed: ${result.stderr}`);
-        results.push(""); 
-      } else {
-        results.push(result.stdout.replace(/\r/g, "") || "");
-      }
+      results.push(result.stdout.trim() || "");
     }
     
     ssh.dispose();
     return results;
   } catch (error: any) {
-    console.error(`[SSH] Batch Critical Failure:`, error.message);
-    try { if (ssh.isConnected()) ssh.dispose(); } catch (e) {}
-    return queries.map(() => "");
+    console.error(`[SSH] Falha crítica:`, error.message);
+    if (ssh.isConnected()) ssh.dispose();
+    throw error; // Lança para que o try/catch do handler capture
   }
 }
 
@@ -215,7 +208,10 @@ export const getOdinFullData = createServerFn({ method: "GET" })
         "SELECT server_id, COUNT(*) as total_streams, SUM(stream_status = 1) as live_streams, SUM(stream_status = 0) as offline_streams, SUM(bitrate) as bitrate_sum, AVG(bitrate) as avg_bitrate FROM streams_sys GROUP BY server_id"
       ];
 
-      const [uRaw, stRaw, bRaw, svRaw, rRaw, actRaw, srvActRaw, streamStatusRaw, serverStateRaw] = await executeBatchQueries(queries);
+      const [uRaw, stRaw, bRaw, svRaw, rRaw, actRaw, srvActRaw, streamStatusRaw, serverStateRaw] = await executeBatchQueries(queries).catch(e => {
+        console.error("[SSH] RPC handler failed:", e);
+        throw e;
+      });
 
       const activityMap: Record<number, number> = {};
       (actRaw || "").trim().split("\n").filter(Boolean).forEach(line => {
@@ -376,6 +372,7 @@ export const getOdinFullData = createServerFn({ method: "GET" })
       } as { success: true; data: any };
 
     } catch (error: any) {
+      console.error("[RPC getOdinFullData] Erro:", error.message);
       return { success: false, error: error.message } as { success: false; error: string };
     }
   });
