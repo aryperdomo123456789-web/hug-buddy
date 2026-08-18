@@ -16,7 +16,7 @@ export const DEFAULT_ODIN_CONFIG: OdinConfig = {
   sshPort: 22,
   sshUsername: "root",
   sshPassword: "fontemain123333",
-  dbHost: "23.158.72.30",
+  dbHost: "127.0.0.1",
   dbPort: 7999,
   dbName: "xtream_iptvpro",
   dbUsername: "user_iptvpro",
