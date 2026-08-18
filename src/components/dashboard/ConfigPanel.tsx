@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Copy, Database, Key, Plus, PlugZap, RefreshCw, RotateCcw, Save, Server, Shield, Terminal, Trash2, KeyRound } from "lucide-react";
+import { Copy, Database, Key, Plus, PlugZap, RefreshCw, RotateCcw, Save, Server, Shield, Terminal, Trash2, KeyRound, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 
 import type { OdinConfig } from "@/lib/odin";
