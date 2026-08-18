@@ -320,7 +320,6 @@ function DashboardPage() {
 
   const navItems = [
     { id: "customers", label: "Clientes", icon: Users },
-    { id: "servers", label: "Servidores", icon: Activity },
     { id: "resellers", label: "Revendedores", icon: UserCheck, adminOnly: true },
     { id: "plans", label: "Planos de Venda", icon: Tag, adminOnly: true },
     { id: "saas_users", label: "Usuários SaaS", icon: Users, adminOnly: true },
