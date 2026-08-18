@@ -701,7 +701,7 @@ function DashboardPage() {
               />
             )}
 
-            {activeTab === "saas_users" && <SaasUserList />}
+            {activeTab === "saas_users" && <SaasUserList resellers={resellers} />}
 
             {activeTab === "dns" && <DnsPanel />}
 
