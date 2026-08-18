@@ -110,6 +110,11 @@ export interface Profile {
   id: string;
   role: "admin" | "reseller";
   odin_reseller_id: number | null;
+  selected_odin_reseller_id?: number | null; // ID do revendedor Odin atualmente selecionado pelo Admin
+  permissions?: {
+    can_create_resellers: boolean;
+    can_create_customers: boolean;
+  };
   full_name: string | null;
   updated_at?: string | null;
 }
