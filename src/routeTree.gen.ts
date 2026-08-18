@@ -11,7 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as ApiPublicInstallRouteImport } from './routes/api.public.install'
+import { Route as ApiPublicInstallRouteImport } from './routes/api/public/install'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
