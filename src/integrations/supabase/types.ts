@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       dns_configs: {
         Row: {
           created_at: string | null
@@ -35,6 +53,63 @@ export type Database = {
           id?: string
           is_default?: boolean | null
           name?: string
+        }
+        Relationships: []
+      }
+      plans: {
+        Row: {
+          bouquets: Json | null
+          connections: number | null
+          created_at: string | null
+          duration: number | null
+          duration_unit: string | null
+          has_adult_content: boolean | null
+          id: string
+          is_trial: boolean | null
+          name: string
+          odin_package_id: number | null
+          odin_server_id: string | null
+          price: number | null
+          sort_order: number | null
+          status: string | null
+          template: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bouquets?: Json | null
+          connections?: number | null
+          created_at?: string | null
+          duration?: number | null
+          duration_unit?: string | null
+          has_adult_content?: boolean | null
+          id?: string
+          is_trial?: boolean | null
+          name: string
+          odin_package_id?: number | null
+          odin_server_id?: string | null
+          price?: number | null
+          sort_order?: number | null
+          status?: string | null
+          template?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bouquets?: Json | null
+          connections?: number | null
+          created_at?: string | null
+          duration?: number | null
+          duration_unit?: string | null
+          has_adult_content?: boolean | null
+          id?: string
+          is_trial?: boolean | null
+          name?: string
+          odin_package_id?: number | null
+          odin_server_id?: string | null
+          price?: number | null
+          sort_order?: number | null
+          status?: string | null
+          template?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
