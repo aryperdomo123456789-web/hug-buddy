@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requirePanelAuth } from "./panel-auth.server";
+import { requirePanelAuth } from "./panel-auth.middleware";
 import type { OdinProvisionScope } from "@/lib/odin-token.server";
 
 async function assertAdmin(context: any) {

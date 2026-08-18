@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { UserSchema, ResellerSchema } from "@/types/odin";
-import { requirePanelAuth } from "./panel-auth.server";
+import { requirePanelAuth } from "./panel-auth.middleware";
 import { escapeSql } from "./odin";
 
 const getOdinServer = async () => import("./odin.server");
