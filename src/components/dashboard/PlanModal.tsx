@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Plan } from "@/types/odin";
-import { X, Save, Settings2, Monitor, ShieldCheck, PlayCircle } from "lucide-react";
+import { Plan, Bouquet } from "@/types/odin";
+import { X, Save, Settings2, Monitor, ShieldCheck, PlayCircle, Database, Check } from "lucide-react";
 
 interface PlanModalProps {
   plan: Plan | null;
@@ -8,6 +8,7 @@ interface PlanModalProps {
   onSave: (data: Plan) => Promise<void>;
   loading?: boolean;
   odinPackages?: any[]; // Passed from parent if needed to link
+  bouquets?: Bouquet[]; // List of available bouquets from Odin
 }
 
 export function PlanModal({ plan, onClose, onSave, loading, odinPackages = [] }: PlanModalProps) {
