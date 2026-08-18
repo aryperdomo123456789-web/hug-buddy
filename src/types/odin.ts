@@ -23,6 +23,7 @@ export const UserSchema = z.object({
   isp_info: z.string().default(""),
   last_ip: z.string().default(""),
   last_ua: z.string().default(""),
+  package_name: z.string().optional(),
 });
 
 export type User = z.infer<typeof UserSchema>;
